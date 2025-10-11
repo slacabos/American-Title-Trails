@@ -1,0 +1,251 @@
+:root {
+  color-scheme: dark light;
+  font-family: 'Press Start 2P', 'VT323', 'Courier New', monospace;
+}
+
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Press Start 2P'), url('https://fonts.gstatic.com/s/pressstart2p/v11/e3t4euO8T-267oIAQAu6jDQyK3nF43pq.woff2') format('woff2');
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1d3557 0%, #0b132b 70%);
+  color: #f1faee;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(640px, 1fr) 360px;
+  gap: 1.5rem;
+  padding: 2rem;
+  width: min(1200px, 100vw);
+}
+
+.board-panel {
+  position: relative;
+  background: rgba(13, 27, 42, 0.85);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+  border-radius: 12px;
+  background: #0b132b;
+}
+
+.hint {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.sidebar {
+  background: rgba(13, 27, 42, 0.92);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+.sidebar h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #a8dadc;
+}
+
+.tile-preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 2px dashed rgba(168, 218, 220, 0.3);
+  border-radius: 12px;
+}
+
+.tile-preview canvas {
+  width: 96px;
+  height: 96px;
+  border-radius: 8px;
+}
+
+.tile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(11, 19, 43, 0.6);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+button,
+select {
+  font-family: inherit;
+  background: #e63946;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+button:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled),
+select:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(230, 57, 70, 0.4);
+}
+
+select {
+  background: rgba(230, 57, 70, 0.9);
+}
+
+.status {
+  min-height: 2.5rem;
+  font-size: 0.75rem;
+  color: #f1faee;
+}
+
+.scoreboard {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(11, 25, 38, 0.7);
+}
+
+.scoreboard h2,
+.log h2 {
+  margin-top: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: #f4a261;
+}
+
+#scoreList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.score-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  background: rgba(8, 16, 28, 0.8);
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-entry .turn-marker {
+  font-size: 0.8rem;
+  color: #ffe066;
+  width: 1rem;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.score-entry .details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.score-entry::before {
+  content: '';
+  width: 8px;
+  height: 100%;
+  background: var(--player-color, #a8dadc);
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.score-entry strong {
+  font-size: 0.8rem;
+}
+
+.deck-count {
+  margin: 0.75rem 0 0;
+  font-size: 0.7rem;
+  color: #a8dadc;
+}
+
+.log {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(11, 25, 38, 0.7);
+  flex: 1;
+  overflow: auto;
+}
+
+#logEntries {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+}
+
+.board-highlight {
+  position: absolute;
+  border: 2px dashed rgba(250, 215, 118, 0.8);
+  pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .sidebar {
+    order: -1;
+  }
+}
