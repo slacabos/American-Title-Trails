@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Get language from command line argument, default to 'en'
-const language = process.argv[2] || 'en';
+const language = process.argv[2] || "en";
 
 const mdFile = path.join(__dirname, `../src/content/help/${language}.md`);
 const tsFile = path.join(__dirname, `../src/content/help/${language}.ts`);
@@ -22,7 +22,9 @@ function syncContent() {
     // Check if the markdown file exists
     if (!fs.existsSync(mdFile)) {
       console.error(`❌ Markdown file not found: ${mdFile}`);
-      console.log(`💡 Available languages: ${getAvailableLanguages().join(', ')}`);
+      console.log(
+        `💡 Available languages: ${getAvailableLanguages().join(", ")}`
+      );
       process.exit(1);
     }
 
@@ -52,12 +54,13 @@ export default { helpContent };
 }
 
 function getAvailableLanguages() {
-  const helpDir = path.join(__dirname, '../src/content/help');
+  const helpDir = path.join(__dirname, "../src/content/help");
   if (!fs.existsSync(helpDir)) return [];
-  
-  return fs.readdirSync(helpDir)
-    .filter(file => file.endsWith('.md'))
-    .map(file => file.replace('.md', ''));
+
+  return fs
+    .readdirSync(helpDir)
+    .filter((file) => file.endsWith(".md"))
+    .map((file) => file.replace(".md", ""));
 }
 
 syncContent();

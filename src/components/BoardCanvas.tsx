@@ -3,6 +3,156 @@ import { Board } from "../board";
 import { Tile } from "../tile";
 import { Position } from "../types";
 
+// Tile rendering constants (same as TileRenderer)
+const ROAD_COLOR = "#8B4513"; // Brown for roads
+const COSTCO_COLOR = "#4169E1"; // Royal blue for Costco
+const MCDONALDS_COLOR = "#FFD700"; // Gold for McDonalds
+const FIELD_COLOR = "#90EE90"; // Light green for fields
+
+// Helper function to render a tile to a canvas context
+const renderTileToCanvas = (
+  ctx: CanvasRenderingContext2D,
+  tile: Tile,
+  size: number
+) => {
+  // Clear and draw background
+  ctx.fillStyle = FIELD_COLOR;
+  ctx.fillRect(0, 0, size, size);
+
+  // Add a subtle border
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0, 0, size, size);
+
+  // Draw roads
+  tile.roadConnections.forEach((connection) => {
+    for (let i = 0; i < connection.length - 1; i++) {
+      drawRoad(ctx, connection[i], connection[i + 1], size);
+    }
+  });
+
+  // Draw Costco zones
+  tile.costcoZones.forEach((zone) => {
+    drawCostcoZone(ctx, zone, size);
+  });
+
+  // Draw McDonalds
+  if (tile.center === "mcdonalds") {
+    drawMcDonalds(ctx, size);
+  }
+};
+
+const drawRoad = (
+  ctx: CanvasRenderingContext2D,
+  from: string,
+  to: string,
+  size: number
+) => {
+  const roadWidth = size * 0.2;
+  const center = size / 2;
+
+  ctx.fillStyle = ROAD_COLOR;
+  ctx.strokeStyle = "#654321";
+  ctx.lineWidth = 1;
+
+  const getConnectionPoint = (direction: string) => {
+    switch (direction) {
+      case "north":
+        return { x: center, y: 0 };
+      case "south":
+        return { x: center, y: size };
+      case "east":
+        return { x: size, y: center };
+      case "west":
+        return { x: 0, y: center };
+      default:
+        return { x: center, y: center };
+    }
+  };
+
+  const start = getConnectionPoint(from);
+  const end = getConnectionPoint(to);
+
+  // Draw road between connection points
+  ctx.beginPath();
+  ctx.moveTo(start.x - roadWidth / 2, start.y);
+  ctx.lineTo(end.x - roadWidth / 2, end.y);
+  ctx.lineTo(end.x + roadWidth / 2, end.y);
+  ctx.lineTo(start.x + roadWidth / 2, start.y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+};
+
+const drawCostcoZone = (
+  ctx: CanvasRenderingContext2D,
+  directions: string[],
+  size: number
+) => {
+  const center = size / 2;
+  const quarter = size / 4;
+
+  ctx.fillStyle = COSTCO_COLOR;
+  ctx.strokeStyle = "#1E40AF";
+  ctx.lineWidth = 1;
+
+  // Simple Costco zone representation
+  ctx.beginPath();
+
+  if (directions.includes("north") && directions.includes("east")) {
+    // Northeast quadrant
+    ctx.rect(center, 0, center, center);
+  } else if (directions.includes("north") && directions.includes("west")) {
+    // Northwest quadrant
+    ctx.rect(0, 0, center, center);
+  } else if (directions.includes("south") && directions.includes("east")) {
+    // Southeast quadrant
+    ctx.rect(center, center, center, center);
+  } else if (directions.includes("south") && directions.includes("west")) {
+    // Southwest quadrant
+    ctx.rect(0, center, center, center);
+  } else {
+    // Full side or center
+    if (directions.includes("north")) {
+      ctx.rect(quarter, 0, center, quarter);
+    }
+    if (directions.includes("south")) {
+      ctx.rect(quarter, size - quarter, center, quarter);
+    }
+    if (directions.includes("east")) {
+      ctx.rect(size - quarter, quarter, quarter, center);
+    }
+    if (directions.includes("west")) {
+      ctx.rect(0, quarter, quarter, center);
+    }
+  }
+
+  ctx.fill();
+  ctx.stroke();
+};
+
+const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
+  const center = size / 2;
+  const radius = size * 0.15;
+
+  ctx.fillStyle = MCDONALDS_COLOR;
+  ctx.strokeStyle = "#DAA520";
+  ctx.lineWidth = 2;
+
+  // Draw McDonalds as a star/special symbol
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.stroke();
+
+  // Add "M" text
+  ctx.fillStyle = "#B8860B";
+  ctx.font = `bold ${size * 0.2}px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("M", center, center);
+};
+
 interface BoardCanvasProps {
   board: Board;
   currentTile?: Tile;
@@ -157,12 +307,8 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
         const tileCtx = tileCanvas.getContext("2d");
 
         if (tileCtx) {
-          // Render tile to temporary canvas (simplified for now)
-          tileCtx.fillStyle = "#90EE90";
-          tileCtx.fillRect(0, 0, tileSize, tileSize);
-          tileCtx.strokeStyle = "#333";
-          tileCtx.lineWidth = 1;
-          tileCtx.strokeRect(0, 0, tileSize, tileSize);
+          // Render the actual tile with its features
+          renderTileToCanvas(tileCtx, record.tile, tileSize);
 
           // Draw the tile to main canvas
           ctx.drawImage(tileCanvas, x, y, scaledTileSize, scaledTileSize);
