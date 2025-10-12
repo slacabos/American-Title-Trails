@@ -21,16 +21,25 @@ const addDelta = (position: Position, direction: Direction): Position => {
   return { x: position.x + delta.x, y: position.y + delta.y };
 };
 
-const makeSignature = (type: string, parts: string[]): string =>
-  `${type}:${[...parts].sort().join("|")}`;
-
 interface NeighborInfo {
   position: Position;
   tile: Tile;
 }
 
+interface Feature {
+  type: TerrainType;
+  tiles: Set<string>;
+  edges: Set<string>;
+  isComplete: boolean;
+}
+
+interface CompletedFeature extends Feature {
+  claimedBy: string[];
+  points: number;
+}
+
 interface PlacementResult {
-  completed: any[];
+  completed: CompletedFeature[];
 }
 
 export class Board {
@@ -134,10 +143,313 @@ export class Board {
     const tileRecord: TileRecord = { position, tile };
     this.tiles.set(positionKey(position), tileRecord);
 
-    // Analyze completed features (simplified for now)
-    const completed: any[] = [];
+    // Analyze completed features after placement
+    const completed = this.analyzeCompletedFeatures(position, tile);
 
     return { completed };
+  }
+
+  private analyzeCompletedFeatures(
+    placedPosition: Position,
+    placedTile: Tile
+  ): CompletedFeature[] {
+    const completed: CompletedFeature[] = [];
+
+    // Check roads
+    const roadFeatures = this.findConnectedRoads(placedPosition, placedTile);
+    roadFeatures.forEach((feature) => {
+      if (this.isRoadComplete(feature)) {
+        const claimedBy = this.getFeatureClaimants(feature);
+        completed.push({
+          ...feature,
+          isComplete: true,
+          claimedBy,
+          points: feature.tiles.size,
+        });
+      }
+    });
+
+    // Check Costcos
+    const costcoFeatures = this.findConnectedCostcos(
+      placedPosition,
+      placedTile
+    );
+    costcoFeatures.forEach((feature) => {
+      if (this.isCostcoComplete(feature)) {
+        const claimedBy = this.getFeatureClaimants(feature);
+        completed.push({
+          ...feature,
+          isComplete: true,
+          claimedBy,
+          points: feature.tiles.size * 2,
+        });
+      }
+    });
+
+    // Check McDonalds
+    if (placedTile.center === "mcdonalds") {
+      if (this.isMcDonaldsComplete(placedPosition)) {
+        const claimedBy = this.getFeatureClaimants({
+          type: "mcdonalds",
+          tiles: new Set([positionKey(placedPosition)]),
+          edges: new Set([positionKey(placedPosition)]),
+          isComplete: true,
+        });
+        completed.push({
+          type: "mcdonalds",
+          tiles: new Set([positionKey(placedPosition)]),
+          edges: new Set([positionKey(placedPosition)]),
+          isComplete: true,
+          claimedBy,
+          points: 9,
+        });
+      }
+    }
+
+    return completed;
+  }
+
+  private findConnectedRoads(
+    startPosition: Position,
+    startTile: Tile
+  ): Feature[] {
+    const features: Feature[] = [];
+    const visited = new Set<string>();
+
+    // Check each road connection on the placed tile
+    startTile.roadConnections.forEach((connection) => {
+      const featureKey = `${positionKey(startPosition)}:${connection.join(
+        ","
+      )}`;
+      if (visited.has(featureKey)) return;
+
+      const feature = this.traceRoadFeature(startPosition, connection, visited);
+      if (feature.tiles.size > 0) {
+        features.push(feature);
+      }
+    });
+
+    return features;
+  }
+
+  private traceRoadFeature(
+    startPosition: Position,
+    connection: string[],
+    visited: Set<string>
+  ): Feature {
+    const feature: Feature = {
+      type: "road",
+      tiles: new Set(),
+      edges: new Set(),
+      isComplete: false,
+    };
+
+    const queue: Array<{ position: Position; segments: string[] }> = [
+      { position: startPosition, segments: connection },
+    ];
+
+    while (queue.length > 0) {
+      const { position, segments } = queue.shift()!;
+      const posKey = positionKey(position);
+
+      if (feature.tiles.has(posKey)) continue;
+      feature.tiles.add(posKey);
+
+      const tile = this.getTile(position)?.tile;
+      if (!tile) continue;
+
+      // Add road segments to edges
+      segments.forEach((segment) => {
+        feature.edges.add(`${posKey}:${segment}`);
+        visited.add(`${posKey}:${segment}`);
+      });
+
+      // Find connected roads in neighboring tiles
+      DIRECTIONS.forEach((direction) => {
+        if (!segments.includes(direction)) return;
+
+        const neighborPos = addDelta(position, direction);
+        const neighbor = this.getTile(neighborPos);
+        if (!neighbor) return;
+
+        const oppositeDir = OPPOSITE[direction];
+        const neighborRoads = neighbor.tile.roadConnections.filter(
+          (conn: string[]) => conn.includes(oppositeDir)
+        );
+
+        neighborRoads.forEach((roadConn: string[]) => {
+          queue.push({ position: neighborPos, segments: roadConn });
+        });
+      });
+    }
+
+    return feature;
+  }
+
+  private findConnectedCostcos(
+    startPosition: Position,
+    startTile: Tile
+  ): Feature[] {
+    const features: Feature[] = [];
+    const visited = new Set<string>();
+
+    // Check each Costco zone on the placed tile
+    startTile.costcoZones.forEach((zone) => {
+      const featureKey = `${positionKey(startPosition)}:${zone.join(",")}`;
+      if (visited.has(featureKey)) return;
+
+      const feature = this.traceCostcoFeature(startPosition, zone, visited);
+      if (feature.tiles.size > 0) {
+        features.push(feature);
+      }
+    });
+
+    return features;
+  }
+
+  private traceCostcoFeature(
+    startPosition: Position,
+    zone: string[],
+    visited: Set<string>
+  ): Feature {
+    const feature: Feature = {
+      type: "costco",
+      tiles: new Set(),
+      edges: new Set(),
+      isComplete: false,
+    };
+
+    const queue: Array<{ position: Position; segments: string[] }> = [
+      { position: startPosition, segments: zone },
+    ];
+
+    while (queue.length > 0) {
+      const { position, segments } = queue.shift()!;
+      const posKey = positionKey(position);
+
+      if (feature.tiles.has(posKey)) continue;
+      feature.tiles.add(posKey);
+
+      const tile = this.getTile(position)?.tile;
+      if (!tile) continue;
+
+      // Add Costco segments to edges
+      segments.forEach((segment) => {
+        feature.edges.add(`${posKey}:${segment}`);
+        visited.add(`${posKey}:${segment}`);
+      });
+
+      // Find connected Costcos in neighboring tiles
+      DIRECTIONS.forEach((direction) => {
+        if (!segments.includes(direction)) return;
+
+        const neighborPos = addDelta(position, direction);
+        const neighbor = this.getTile(neighborPos);
+        if (!neighbor) return;
+
+        const oppositeDir = OPPOSITE[direction];
+        const neighborCostcos = neighbor.tile.costcoZones.filter(
+          (zone: string[]) => zone.includes(oppositeDir)
+        );
+
+        neighborCostcos.forEach((costcoZone: string[]) => {
+          queue.push({ position: neighborPos, segments: costcoZone });
+        });
+      });
+    }
+
+    return feature;
+  }
+
+  private isRoadComplete(feature: Feature): boolean {
+    // A road is complete if all its endpoints are connected or terminate at road ends
+    const openEnds = new Set<string>();
+
+    feature.edges.forEach((edge) => {
+      const [posKey, segment] = edge.split(":");
+      const position = parsePositionKey(posKey);
+      const tile = this.getTile(position)?.tile;
+      if (!tile) return;
+
+      // Check if this segment connects to the center or to another direction
+      const roadConn = tile.roadConnections.find((conn: string[]) =>
+        conn.includes(segment)
+      );
+      if (!roadConn) return;
+
+      roadConn.forEach((dir: string) => {
+        if (dir === "center") return; // Center connections don't create open ends
+
+        if (DIRECTIONS.includes(dir as Direction)) {
+          const neighborPos = addDelta(position, dir as Direction);
+          const neighbor = this.getTile(neighborPos);
+
+          if (!neighbor) {
+            openEnds.add(`${posKey}:${dir}`);
+          } else {
+            const oppositeDir = OPPOSITE[dir as Direction];
+            const hasConnectingRoad = neighbor.tile.roadConnections.some(
+              (conn: string[]) => conn.includes(oppositeDir)
+            );
+            if (!hasConnectingRoad) {
+              openEnds.add(`${posKey}:${dir}`);
+            }
+          }
+        }
+      });
+    });
+
+    return openEnds.size === 0;
+  }
+
+  private isCostcoComplete(feature: Feature): boolean {
+    // A Costco is complete if it forms a closed area with no open edges
+    for (const edge of feature.edges) {
+      const [posKey, segment] = edge.split(":");
+      if (DIRECTIONS.includes(segment as Direction)) {
+        const position = parsePositionKey(posKey);
+        const neighborPos = addDelta(position, segment as Direction);
+        const neighbor = this.getTile(neighborPos);
+
+        if (!neighbor) return false; // Open edge to empty space
+
+        const oppositeDir = OPPOSITE[segment as Direction];
+        const hasConnectingCostco = neighbor.tile.costcoZones.some(
+          (zone: string[]) => zone.includes(oppositeDir)
+        );
+        if (!hasConnectingCostco) return false; // Open edge to non-Costco
+      }
+    }
+    return true;
+  }
+
+  private isMcDonaldsComplete(position: Position): boolean {
+    // McDonalds is complete when all 8 surrounding positions have tiles
+    const surroundingPositions = [
+      { x: position.x - 1, y: position.y - 1 },
+      { x: position.x, y: position.y - 1 },
+      { x: position.x + 1, y: position.y - 1 },
+      { x: position.x - 1, y: position.y },
+      { x: position.x + 1, y: position.y },
+      { x: position.x - 1, y: position.y + 1 },
+      { x: position.x, y: position.y + 1 },
+      { x: position.x + 1, y: position.y + 1 },
+    ];
+
+    return surroundingPositions.every((pos) => this.getTile(pos) !== undefined);
+  }
+
+  private getFeatureClaimants(feature: Feature): string[] {
+    const claimants = new Set<string>();
+
+    feature.edges.forEach((edge) => {
+      const claim = this.featureClaims.get(edge);
+      if (claim) {
+        claim.players.forEach((player) => claimants.add(player));
+      }
+    });
+
+    return Array.from(claimants);
   }
 
   claimFeature(
@@ -173,7 +485,31 @@ export class Board {
       return null;
     }
 
-    // Simplified preview - would need full implementation
-    return { completed: [] };
+    // Create a temporary board state to analyze completion
+    const tempBoard = new Board();
+    tempBoard.tiles.clear();
+    this.tiles.forEach((record, key) => {
+      tempBoard.tiles.set(key, record);
+    });
+
+    // Place tile temporarily
+    tempBoard.tiles.set(positionKey(position), { position, tile });
+
+    // Analyze what would complete
+    const completed = tempBoard.analyzeCompletedFeatures(position, tile);
+
+    return { completed };
+  }
+
+  removeFollower(edge: string): void {
+    this.featureClaims.delete(edge);
+  }
+
+  returnFollowersFromCompletedFeatures(completed: CompletedFeature[]): void {
+    completed.forEach((feature) => {
+      feature.edges.forEach((edge) => {
+        this.removeFollower(edge);
+      });
+    });
   }
 }

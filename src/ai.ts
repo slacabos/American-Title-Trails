@@ -87,10 +87,13 @@ export class SimpleAI {
       return null;
     }
 
+    // At this point, bestMove is guaranteed to be non-null
+    const validMove: AIMove = bestMove;
+
     if (player.canPlaceFollower() && tile.center === "mcdonalds") {
-      bestMove.follower = { type: "mcdonalds" };
+      validMove.follower = { type: "mcdonalds" };
     }
 
-    return bestMove;
+    return validMove;
   }
 }

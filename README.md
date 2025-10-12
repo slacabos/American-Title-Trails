@@ -34,6 +34,26 @@ Running `npm run dev` launches the Vite development server and opens the interac
 - **Interactive Setup**: Choose player count, names, and human vs AI
 - **Real-time Updates**: Live game state with visual feedback
 
+## 🎮 How to Play
+
+**Quick Start:**
+
+1. Run `npm run dev` and open http://localhost:3000
+2. Configure 2-5 players (human or AI)
+3. Take turns placing tiles and claiming features
+4. Score points when roads, Costcos, or McDonalds are completed
+5. Player with the most points wins!
+
+**📖 [Complete Gameplay Instructions](./GAMEPLAY_INSTRUCTIONS.md)** - Detailed rules, strategies, and tips
+
+**Basic Gameplay:**
+
+- **Place Tiles**: Click on green highlighted areas to place tiles
+- **Rotate**: Use "Rotate Tile" button to change orientation
+- **Claim Features**: After placing, optionally claim roads, Costcos, or McDonalds
+- **Score Points**: Completed features score immediately and return followers
+- **Win**: Highest score when all tiles are placed
+
 ## Development Commands
 
 ```bash
