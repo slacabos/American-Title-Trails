@@ -1,41 +1,35 @@
-import { Game } from '../src/game.js';
-import { SimpleAI } from '../src/ai.js';
+import { Game } from "../src/game.js";
+import { SimpleAI } from "../src/ai.js";
 
-const boardCanvas = document.getElementById('board');
-const boardCtx = boardCanvas.getContext('2d');
-const previewCanvas = document.getElementById('tilePreview');
-const previewCtx = previewCanvas.getContext('2d');
+const boardCanvas = document.getElementById("board");
+const boardCtx = boardCanvas.getContext("2d");
+const previewCanvas = document.getElementById("tilePreview");
+const previewCtx = previewCanvas.getContext("2d");
 
-const rotateLeftBtn = document.getElementById('rotateLeft');
-const rotateRightBtn = document.getElementById('rotateRight');
-const followerTypeSelect = document.getElementById('followerType');
-const followerDirectionSelect = document.getElementById('followerDirection');
-const directionGroup = document.getElementById('directionGroup');
-const skipButton = document.getElementById('skipTurn');
-const turnStatus = document.getElementById('turnStatus');
-const tileNameLabel = document.getElementById('tileName');
-const boardHint = document.getElementById('boardHint');
+const rotateLeftBtn = document.getElementById("rotateLeft");
+const rotateRightBtn = document.getElementById("rotateRight");
+const followerTypeSelect = document.getElementById("followerType");
+const followerDirectionSelect = document.getElementById("followerDirection");
+const directionGroup = document.getElementById("directionGroup");
+const skipButton = document.getElementById("skipTurn");
+const turnStatus = document.getElementById("turnStatus");
+const tileNameLabel = document.getElementById("tileName");
+const boardHint = document.getElementById("boardHint");
 
-const scoreList = document.getElementById('scoreList');
-const tilesRemainingLabel = document.getElementById('tilesRemaining');
-const logEntries = document.getElementById('logEntries');
+const scoreList = document.getElementById("scoreList");
+const tilesRemainingLabel = document.getElementById("tilesRemaining");
+const logEntries = document.getElementById("logEntries");
 
-const palette = ['#ff595e', '#1982c4', '#ffca3a', '#6a4c93', '#43aa8b'];
+// Game setup elements
+const gameSetup = document.getElementById("gameSetup");
+const playerCountSelect = document.getElementById("playerCount");
+const playerConfig = document.getElementById("playerConfig");
+const startGameBtn = document.getElementById("startGame");
 
-const players = [
-  { name: 'You', id: 'hero', isAI: false, color: palette[0] },
-  { name: 'Casey (AI)', id: 'ai-casey', isAI: true, color: palette[1] },
-  { name: 'Jordan (AI)', id: 'ai-jordan', isAI: true, color: palette[2] }
-];
+const palette = ["#ff595e", "#1982c4", "#ffca3a", "#6a4c93", "#43aa8b"];
 
-const game = new Game(players);
-const aiControllers = new Map();
-
-game.players.forEach(player => {
-  if (player.isAI) {
-    aiControllers.set(player.id, new SimpleAI());
-  }
-});
+let game = null;
+let aiControllers = new Map();
 
 let currentTile = null;
 let currentRotation = 0;
@@ -50,54 +44,150 @@ const TILE_SIZE = 64;
 const BOARD_PADDING = 2;
 
 const directionLabels = {
-  north: 'north',
-  east: 'east',
-  south: 'south',
-  west: 'west'
+  north: "north",
+  east: "east",
+  south: "south",
+  west: "west",
 };
 
 const featureLabels = {
-  road: 'road',
-  costco: 'Costco warehouse',
-  mcdonalds: 'McDonalds'
+  road: "road",
+  costco: "Costco warehouse",
+  mcdonalds: "McDonalds",
 };
 
-const toDegrees = rotation => ((rotation % 4) + 4) % 4 * 90;
+// Game Setup Functions
+const generatePlayerConfig = () => {
+  const count = parseInt(playerCountSelect.value, 10);
+  playerConfig.innerHTML = "";
 
-const logEvent = message => {
-  logs.unshift(`${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — ${message}`);
+  for (let i = 0; i < count; i++) {
+    const playerDiv = document.createElement("div");
+    playerDiv.className = "player-setup";
+
+    const colorIndicator = document.createElement("div");
+    colorIndicator.className = "player-color-indicator";
+    colorIndicator.style.backgroundColor = palette[i];
+
+    const label = document.createElement("label");
+    label.textContent = `P${i + 1}:`;
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = `Player ${i + 1}`;
+    nameInput.value = i === 0 ? "You" : `Player ${i + 1}`;
+    nameInput.dataset.playerIndex = i;
+
+    const typeSelect = document.createElement("select");
+    typeSelect.dataset.playerIndex = i;
+
+    const humanOption = document.createElement("option");
+    humanOption.value = "human";
+    humanOption.textContent = "Human";
+
+    const aiOption = document.createElement("option");
+    aiOption.value = "ai";
+    aiOption.textContent = "AI";
+    aiOption.selected = i > 0; // Default to AI for players 2+
+
+    typeSelect.appendChild(humanOption);
+    typeSelect.appendChild(aiOption);
+
+    playerDiv.appendChild(colorIndicator);
+    playerDiv.appendChild(label);
+    playerDiv.appendChild(nameInput);
+    playerDiv.appendChild(typeSelect);
+
+    playerConfig.appendChild(playerDiv);
+  }
+};
+
+const startGame = () => {
+  const playerSetups = Array.from(playerConfig.children);
+  const players = playerSetups.map((setup, index) => {
+    const nameInput = setup.querySelector('input[type="text"]');
+    const typeSelect = setup.querySelector("select");
+
+    return {
+      name: nameInput.value.trim() || `Player ${index + 1}`,
+      id: `player-${index + 1}`,
+      isAI: typeSelect.value === "ai",
+      color: palette[index],
+    };
+  });
+
+  // Initialize game
+  game = new Game(players);
+  aiControllers.clear();
+
+  game.players.forEach((player) => {
+    if (player.isAI) {
+      aiControllers.set(player.id, new SimpleAI());
+    }
+  });
+
+  // Hide setup and show game UI
+  gameSetup.style.display = "none";
+  document.querySelector(".tile-preview").style.display = "block";
+  document.querySelector(".controls").style.display = "block";
+  document.querySelector(".scoreboard").style.display = "block";
+  document.querySelector(".log").style.display = "block";
+
+  // Initialize game state
+  gameOver = false;
+  currentTile = null;
+  currentRotation = 0;
+  validPlacements = [];
+  logs.length = 0;
+
+  logEvent("Game started!");
+  updateScoreboard();
+  updateTilesRemaining();
+  nextTurn();
+};
+
+const toDegrees = (rotation) => (((rotation % 4) + 4) % 4) * 90;
+
+const logEvent = (message) => {
+  logs.unshift(
+    `${new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} — ${message}`
+  );
   if (logs.length > MAX_LOG_ENTRIES) {
     logs.pop();
   }
-  logEntries.innerHTML = '';
-  logs.forEach(entry => {
-    const li = document.createElement('li');
+  logEntries.innerHTML = "";
+  logs.forEach((entry) => {
+    const li = document.createElement("li");
     li.textContent = entry;
     logEntries.appendChild(li);
   });
 };
 
 const updateScoreboard = () => {
-  scoreList.innerHTML = '';
-  game.players.forEach(player => {
-    const li = document.createElement('li');
-    li.className = 'score-entry';
-    li.style.setProperty('--player-color', player.color ?? '#a8dadc');
+  if (!game) return;
+  scoreList.innerHTML = "";
+  game.players.forEach((player) => {
+    const li = document.createElement("li");
+    li.className = "score-entry";
+    li.style.setProperty("--player-color", player.color ?? "#a8dadc");
 
-    const marker = document.createElement('span');
-    marker.className = 'turn-marker';
-    marker.textContent = player === game.currentPlayer && !gameOver ? '▶' : '';
+    const marker = document.createElement("span");
+    marker.className = "turn-marker";
+    marker.textContent = player === game.currentPlayer && !gameOver ? "▶" : "";
     li.appendChild(marker);
 
-    const details = document.createElement('div');
-    details.className = 'details';
+    const details = document.createElement("div");
+    details.className = "details";
 
-    const title = document.createElement('strong');
-    const suffix = player.isAI ? ' 🤖' : '';
+    const title = document.createElement("strong");
+    const suffix = player.isAI ? " 🤖" : "";
     title.textContent = `${player.name}${suffix}`;
     details.appendChild(title);
 
-    const meta = document.createElement('span');
+    const meta = document.createElement("span");
     meta.textContent = `${player.score} pts • ${player.followers} reps remaining`;
     details.appendChild(meta);
 
@@ -107,15 +197,16 @@ const updateScoreboard = () => {
 };
 
 const updateTilesRemaining = () => {
+  if (!game) return;
   tilesRemainingLabel.textContent = `${game.drawPile.length}`;
 };
 
-const isHumanTurn = () => !gameOver && !game.currentPlayer.isAI;
+const isHumanTurn = () => game && !gameOver && !game.currentPlayer.isAI;
 
-const normalizeRotation = value => ((value % 4) + 4) % 4;
+const normalizeRotation = (value) => ((value % 4) + 4) % 4;
 
 const ensureCurrentTile = () => {
-  if (gameOver || currentTile) {
+  if (!game || gameOver || currentTile) {
     return true;
   }
   try {
@@ -125,19 +216,19 @@ const ensureCurrentTile = () => {
   } catch (error) {
     currentTile = null;
     currentRotation = 0;
-    endGame('No more tiles remain in the draw pile.');
+    endGame("No more tiles remain in the draw pile.");
     return false;
   }
 };
 
 const drawFieldPattern = (ctx, x, y, size) => {
-  ctx.fillStyle = '#2d6a4f';
+  ctx.fillStyle = "#2d6a4f";
   ctx.fillRect(x, y, size, size);
   const patch = Math.max(1, Math.floor(size / 4));
   for (let gx = 0; gx < size; gx += patch) {
     for (let gy = 0; gy < size; gy += patch) {
       const alt = (gx / patch + gy / patch) % 2 === 0;
-      ctx.fillStyle = alt ? '#1b4332' : '#40916c';
+      ctx.fillStyle = alt ? "#1b4332" : "#40916c";
       ctx.fillRect(x + gx, y + gy, patch, patch);
     }
   }
@@ -148,12 +239,12 @@ const drawTileArt = (ctx, tile, x, y, size) => {
   ctx.imageSmoothingEnabled = false;
   drawFieldPattern(ctx, x, y, size);
 
-  const roadColor = '#6c757d';
-  const stripeColor = '#f8f9fa';
-  const costcoColor = '#1d3557';
-  const costcoAccent = '#457b9d';
-  const mcdBase = '#c1121f';
-  const mcdAccent = '#ffbe0b';
+  const roadColor = "#6c757d";
+  const stripeColor = "#f8f9fa";
+  const costcoColor = "#1d3557";
+  const costcoAccent = "#457b9d";
+  const mcdBase = "#c1121f";
+  const mcdAccent = "#ffbe0b";
 
   const half = size / 2;
   const roadWidth = Math.max(6, size * 0.22);
@@ -161,37 +252,57 @@ const drawTileArt = (ctx, tile, x, y, size) => {
   const drawRoad = (direction) => {
     ctx.fillStyle = roadColor;
     switch (direction) {
-      case 'north':
-        ctx.fillRect(x + half - roadWidth / 2, y, roadWidth, half + roadWidth / 2);
+      case "north":
+        ctx.fillRect(
+          x + half - roadWidth / 2,
+          y,
+          roadWidth,
+          half + roadWidth / 2
+        );
         break;
-      case 'south':
-        ctx.fillRect(x + half - roadWidth / 2, y + half - roadWidth / 2, roadWidth, half + roadWidth / 2);
+      case "south":
+        ctx.fillRect(
+          x + half - roadWidth / 2,
+          y + half - roadWidth / 2,
+          roadWidth,
+          half + roadWidth / 2
+        );
         break;
-      case 'east':
-        ctx.fillRect(x + half - roadWidth / 2, y + half - roadWidth / 2, half + roadWidth / 2, roadWidth);
+      case "east":
+        ctx.fillRect(
+          x + half - roadWidth / 2,
+          y + half - roadWidth / 2,
+          half + roadWidth / 2,
+          roadWidth
+        );
         break;
-      case 'west':
-        ctx.fillRect(x, y + half - roadWidth / 2, half + roadWidth / 2, roadWidth);
+      case "west":
+        ctx.fillRect(
+          x,
+          y + half - roadWidth / 2,
+          half + roadWidth / 2,
+          roadWidth
+        );
         break;
       default:
         break;
     }
   };
 
-  const drawRoadStripe = direction => {
+  const drawRoadStripe = (direction) => {
     ctx.fillStyle = stripeColor;
     const stripeWidth = Math.max(2, roadWidth / 6);
     switch (direction) {
-      case 'north':
+      case "north":
         ctx.fillRect(x + half - stripeWidth / 2, y, stripeWidth, half);
         break;
-      case 'south':
+      case "south":
         ctx.fillRect(x + half - stripeWidth / 2, y + half, stripeWidth, half);
         break;
-      case 'east':
+      case "east":
         ctx.fillRect(x + half, y + half - stripeWidth / 2, half, stripeWidth);
         break;
-      case 'west':
+      case "west":
         ctx.fillRect(x, y + half - stripeWidth / 2, half, stripeWidth);
         break;
       default:
@@ -199,19 +310,19 @@ const drawTileArt = (ctx, tile, x, y, size) => {
     }
   };
 
-  const drawCostco = direction => {
+  const drawCostco = (direction) => {
     ctx.fillStyle = costcoColor;
     switch (direction) {
-      case 'north':
+      case "north":
         ctx.fillRect(x, y, size, half);
         break;
-      case 'south':
+      case "south":
         ctx.fillRect(x, y + half, size, half);
         break;
-      case 'east':
+      case "east":
         ctx.fillRect(x + half, y, half, size);
         break;
-      case 'west':
+      case "west":
         ctx.fillRect(x, y, half, size);
         break;
       default:
@@ -220,16 +331,26 @@ const drawTileArt = (ctx, tile, x, y, size) => {
     ctx.fillStyle = costcoAccent;
     const inset = Math.max(4, size * 0.08);
     switch (direction) {
-      case 'north':
+      case "north":
         ctx.fillRect(x + inset, y + inset, size - inset * 2, half - inset);
         break;
-      case 'south':
-        ctx.fillRect(x + inset, y + half + inset / 2, size - inset * 2, half - inset);
+      case "south":
+        ctx.fillRect(
+          x + inset,
+          y + half + inset / 2,
+          size - inset * 2,
+          half - inset
+        );
         break;
-      case 'east':
-        ctx.fillRect(x + half + inset / 2, y + inset, half - inset, size - inset * 2);
+      case "east":
+        ctx.fillRect(
+          x + half + inset / 2,
+          y + inset,
+          half - inset,
+          size - inset * 2
+        );
         break;
-      case 'west':
+      case "west":
         ctx.fillRect(x + inset, y + inset, half - inset, size - inset * 2);
         break;
       default:
@@ -237,58 +358,83 @@ const drawTileArt = (ctx, tile, x, y, size) => {
     }
   };
 
-  ['north', 'east', 'south', 'west'].forEach(direction => {
+  ["north", "east", "south", "west"].forEach((direction) => {
     const edge = tile.edgeAt(direction);
-    if (edge === 'costco') {
+    if (edge === "costco") {
       drawCostco(direction);
     }
   });
 
-  ['north', 'east', 'south', 'west'].forEach(direction => {
+  ["north", "east", "south", "west"].forEach((direction) => {
     const edge = tile.edgeAt(direction);
-    if (edge === 'road') {
+    if (edge === "road") {
       drawRoad(direction);
       drawRoadStripe(direction);
     }
   });
 
-  if (tile.center === 'road' || tile.center === 'mixed') {
+  if (tile.center === "road" || tile.center === "mixed") {
     ctx.fillStyle = roadColor;
-    ctx.fillRect(x + half - roadWidth / 2, y + half - roadWidth / 2, roadWidth, roadWidth);
+    ctx.fillRect(
+      x + half - roadWidth / 2,
+      y + half - roadWidth / 2,
+      roadWidth,
+      roadWidth
+    );
     ctx.fillStyle = stripeColor;
-    ctx.fillRect(x + half - Math.max(2, roadWidth / 6), y + half - Math.max(2, roadWidth / 6), Math.max(4, roadWidth / 3), Math.max(4, roadWidth / 3));
+    ctx.fillRect(
+      x + half - Math.max(2, roadWidth / 6),
+      y + half - Math.max(2, roadWidth / 6),
+      Math.max(4, roadWidth / 3),
+      Math.max(4, roadWidth / 3)
+    );
   }
 
-  if (tile.center === 'costco' || tile.center === 'mixed') {
+  if (tile.center === "costco" || tile.center === "mixed") {
     const inset = Math.max(6, size * 0.18);
     ctx.fillStyle = costcoColor;
     ctx.fillRect(x + inset, y + inset, size - inset * 2, size - inset * 2);
-    ctx.fillStyle = '#e63946';
-    ctx.fillRect(x + inset + 4, y + inset + 4, size - (inset + 4) * 2, (size - inset * 2) / 3);
+    ctx.fillStyle = "#e63946";
+    ctx.fillRect(
+      x + inset + 4,
+      y + inset + 4,
+      size - (inset + 4) * 2,
+      (size - inset * 2) / 3
+    );
   }
 
-  if (tile.center === 'mcdonalds') {
+  if (tile.center === "mcdonalds") {
     const inset = Math.max(8, size * 0.2);
     ctx.fillStyle = mcdBase;
     ctx.fillRect(x + inset, y + inset, size - inset * 2, size - inset * 2);
     ctx.fillStyle = mcdAccent;
     ctx.beginPath();
     ctx.moveTo(x + inset + 4, y + inset + (size - inset * 2) / 2);
-    ctx.quadraticCurveTo(x + size / 2, y + inset - 6, x + size - inset - 4, y + inset + (size - inset * 2) / 2);
+    ctx.quadraticCurveTo(
+      x + size / 2,
+      y + inset - 6,
+      x + size - inset - 4,
+      y + inset + (size - inset * 2) / 2
+    );
     ctx.lineTo(x + size - inset - 4, y + size - inset - 6);
     ctx.lineTo(x + inset + 4, y + size - inset - 6);
     ctx.closePath();
     ctx.fill();
   }
 
-  ctx.strokeStyle = 'rgba(15, 15, 15, 0.6)';
+  ctx.strokeStyle = "rgba(15, 15, 15, 0.6)";
   ctx.lineWidth = Math.max(2, size * 0.05);
-  ctx.strokeRect(x + ctx.lineWidth / 2, y + ctx.lineWidth / 2, size - ctx.lineWidth, size - ctx.lineWidth);
+  ctx.strokeRect(
+    x + ctx.lineWidth / 2,
+    y + ctx.lineWidth / 2,
+    size - ctx.lineWidth,
+    size - ctx.lineWidth
+  );
 
   ctx.restore();
 };
 
-const boardToCanvas = position => {
+const boardToCanvas = (position) => {
   if (!renderState) {
     return { x: 0, y: 0 };
   }
@@ -303,7 +449,7 @@ const drawGrid = () => {
     return;
   }
   const { widthTiles, heightTiles, tileSize } = renderState;
-  boardCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  boardCtx.strokeStyle = "rgba(255, 255, 255, 0.08)";
   boardCtx.lineWidth = 1;
 
   for (let c = 0; c <= widthTiles; c += 1) {
@@ -326,11 +472,11 @@ const highlightPlacements = () => {
   }
   const { tileSize } = renderState;
   boardCtx.save();
-  validPlacements.forEach(position => {
+  validPlacements.forEach((position) => {
     const { x, y } = boardToCanvas(position);
-    boardCtx.fillStyle = 'rgba(255, 221, 51, 0.22)';
+    boardCtx.fillStyle = "rgba(255, 221, 51, 0.22)";
     boardCtx.fillRect(x, y, tileSize, tileSize);
-    boardCtx.strokeStyle = 'rgba(255, 221, 51, 0.8)';
+    boardCtx.strokeStyle = "rgba(255, 221, 51, 0.8)";
     boardCtx.lineWidth = 2;
     boardCtx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
   });
@@ -338,15 +484,15 @@ const highlightPlacements = () => {
 };
 
 const drawFollowers = () => {
-  if (!renderState) {
+  if (!renderState || !game) {
     return;
   }
   const claims = game.board.getFeatureClaims();
   const { tileSize } = renderState;
 
-  claims.forEach(claim => {
-    const [coords, direction] = claim.edge.split(':');
-    const [xStr, yStr] = coords.split(',');
+  claims.forEach((claim) => {
+    const [coords, direction] = claim.edge.split(":");
+    const [xStr, yStr] = coords.split(",");
     const tilePosition = { x: Number(xStr), y: Number(yStr) };
     const base = boardToCanvas(tilePosition);
     const radius = Math.max(5, tileSize * 0.12);
@@ -355,20 +501,20 @@ const drawFollowers = () => {
     let anchorX = base.x + tileSize / 2;
     let anchorY = base.y + tileSize / 2;
 
-    if (claim.type === 'mcdonalds') {
+    if (claim.type === "mcdonalds") {
       anchorY = base.y + tileSize / 2;
     } else {
       switch (direction) {
-        case 'north':
+        case "north":
           anchorY = base.y + radius * 1.5;
           break;
-        case 'south':
+        case "south":
           anchorY = base.y + tileSize - radius * 1.5;
           break;
-        case 'east':
+        case "east":
           anchorX = base.x + tileSize - radius * 1.5;
           break;
-        case 'west':
+        case "west":
           anchorX = base.x + radius * 1.5;
           break;
         default:
@@ -377,14 +523,17 @@ const drawFollowers = () => {
     }
 
     claim.players.forEach((playerId, index) => {
-      const player = game.players.find(p => p.id === playerId);
+      const player = game.players.find((p) => p.id === playerId);
       if (!player) {
         return;
       }
-      const offsetX = claim.players.length > 1 ? (index - (claim.players.length - 1) / 2) * separation : 0;
+      const offsetX =
+        claim.players.length > 1
+          ? (index - (claim.players.length - 1) / 2) * separation
+          : 0;
       boardCtx.beginPath();
-      boardCtx.fillStyle = player.color ?? '#f1faee';
-      boardCtx.strokeStyle = 'rgba(10, 10, 10, 0.85)';
+      boardCtx.fillStyle = player.color ?? "#f1faee";
+      boardCtx.strokeStyle = "rgba(10, 10, 10, 0.85)";
       boardCtx.lineWidth = Math.max(1, tileSize * 0.05);
       boardCtx.arc(anchorX + offsetX, anchorY, radius, 0, Math.PI * 2);
       boardCtx.fill();
@@ -394,6 +543,7 @@ const drawFollowers = () => {
 };
 
 const drawBoard = () => {
+  if (!game) return;
   const bounds = game.board.getBounds();
   const widthTiles = bounds.maxX - bounds.minX + 1 + BOARD_PADDING * 2;
   const heightTiles = bounds.maxY - bounds.minY + 1 + BOARD_PADDING * 2;
@@ -405,7 +555,13 @@ const drawBoard = () => {
     boardCanvas.height = height;
   }
 
-  renderState = { bounds, padding: BOARD_PADDING, tileSize: TILE_SIZE, widthTiles, heightTiles };
+  renderState = {
+    bounds,
+    padding: BOARD_PADDING,
+    tileSize: TILE_SIZE,
+    widthTiles,
+    heightTiles,
+  };
 
   boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
   boardCtx.imageSmoothingEnabled = false;
@@ -425,7 +581,7 @@ const updateTilePreview = () => {
   previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
   previewCtx.imageSmoothingEnabled = false;
   if (!currentTile) {
-    tileNameLabel.textContent = 'Waiting for tile draw…';
+    tileNameLabel.textContent = "Waiting for tile draw…";
     return;
   }
   const rotated = currentTile.rotate(normalizeRotation(currentRotation));
@@ -442,10 +598,10 @@ const updateValidPlacements = () => {
   const rotated = currentTile.rotate(rotation);
   validPlacements = game.board
     .getPlacementCandidates()
-    .filter(position => game.board.canPlace(rotated, position));
+    .filter((position) => game.board.canPlace(rotated, position));
   boardHint.textContent = validPlacements.length
-    ? 'Click a highlighted square to place your tile.'
-    : 'No valid spots — discard the tile to continue.';
+    ? "Click a highlighted square to place your tile."
+    : "No valid spots — discard the tile to continue.";
 };
 
 const updateControls = () => {
@@ -453,9 +609,13 @@ const updateControls = () => {
   rotateLeftBtn.disabled = !humanTurn;
   rotateRightBtn.disabled = !humanTurn;
   followerTypeSelect.disabled = !humanTurn;
-  followerDirectionSelect.disabled = !humanTurn || !['road', 'costco'].includes(followerTypeSelect.value);
+  followerDirectionSelect.disabled =
+    !humanTurn || !["road", "costco"].includes(followerTypeSelect.value);
   skipButton.disabled = !humanTurn;
-  directionGroup.style.display = followerTypeSelect.value === 'road' || followerTypeSelect.value === 'costco' ? 'flex' : 'none';
+  directionGroup.style.display =
+    followerTypeSelect.value === "road" || followerTypeSelect.value === "costco"
+      ? "flex"
+      : "none";
 };
 
 const refreshUI = () => {
@@ -472,31 +632,42 @@ const getFollowerSelection = () => {
     return null;
   }
   const type = followerTypeSelect.value;
-  if (type === 'none') {
+  if (type === "none") {
     return null;
   }
-  if (type === 'mcdonalds') {
-    return { type: 'mcdonalds' };
+  if (type === "mcdonalds") {
+    return { type: "mcdonalds" };
   }
   return { type, identifier: followerDirectionSelect.value };
 };
 
-const announceScores = scoredEvents => {
-  scoredEvents.forEach(event => {
+const announceScores = (scoredEvents) => {
+  scoredEvents.forEach((event) => {
     const feature = featureLabels[event.feature] ?? event.feature;
-    logEvent(`${event.player} scores ${event.points} pts for completing a ${feature}.`);
+    logEvent(
+      `${event.player} scores ${event.points} pts for completing a ${feature}.`
+    );
   });
 };
 
-const handlePlacementResult = (player, tileName, position, rotation, follower, result) => {
-  const rotationText = rotation ? ` rotated ${toDegrees(rotation)}°` : '';
-  logEvent(`${player.name} places ${tileName} at (${position.x}, ${position.y})${rotationText}.`);
+const handlePlacementResult = (
+  player,
+  tileName,
+  position,
+  rotation,
+  follower,
+  result
+) => {
+  const rotationText = rotation ? ` rotated ${toDegrees(rotation)}°` : "";
+  logEvent(
+    `${player.name} places ${tileName} at (${position.x}, ${position.y})${rotationText}.`
+  );
 
   if (follower) {
-    if (follower.type === 'mcdonalds') {
+    if (follower.type === "mcdonalds") {
       logEvent(`${player.name} assigns a manager to the McDonalds.`);
     } else {
-      const feature = follower.type === 'road' ? 'road' : 'Costco edge';
+      const feature = follower.type === "road" ? "road" : "Costco edge";
       const label = directionLabels[follower.identifier] ?? follower.identifier;
       logEvent(`${player.name} deploys a follower on the ${label} ${feature}.`);
     }
@@ -505,7 +676,7 @@ const handlePlacementResult = (player, tileName, position, rotation, follower, r
   announceScores(result.scored);
 };
 
-const placeTileAt = position => {
+const placeTileAt = (position) => {
   if (!isHumanTurn() || !currentTile) {
     return;
   }
@@ -517,17 +688,26 @@ const placeTileAt = position => {
   try {
     const result = game.placeTile(player.id, currentTile, position, {
       rotation,
-      follower: follower ?? undefined
+      follower: follower ?? undefined,
     });
-    handlePlacementResult(player, tileName, position, rotation, follower, result);
+    handlePlacementResult(
+      player,
+      tileName,
+      position,
+      rotation,
+      follower,
+      result
+    );
     currentTile = null;
     currentRotation = 0;
-    followerTypeSelect.value = 'none';
+    followerTypeSelect.value = "none";
     game.advanceTurn();
     refreshUI();
     setTimeout(nextTurn, 500);
   } catch (error) {
-    logEvent(`Cannot place ${tileName} at (${position.x}, ${position.y}): ${error.message}`);
+    logEvent(
+      `Cannot place ${tileName} at (${position.x}, ${position.y}): ${error.message}`
+    );
   }
 };
 
@@ -545,7 +725,7 @@ const handleSkip = () => {
   setTimeout(nextTurn, 400);
 };
 
-const executeAiTurn = player => {
+const executeAiTurn = (player) => {
   if (!currentTile) {
     return;
   }
@@ -570,9 +750,16 @@ const executeAiTurn = player => {
   const tileName = currentTile.name;
   const result = game.placeTile(player.id, currentTile, position, {
     rotation: normalizedRotation,
-    follower: follower ?? undefined
+    follower: follower ?? undefined,
   });
-  handlePlacementResult(player, tileName, position, normalizedRotation, follower, result);
+  handlePlacementResult(
+    player,
+    tileName,
+    position,
+    normalizedRotation,
+    follower,
+    result
+  );
   currentTile = null;
   currentRotation = 0;
   game.advanceTurn();
@@ -585,26 +772,27 @@ const endGame = (reason) => {
     return;
   }
   gameOver = true;
-  turnStatus.textContent = reason ?? 'Game over';
-  logEvent(reason ?? 'Game over');
+  turnStatus.textContent = reason ?? "Game over";
+  logEvent(reason ?? "Game over");
   updateScoreboard();
-  boardHint.textContent = 'Game complete. Refresh to play again.';
+  boardHint.textContent = "Game complete. Refresh to play again.";
 };
 
 const updateTurnStatus = () => {
-  if (gameOver) {
+  if (!game || gameOver) {
     return;
   }
   const player = game.currentPlayer;
   if (player.isAI) {
     turnStatus.textContent = `${player.name} is planning a move…`;
   } else {
-    turnStatus.textContent = 'Your turn — rotate and click a highlighted space to play the tile.';
+    turnStatus.textContent =
+      "Your turn — rotate and click a highlighted space to play the tile.";
   }
 };
 
 const nextTurn = () => {
-  if (gameOver) {
+  if (!game || gameOver) {
     return;
   }
   if (!ensureCurrentTile()) {
@@ -622,7 +810,11 @@ const nextTurn = () => {
   }
 };
 
-rotateLeftBtn.addEventListener('click', () => {
+// Setup event listeners
+playerCountSelect.addEventListener("change", generatePlayerConfig);
+startGameBtn.addEventListener("click", startGame);
+
+rotateLeftBtn.addEventListener("click", () => {
   if (!isHumanTurn()) {
     return;
   }
@@ -632,7 +824,7 @@ rotateLeftBtn.addEventListener('click', () => {
   drawBoard();
 });
 
-rotateRightBtn.addEventListener('click', () => {
+rotateRightBtn.addEventListener("click", () => {
   if (!isHumanTurn()) {
     return;
   }
@@ -642,32 +834,35 @@ rotateRightBtn.addEventListener('click', () => {
   drawBoard();
 });
 
-followerTypeSelect.addEventListener('change', () => {
+followerTypeSelect.addEventListener("change", () => {
   updateControls();
 });
 
-skipButton.addEventListener('click', handleSkip);
+skipButton.addEventListener("click", handleSkip);
 
-boardCanvas.addEventListener('click', event => {
+boardCanvas.addEventListener("click", (event) => {
   if (!isHumanTurn() || !renderState || !currentTile) {
     return;
   }
   const rect = boardCanvas.getBoundingClientRect();
   const scaleX = boardCanvas.width / rect.width;
   const scaleY = boardCanvas.height / rect.height;
-  const x = Math.floor((event.clientX - rect.left) * scaleX / TILE_SIZE);
-  const y = Math.floor((event.clientY - rect.top) * scaleY / TILE_SIZE);
+  const x = Math.floor(((event.clientX - rect.left) * scaleX) / TILE_SIZE);
+  const y = Math.floor(((event.clientY - rect.top) * scaleY) / TILE_SIZE);
 
   const { bounds, padding } = renderState;
   const boardX = x + bounds.minX - padding;
   const boardY = y + bounds.minY - padding;
   const position = { x: boardX, y: boardY };
 
-  if (validPlacements.some(place => place.x === position.x && place.y === position.y)) {
+  if (
+    validPlacements.some(
+      (place) => place.x === position.x && place.y === position.y
+    )
+  ) {
     placeTileAt(position);
   }
 });
 
-logEvent('Welcome to American Tile Trails!');
-refreshUI();
-nextTurn();
+// Initialize setup interface
+generatePlayerConfig();

@@ -1,13 +1,15 @@
 :root {
   color-scheme: dark light;
-  font-family: 'Press Start 2P', 'VT323', 'Courier New', monospace;
+  font-family: "Press Start 2P", "VT323", "Courier New", monospace;
 }
 
 @font-face {
-  font-family: 'Press Start 2P';
+  font-family: "Press Start 2P";
   font-style: normal;
   font-weight: 400;
-  src: local('Press Start 2P'), url('https://fonts.gstatic.com/s/pressstart2p/v11/e3t4euO8T-267oIAQAu6jDQyK3nF43pq.woff2') format('woff2');
+  src: local("Press Start 2P"),
+    url("https://fonts.gstatic.com/s/pressstart2p/v11/e3t4euO8T-267oIAQAu6jDQyK3nF43pq.woff2")
+      format("woff2");
 }
 
 body {
@@ -195,7 +197,7 @@ select {
 }
 
 .score-entry::before {
-  content: '';
+  content: "";
   width: 8px;
   height: 100%;
   background: var(--player-color, #a8dadc);
@@ -237,6 +239,93 @@ select {
   position: absolute;
   border: 2px dashed rgba(250, 215, 118, 0.8);
   pointer-events: none;
+}
+
+/* Game Setup Styles */
+.game-setup {
+  background: rgba(29, 53, 87, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.setup-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.player-config {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.player-setup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(241, 250, 238, 0.1);
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.player-setup label {
+  min-width: 60px;
+  font-size: 0.7rem;
+}
+
+.player-setup input[type="text"] {
+  flex: 1;
+  background: rgba(13, 27, 42, 0.8);
+  border: 1px solid #457b9d;
+  border-radius: 4px;
+  color: #f1faee;
+  padding: 0.25rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.7rem;
+}
+
+.player-setup select {
+  background: rgba(13, 27, 42, 0.8);
+  border: 1px solid #457b9d;
+  border-radius: 4px;
+  color: #f1faee;
+  padding: 0.25rem;
+  font-family: inherit;
+  font-size: 0.7rem;
+}
+
+.player-color-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #f1faee;
+  display: inline-block;
+}
+
+.start-button {
+  background: linear-gradient(135deg, #43aa8b 0%, #277da1 100%);
+  border: none;
+  border-radius: 8px;
+  color: #f1faee;
+  padding: 0.75rem 1.5rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.start-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.start-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 @media (max-width: 1024px) {

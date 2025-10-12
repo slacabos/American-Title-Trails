@@ -9,14 +9,44 @@
   <body>
     <main class="layout">
       <section class="board-panel">
-        <canvas id="board" width="768" height="768" aria-label="American Tile Trails board"></canvas>
-        <div id="boardHint" class="hint">Click a highlighted square to place your tile.</div>
+        <canvas
+          id="board"
+          width="768"
+          height="768"
+          aria-label="American Tile Trails board"
+        ></canvas>
+        <div id="boardHint" class="hint">
+          Click a highlighted square to place your tile.
+        </div>
       </section>
       <aside class="sidebar">
         <h1>American Tile Trails</h1>
-        <p class="tagline">McDonalds abbeys, Costco castles, and cross-country roads.</p>
+        <p class="tagline">
+          McDonalds abbeys, Costco castles, and cross-country roads.
+        </p>
 
-        <section class="tile-preview" aria-live="polite">
+        <section class="game-setup" id="gameSetup">
+          <h2>Game Setup</h2>
+          <div class="setup-controls">
+            <div class="control-group">
+              <label for="playerCount">Number of players (2-5):</label>
+              <select id="playerCount">
+                <option value="2">2 Players</option>
+                <option value="3" selected>3 Players</option>
+                <option value="4">4 Players</option>
+                <option value="5">5 Players</option>
+              </select>
+            </div>
+            <div id="playerConfig" class="player-config">
+              <!-- Player configuration will be generated here -->
+            </div>
+            <button id="startGame" type="button" class="start-button">
+              Start Game
+            </button>
+          </div>
+        </section>
+
+        <section class="tile-preview" aria-live="polite" style="display: none">
           <canvas id="tilePreview" width="128" height="128"></canvas>
           <div class="tile-details">
             <strong>Next tile:</strong>
@@ -24,7 +54,11 @@
           </div>
         </section>
 
-        <section class="controls" aria-label="Turn controls">
+        <section
+          class="controls"
+          aria-label="Turn controls"
+          style="display: none"
+        >
           <div class="control-group">
             <button id="rotateLeft" type="button">⟲ Rotate</button>
             <button id="rotateRight" type="button">Rotate ⟳</button>
@@ -53,13 +87,19 @@
           <p id="turnStatus" class="status" aria-live="polite"></p>
         </section>
 
-        <section class="scoreboard" aria-label="Scoreboard">
+        <section
+          class="scoreboard"
+          aria-label="Scoreboard"
+          style="display: none"
+        >
           <h2>Scoreboard</h2>
           <ul id="scoreList"></ul>
-          <p class="deck-count">Tiles remaining: <span id="tilesRemaining"></span></p>
+          <p class="deck-count">
+            Tiles remaining: <span id="tilesRemaining"></span>
+          </p>
         </section>
 
-        <section class="log" aria-label="Activity log">
+        <section class="log" aria-label="Activity log" style="display: none">
           <h2>Game log</h2>
           <ul id="logEntries"></ul>
         </section>
