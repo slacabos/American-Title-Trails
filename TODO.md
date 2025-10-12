@@ -3,6 +3,7 @@
 ## 🎯 High Priority
 
 ### 1. Testing Infrastructure (Critical)
+
 - [ ] Install testing framework: `npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event`
 - [ ] Create `vitest.config.ts` configuration file
 - [ ] Add test scripts to `package.json`
@@ -19,6 +20,7 @@
 - [ ] Add CI/CD pipeline with GitHub Actions
 
 ### 2. State Management Refactoring
+
 - [ ] Break down monolithic `Game` class (419 lines) into smaller focused classes:
   - [ ] `GameEngine` - Pure game logic
   - [ ] `TurnManager` - Handle turn progression and phases
@@ -34,6 +36,7 @@
   - [ ] Improve listener pattern with better type safety
 
 ### 3. Performance Optimizations
+
 - [ ] Canvas rendering improvements:
   - [ ] Implement `requestAnimationFrame` loop for smooth rendering
   - [ ] Add canvas dirty checking to avoid unnecessary redraws
@@ -50,6 +53,7 @@
 ## 🔧 Medium Priority
 
 ### 4. Error Handling & Validation
+
 - [ ] Create custom error types:
   ```typescript
   class GameError extends Error
@@ -66,6 +70,7 @@
   - [ ] Error logging and reporting
 
 ### 5. Code Quality & Documentation
+
 - [ ] Add JSDoc comments to all public methods
 - [ ] Improve TypeScript strict mode compliance:
   - [ ] Enable `strictNullChecks`
@@ -81,6 +86,7 @@
   - [ ] Set up Prettier for code formatting
 
 ### 6. Accessibility Improvements
+
 - [ ] Canvas accessibility:
   - [ ] Add ARIA labels for interactive canvas elements
   - [ ] Implement keyboard navigation for tile placement
@@ -97,6 +103,7 @@
 ## 🎮 Low Priority
 
 ### 7. AI Enhancement
+
 - [ ] Advanced AI algorithms:
   - [ ] Implement minimax algorithm for better decision making
   - [ ] Add Monte Carlo tree search for strategic planning
@@ -111,6 +118,7 @@
   - [ ] Adaptive difficulty based on player performance
 
 ### 8. Developer Experience
+
 - [ ] Development tools:
   - [ ] Add debug mode with detailed game state logging
   - [ ] Create development overlay for testing
@@ -125,6 +133,7 @@
   - [ ] Implement proper source maps for debugging
 
 ### 9. Feature Enhancements
+
 - [ ] Game features:
   - [ ] Add game save/load functionality
   - [ ] Implement game replay system
@@ -139,6 +148,7 @@
   - [ ] Implement game lobbies
 
 ## 📋 Quick Wins (Can be done immediately)
+
 - [ ] Add proper README badges (build status, coverage, license)
 - [ ] Create `.gitignore` improvements (add common IDE files)
 - [ ] Add `engines` field validation in package.json
@@ -148,6 +158,7 @@
 - [ ] Add proper license header to source files
 
 ## 🔄 Ongoing Maintenance
+
 - [ ] Regular dependency updates
 - [ ] Security vulnerability scanning
 - [ ] Performance monitoring and optimization
@@ -167,6 +178,7 @@
 6. **Month 3+**: Advanced features and AI enhancements
 
 ## Notes
+
 - Focus on high-impact, low-effort items first
 - Maintain backward compatibility during refactoring
 - Test thoroughly before implementing breaking changes
