@@ -10,6 +10,21 @@
   - [ ] **Implement curved boundaries** that don't follow straight edge patterns
   - [ ] **Add pennant system** for bonus scoring (e.g., "Costco Plus" or "Gas Station" markers)
   - [ ] **Create diverse tile varieties** matching original Carcassonne city tile complexity
+  - [ ] **Detailed Costco/City Area Behavior Requirements**:
+    - [ ] **Enclosure Rules**: Costco areas must form completely enclosed shopping districts (no open edges to fields)
+    - [ ] **Connection Logic**: Adjacent Costco edges automatically connect into larger shopping complexes
+    - [ ] **Separation Handling**: Multiple Costco segments on same tile remain separate unless explicitly connected
+    - [ ] **Curved Segments**: Costco areas can curve around tile corners (not limited to straight edge connections)
+    - [ ] **Peninsula Support**: Allow Costco segments that jut into field areas without connecting to edges
+    - [ ] **Bridge Connections**: Support Costco areas that span across field areas (like city bridges)
+    - [ ] **Size Validation**: Completed Costco areas must contain at least 2 tiles (prevent single-tile completion)
+    - [ ] **Edge Matching**: Costco edge segments must align properly with adjacent tiles' Costco segments
+    - [ ] **Field Boundaries**: Clear distinction between Costco commercial areas and surrounding field regions
+    - [ ] **Completion Detection**: Efficient algorithm to detect when Costco shopping districts are fully enclosed
+    - [ ] **Scoring Mechanics**:
+      - Complete Costco: 2 points per tile + 2 points per pennant
+      - Incomplete Costco: 1 point per tile + 1 point per pennant (end game)
+      - Shared ownership: Points divided among players with most followers in area
 - [ ] Update `costcoZones` data structure to support:
   - [ ] Multiple separate Costco areas per tile
   - [ ] Complex segment shapes and curves
