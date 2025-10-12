@@ -49,7 +49,7 @@ describe("Costco zone geometry", () => {
     const rotated = tile.rotate(1);
 
     const rotatedZone = rotated.costcoZones[0];
-    expect(rotatedZone.edges).toEqual<[Direction, Direction]>([
+    expect(rotatedZone.edges).toEqual([
       "east",
       "south",
     ]);
