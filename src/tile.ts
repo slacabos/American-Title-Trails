@@ -82,7 +82,7 @@ export class Tile {
       zones.map((zone) => ({
         id: zone.id,
         edges: zone.edges.map((edge) =>
-          rotateDirection(edge, normalized) as Direction | "center"
+          edge === "center" ? "center" : rotateDirection(edge, normalized)
         ),
         polygon: zone.polygon.map((point) => rotatePoint(point, normalized)),
         pennants: zone.pennants,
