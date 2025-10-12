@@ -77,8 +77,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       });
 
       // Check Costco zones
-      state.currentTile.costcoZones.forEach((_: any, index: number) => {
-        features.push({ type: "costco", identifier: `costco_${index}` });
+      state.currentTile.costcoZones.forEach((zone: any) => {
+        features.push({ type: "costco", identifier: zone.id });
       });
 
       // Check McDonalds

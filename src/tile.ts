@@ -1,15 +1,41 @@
 import { DIRECTIONS, rotateDirection } from "./directions";
-import { Direction, TileDefinition, TileEdges, TerrainType } from "./types";
+import {
+  CostcoZoneDefinition,
+  Direction,
+  NormalizedPoint,
+  TileDefinition,
+  TileEdges,
+  TerrainType,
+} from "./types";
 
 const directionIndex = (direction: Direction): number =>
   DIRECTIONS.indexOf(direction);
+
+const cloneZone = (zone: CostcoZoneDefinition): CostcoZoneDefinition => ({
+  id: zone.id,
+  edges: [...zone.edges],
+  polygon: zone.polygon.map((point) => ({ ...point })),
+  pennants: zone.pennants,
+});
+
+const rotatePoint = (
+  point: NormalizedPoint,
+  times: number
+): NormalizedPoint => {
+  const normalized = ((times % 4) + 4) % 4;
+  let current = { ...point };
+  for (let i = 0; i < normalized; i += 1) {
+    current = { x: 1 - current.y, y: current.x };
+  }
+  return current;
+};
 
 export class Tile {
   public readonly id: string;
   public readonly name: string;
   public readonly center: TerrainType;
   public readonly roadConnections: string[][];
-  public readonly costcoZones: string[][];
+  public readonly costcoZones: CostcoZoneDefinition[];
   public readonly isStart: boolean;
   public readonly orientation: number;
   private readonly edges: TerrainType[];
@@ -27,7 +53,7 @@ export class Tile {
     this.name = name;
     this.center = center;
     this.roadConnections = roadConnections.map((connection) => [...connection]);
-    this.costcoZones = costcoZones.map((zone) => [...zone]);
+    this.costcoZones = costcoZones.map((zone) => cloneZone(zone));
     this.isStart = isStart;
     this.orientation = 0;
 
@@ -50,6 +76,18 @@ export class Tile {
         items.map((item) => rotateDirection(item, normalized))
       );
 
+    const rotateZones = (
+      zones: CostcoZoneDefinition[]
+    ): CostcoZoneDefinition[] =>
+      zones.map((zone) => ({
+        id: zone.id,
+        edges: zone.edges.map((edge) =>
+          rotateDirection(edge, normalized) as Direction | "center"
+        ),
+        polygon: zone.polygon.map((point) => rotatePoint(point, normalized)),
+        pennants: zone.pennants,
+      }));
+
     const rotated = new Tile({
       id: this.id,
       name: this.name,
@@ -61,7 +99,7 @@ export class Tile {
       } as TileEdges,
       center: this.center,
       roadConnections: rotateCollection(this.roadConnections),
-      costcoZones: rotateCollection(this.costcoZones),
+      costcoZones: rotateZones(this.costcoZones),
       isStart: this.isStart,
     });
 
@@ -81,7 +119,7 @@ export class Tile {
       } as TileEdges,
       center: this.center,
       roadConnections: this.roadConnections,
-      costcoZones: this.costcoZones,
+      costcoZones: this.costcoZones.map((zone) => cloneZone(zone)),
       isStart: this.isStart,
     });
     (clone as any).orientation = this.orientation;

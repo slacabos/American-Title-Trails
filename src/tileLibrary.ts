@@ -1,20 +1,47 @@
 import { Tile } from "./tile";
-import { TileDefinition } from "./types";
+import { CostcoZoneDefinition, Direction, TileDefinition } from "./types";
+
+const createZone = (
+  id: string,
+  edges: Array<Direction | "center">,
+  polygon: Array<[number, number]>,
+  pennants = 0
+): CostcoZoneDefinition => {
+  const zone: CostcoZoneDefinition = {
+    id,
+    edges,
+    polygon: polygon.map(([x, y]) => ({ x, y })),
+  };
+
+  if (pennants > 0) {
+    zone.pennants = pennants;
+  }
+
+  return zone;
+};
 
 const TILE_LIBRARY: TileDefinition[] = [
   {
     id: "starter-crossroads",
-    name: "Route 66 Crossroads",
+    name: "Costco Welcome Plaza",
     isStart: true,
-    edges: { north: "road", east: "road", south: "road", west: "road" },
-    center: "road",
-    roadConnections: [
-      ["north", "center"],
-      ["east", "center"],
-      ["south", "center"],
-      ["west", "center"],
+    edges: { north: "costco", east: "road", south: "field", west: "road" },
+    center: "field",
+    roadConnections: [["west", "east"]],
+    costcoZones: [
+      createZone(
+        "plaza",
+        ["north"],
+        [
+          [0.12, 0.08],
+          [0.88, 0.08],
+          [0.82, 0.28],
+          [0.5, 0.32],
+          [0.18, 0.28],
+        ],
+        1
+      ),
     ],
-    costcoZones: [],
   },
   {
     id: "straight-road",
@@ -58,7 +85,21 @@ const TILE_LIBRARY: TileDefinition[] = [
     edges: { north: "costco", east: "field", south: "costco", west: "field" },
     center: "costco",
     roadConnections: [],
-    costcoZones: [["north", "south", "center"]],
+    costcoZones: [
+      createZone(
+        "main_hall",
+        ["north", "south", "center"],
+        [
+          [0.2, 0.08],
+          [0.8, 0.08],
+          [0.88, 0.5],
+          [0.8, 0.92],
+          [0.2, 0.92],
+          [0.12, 0.5],
+        ],
+        1
+      ),
+    ],
   },
   {
     id: "costco-corner",
@@ -66,7 +107,21 @@ const TILE_LIBRARY: TileDefinition[] = [
     edges: { north: "costco", east: "costco", south: "field", west: "field" },
     center: "costco",
     roadConnections: [],
-    costcoZones: [["north", "east", "center"]],
+    costcoZones: [
+      createZone(
+        "corner",
+        ["north", "east", "center"],
+        [
+          [0.1, 0.12],
+          [0.78, 0.08],
+          [0.92, 0.22],
+          [0.92, 0.78],
+          [0.6, 0.6],
+          [0.12, 0.62],
+        ],
+        1
+      ),
+    ],
   },
   {
     id: "costco-road",
@@ -74,7 +129,31 @@ const TILE_LIBRARY: TileDefinition[] = [
     edges: { north: "costco", east: "costco", south: "road", west: "field" },
     center: "mixed",
     roadConnections: [["south", "center"]],
-    costcoZones: [["north", "east", "center"]],
+    costcoZones: [
+      createZone(
+        "loading_bay",
+        ["north", "center"],
+        [
+          [0.18, 0.08],
+          [0.78, 0.08],
+          [0.74, 0.32],
+          [0.42, 0.42],
+          [0.2, 0.32],
+        ]
+      ),
+      createZone(
+        "gas_station",
+        ["east"],
+        [
+          [0.82, 0.18],
+          [0.94, 0.3],
+          [0.94, 0.72],
+          [0.82, 0.82],
+          [0.7, 0.5],
+        ],
+        1
+      ),
+    ],
   },
   {
     id: "costco-cap",
@@ -82,7 +161,19 @@ const TILE_LIBRARY: TileDefinition[] = [
     edges: { north: "costco", east: "field", south: "field", west: "field" },
     center: "costco",
     roadConnections: [],
-    costcoZones: [["north", "center"]],
+    costcoZones: [
+      createZone(
+        "culdesac",
+        ["north", "center"],
+        [
+          [0.2, 0.08],
+          [0.8, 0.08],
+          [0.86, 0.22],
+          [0.5, 0.46],
+          [0.14, 0.22],
+        ]
+      ),
+    ],
   },
   {
     id: "mcdonalds-abbey",
@@ -99,8 +190,30 @@ const TILE_LIBRARY: TileDefinition[] = [
     center: "mixed",
     roadConnections: [["east", "south", "center"]],
     costcoZones: [
-      ["north", "center"],
-      ["west", "center"],
+      createZone(
+        "north_wing",
+        ["north", "center"],
+        [
+          [0.18, 0.08],
+          [0.82, 0.08],
+          [0.78, 0.28],
+          [0.5, 0.38],
+          [0.22, 0.28],
+        ]
+      ),
+      createZone(
+        "west_annex",
+        ["west", "center"],
+        [
+          [0.08, 0.18],
+          [0.26, 0.12],
+          [0.34, 0.5],
+          [0.26, 0.86],
+          [0.08, 0.78],
+          [0.18, 0.5],
+        ],
+        1
+      ),
     ],
   },
 ];

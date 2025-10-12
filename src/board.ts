@@ -6,6 +6,7 @@ import {
   FeatureClaim,
   Direction,
   TerrainType,
+  CostcoZoneDefinition,
 } from "./types";
 import { Tile } from "./tile";
 
@@ -30,6 +31,7 @@ interface Feature {
   type: TerrainType;
   tiles: Set<string>;
   edges: Set<string>;
+  pennants: number;
   isComplete: boolean;
 }
 
@@ -181,7 +183,7 @@ export class Board {
           ...feature,
           isComplete: true,
           claimedBy,
-          points: feature.tiles.size * 2,
+          points: feature.tiles.size * 2 + feature.pennants * 2,
         });
       }
     });
@@ -193,12 +195,14 @@ export class Board {
           type: "mcdonalds",
           tiles: new Set([positionKey(placedPosition)]),
           edges: new Set([positionKey(placedPosition)]),
+          pennants: 0,
           isComplete: true,
         });
         completed.push({
           type: "mcdonalds",
           tiles: new Set([positionKey(placedPosition)]),
           edges: new Set([positionKey(placedPosition)]),
+          pennants: 0,
           isComplete: true,
           claimedBy,
           points: 9,
@@ -241,6 +245,7 @@ export class Board {
       type: "road",
       tiles: new Set(),
       edges: new Set(),
+      pennants: 0,
       isComplete: false,
     };
 
@@ -293,12 +298,11 @@ export class Board {
     const features: Feature[] = [];
     const visited = new Set<string>();
 
-    // Check each Costco zone on the placed tile
     startTile.costcoZones.forEach((zone) => {
-      const featureKey = `${positionKey(startPosition)}:${zone.join(",")}`;
-      if (visited.has(featureKey)) return;
+      const zoneKey = `${positionKey(startPosition)}:${zone.id}`;
+      if (visited.has(zoneKey)) return;
 
-      const feature = this.traceCostcoFeature(startPosition, zone, visited);
+      const feature = this.traceCostcoFeature(startPosition, zone.id, visited);
       if (feature.tiles.size > 0) {
         features.push(feature);
       }
@@ -309,39 +313,61 @@ export class Board {
 
   private traceCostcoFeature(
     startPosition: Position,
-    zone: string[],
+    startZoneId: string,
     visited: Set<string>
   ): Feature {
     const feature: Feature = {
       type: "costco",
       tiles: new Set(),
       edges: new Set(),
+      pennants: 0,
       isComplete: false,
     };
 
-    const queue: Array<{ position: Position; segments: string[] }> = [
-      { position: startPosition, segments: zone },
+    const queue: Array<{ position: Position; zoneId: string }> = [
+      { position: startPosition, zoneId: startZoneId },
     ];
 
     while (queue.length > 0) {
-      const { position, segments } = queue.shift()!;
+      const { position, zoneId } = queue.shift()!;
       const posKey = positionKey(position);
 
-      if (feature.tiles.has(posKey)) continue;
-      feature.tiles.add(posKey);
+      const zoneKey = `${posKey}:${zoneId}`;
+      if (visited.has(zoneKey)) {
+        continue;
+      }
+      visited.add(zoneKey);
 
       const tile = this.getTile(position)?.tile;
       if (!tile) continue;
 
-      // Add Costco segments to edges
-      segments.forEach((segment) => {
-        feature.edges.add(`${posKey}:${segment}`);
-        visited.add(`${posKey}:${segment}`);
-      });
+      const zone = tile.costcoZones.find(
+        (candidate: CostcoZoneDefinition) => candidate.id === zoneId
+      );
+      if (!zone) continue;
 
-      // Find connected Costcos in neighboring tiles
-      DIRECTIONS.forEach((direction) => {
-        if (!segments.includes(direction)) return;
+      feature.tiles.add(posKey);
+      feature.pennants += zone.pennants ?? 0;
+
+      // Track follower claim key for this zone
+      feature.edges.add(zoneKey);
+
+      zone.edges.forEach((segment: Direction | "center") => {
+        if (segment === "center") {
+          // Link to other Costco zones on the same tile that also touch the center
+          tile.costcoZones
+            .filter(
+              (candidate: CostcoZoneDefinition) =>
+                candidate.id !== zoneId && candidate.edges.includes("center")
+            )
+            .forEach((candidate: CostcoZoneDefinition) => {
+              queue.push({ position, zoneId: candidate.id });
+            });
+          return;
+        }
+
+        const direction = segment as Direction;
+        feature.edges.add(`${posKey}:${direction}`);
 
         const neighborPos = addDelta(position, direction);
         const neighbor = this.getTile(neighborPos);
@@ -349,11 +375,12 @@ export class Board {
 
         const oppositeDir = OPPOSITE[direction];
         const neighborCostcos = neighbor.tile.costcoZones.filter(
-          (zone: string[]) => zone.includes(oppositeDir)
+          (candidate: CostcoZoneDefinition) =>
+            candidate.edges.includes(oppositeDir)
         );
 
-        neighborCostcos.forEach((costcoZone: string[]) => {
-          queue.push({ position: neighborPos, segments: costcoZone });
+        neighborCostcos.forEach((candidate: CostcoZoneDefinition) => {
+          queue.push({ position: neighborPos, zoneId: candidate.id });
         });
       });
     }
@@ -415,7 +442,7 @@ export class Board {
 
         const oppositeDir = OPPOSITE[segment as Direction];
         const hasConnectingCostco = neighbor.tile.costcoZones.some(
-          (zone: string[]) => zone.includes(oppositeDir)
+          (zone: CostcoZoneDefinition) => zone.edges.includes(oppositeDir)
         );
         if (!hasConnectingCostco) return false; // Open edge to non-Costco
       }
