@@ -3,6 +3,8 @@ import { PlayerDefinition, Position, TerrainType } from "../types";
 import { Game, GamePhase } from "../game";
 import BoardCanvas from "./BoardCanvas";
 import TileRenderer from "./TileRenderer";
+import HelpModal from "./HelpModal";
+import { Button } from "@/components/ui/button";
 
 interface GameBoardProps {
   players: PlayerDefinition[];
@@ -170,21 +172,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           showValidPlacements={gameState.phase === GamePhase.PLACE_TILE}
         />
 
-        {gameState.phase === GamePhase.PLACE_TILE && (
-          <div className="board-controls">
-            <button
-              onClick={handleRotateTile}
-              disabled={!gameState.currentTile}
-            >
-              Rotate Tile
-            </button>
-            <span className="hint">
-              💡 Click green areas to place tile • Use mouse wheel to zoom •
-              Drag to pan
-            </span>
-          </div>
-        )}
-
         {gameState.phase === GamePhase.CLAIM_FEATURE && (
           <div className="claim-controls">
             <h3>Claim a Feature</h3>
@@ -196,20 +183,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
             </p>
             <div className="feature-buttons">
               {claimableFeatures.map((feature, index) => (
-                <button
+                <Button
                   key={index}
                   onClick={() =>
                     handleClaimFeature(feature.type, feature.identifier)
                   }
-                  className={`feature-button feature-${feature.type}`}
+                  className={`feature-button feature-${feature.type} bg-blue-600 hover:bg-blue-700 text-white`}
                 >
                   Claim {feature.type}
                   {feature.identifier && ` (${feature.identifier})`}
-                </button>
+                </Button>
               ))}
-              <button onClick={handleSkipClaim} className="skip-button">
+              <Button
+                onClick={handleSkipClaim}
+                variant="outline"
+                className="skip-button"
+              >
                 Skip Claiming
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -218,13 +209,23 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           <div className="game-over">
             <h2>Game Over!</h2>
             <p>Winner: {gameState.winner}</p>
-            <button onClick={onReset}>Play Again</button>
+            <Button
+              onClick={onReset}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Play Again
+            </Button>
           </div>
         )}
       </div>
 
       <aside className="sidebar">
         <h1>American Tile Trails</h1>
+        <img
+          src="/src/assets/icon.png"
+          alt="American Tile Trails Game Icon"
+          className="game-icon"
+        />
         <p className="tagline">TypeScript + React Edition</p>
 
         <section className="current-tile">
@@ -242,6 +243,20 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
                   Phase: {gameState.phase.replace("_", " ")}
                 </div>
               </div>
+              {gameState.phase === GamePhase.PLACE_TILE && (
+                <div className="tile-controls">
+                  <Button
+                    onClick={handleRotateTile}
+                    disabled={!gameState.currentTile}
+                    className="rotate-button bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    🔄 Rotate Tile
+                  </Button>
+                  <div className="control-hint">
+                    💡 Click green areas to place • Wheel to zoom • Drag to pan
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="no-tile">No current tile</div>
@@ -250,10 +265,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
         <section className="game-controls">
           <h2>Game Controls</h2>
-          <button onClick={onReset}>New Game</button>
-          <button onClick={() => setShowHelp(!showHelp)}>
-            {showHelp ? "Hide Help" : "Show Help"}
-          </button>
+          <Button onClick={onReset} variant="outline" className="mb-2">
+            New Game
+          </Button>
+          <Button onClick={() => setShowHelp(true)} variant="outline">
+            📖 Show Help
+          </Button>
           <div className="game-stats">
             <div>Turn: {gameState.turnNumber}</div>
             <div>
@@ -365,6 +382,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </ul>
         </section>
       </aside>
+
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </>
   );
 };

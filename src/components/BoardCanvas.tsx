@@ -237,6 +237,45 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     renderBoard();
   }, [renderBoard]);
 
+  // Set up native wheel event listener to prevent page scrolling
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      const newScale = Math.max(
+        MIN_SCALE,
+        Math.min(MAX_SCALE, canvasState.scale * scaleFactor)
+      );
+
+      // Zoom towards mouse position
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const scaleRatio = newScale / canvasState.scale;
+      const newOffsetX = mouseX - (mouseX - canvasState.offsetX) * scaleRatio;
+      const newOffsetY = mouseY - (mouseY - canvasState.offsetY) * scaleRatio;
+
+      setCanvasState((prev) => ({
+        ...prev,
+        scale: newScale,
+        offsetX: newOffsetX,
+        offsetY: newOffsetY,
+      }));
+    };
+
+    canvas.addEventListener("wheel", handleNativeWheel, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("wheel", handleNativeWheel);
+    };
+  }, [canvasState.scale, canvasState.offsetX, canvasState.offsetY]);
+
   // Handle mouse events
   const handleMouseDown = (e: React.MouseEvent) => {
     const position = screenToBoard(e.clientX, e.clientY);
@@ -295,35 +334,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     }));
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-
-    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(
-      MIN_SCALE,
-      Math.min(MAX_SCALE, canvasState.scale * scaleFactor)
-    );
-
-    // Zoom towards mouse position
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    const scaleRatio = newScale / canvasState.scale;
-    const newOffsetX = mouseX - (mouseX - canvasState.offsetX) * scaleRatio;
-    const newOffsetY = mouseY - (mouseY - canvasState.offsetY) * scaleRatio;
-
-    setCanvasState((prev) => ({
-      ...prev,
-      scale: newScale,
-      offsetX: newOffsetX,
-      offsetY: newOffsetY,
-    }));
-  };
-
   return (
     <div
       ref={containerRef}
@@ -341,7 +351,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        onWheel={handleWheel}
         style={{
           cursor: canvasState.isDragging
             ? "grabbing"
@@ -359,10 +368,13 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
           position: "absolute",
           top: 10,
           right: 10,
-          background: "rgba(255, 255, 255, 0.9)",
+          background: "rgba(13, 27, 42, 0.9)",
+          color: "#f1faee",
           padding: "8px",
           borderRadius: "4px",
           fontSize: "12px",
+          border: "1px solid rgba(69, 123, 157, 0.5)",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
         }}
       >
         <div>Zoom: {Math.round(canvasState.scale * 100)}%</div>

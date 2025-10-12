@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { PlayerDefinition } from "../types";
+import HelpModal from "./HelpModal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface GameSetupProps {
   onStartGame: (players: PlayerDefinition[]) => void;
@@ -10,6 +21,7 @@ const palette = ["#ff595e", "#1982c4", "#ffca3a", "#6a4c93", "#43aa8b"];
 const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
   const [playerCount, setPlayerCount] = useState(3);
   const [playerConfigs, setPlayerConfigs] = useState<PlayerDefinition[]>([]);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     const configs: PlayerDefinition[] = [];
@@ -66,6 +78,11 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
 
       <aside className="sidebar">
         <h1>American Tile Trails</h1>
+        <img
+          src="/src/assets/icon.png"
+          alt="American Tile Trails Game Icon"
+          className="game-icon"
+        />
         <p className="tagline">
           McDonalds abbeys, Costco castles, and cross-country roads.
         </p>
@@ -74,17 +91,23 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
           <h2>Game Setup</h2>
           <div className="setup-controls">
             <div className="control-group">
-              <label htmlFor="playerCount">Number of players (2-5):</label>
-              <select
-                id="playerCount"
-                value={playerCount}
-                onChange={(e) => setPlayerCount(parseInt(e.target.value, 10))}
+              <Label htmlFor="playerCount" className="text-white">
+                Number of players (2-5):
+              </Label>
+              <Select
+                value={playerCount.toString()}
+                onValueChange={(value) => setPlayerCount(parseInt(value, 10))}
               >
-                <option value="2">2 Players</option>
-                <option value="3">3 Players</option>
-                <option value="4">4 Players</option>
-                <option value="5">5 Players</option>
-              </select>
+                <SelectTrigger id="playerCount" className="w-full">
+                  <SelectValue placeholder="Select number of players" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">2 Players</SelectItem>
+                  <SelectItem value="3">3 Players</SelectItem>
+                  <SelectItem value="4">4 Players</SelectItem>
+                  <SelectItem value="5">5 Players</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="player-config">
@@ -94,34 +117,53 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
                     className="player-color-indicator"
                     style={{ backgroundColor: config.color }}
                   />
-                  <label>P{index + 1}:</label>
-                  <input
+                  <Label className="text-white">P{index + 1}:</Label>
+                  <Input
                     type="text"
                     value={config.name}
                     onChange={(e) =>
                       updatePlayerConfig(index, "name", e.target.value)
                     }
                     placeholder={`Player ${index + 1}`}
+                    className="flex-1"
                   />
-                  <select
+                  <Select
                     value={config.isAI ? "ai" : "human"}
-                    onChange={(e) =>
-                      updatePlayerConfig(index, "isAI", e.target.value === "ai")
+                    onValueChange={(value) =>
+                      updatePlayerConfig(index, "isAI", value === "ai")
                     }
                   >
-                    <option value="human">Human</option>
-                    <option value="ai">AI</option>
-                  </select>
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="human">Human</SelectItem>
+                      <SelectItem value="ai">AI</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               ))}
             </div>
 
-            <button className="start-button" onClick={handleStartGame}>
+            <Button
+              onClick={handleStartGame}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 text-lg"
+            >
               Start Game
-            </button>
+            </Button>
+
+            <Button
+              onClick={() => setShowHelp(true)}
+              variant="outline"
+              className="w-full mt-4"
+            >
+              📖 How to Play
+            </Button>
           </div>
         </section>
       </aside>
+
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </>
   );
 };
