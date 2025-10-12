@@ -2,7 +2,33 @@
 
 ## 🎯 High Priority
 
-### 1. Testing Infrastructure (Critical)
+### 1. Costco Tile System Redesign (Critical)
+
+- [ ] Redesign Costco tiles to follow proper Carcassonne city mechanics instead of road-like connections:
+  - [ ] **Update tile definitions** to use complex city-like segments rather than simple edge-to-edge connections
+  - [ ] **Add multiple separate Costco areas** on single tiles (like cities can have multiple segments)
+  - [ ] **Implement curved boundaries** that don't follow straight edge patterns
+  - [ ] **Add pennant system** for bonus scoring (e.g., "Costco Plus" or "Gas Station" markers)
+  - [ ] **Create diverse tile varieties** matching original Carcassonne city tile complexity
+- [ ] Update `costcoZones` data structure to support:
+  - [ ] Multiple separate Costco areas per tile
+  - [ ] Complex segment shapes and curves
+  - [ ] Pennant markers for bonus points
+- [ ] Redesign visual rendering in `BoardCanvas.tsx`:
+  - [ ] Draw curved Costco boundaries instead of rectangular zones
+  - [ ] Add visual pennant indicators
+  - [ ] Support multiple separate Costco areas per tile
+- [ ] Update completion logic in `board.ts`:
+  - [ ] Handle complex enclosed Costco areas properly
+  - [ ] Implement pennant bonus scoring
+  - [ ] Support multiple separate completable areas per tile
+- [ ] **Replace starter tile** with proper CRFR-style starting tile:
+  - [ ] Current starter tile is 4-way road crossroads (not standard Carcassonne)
+  - [ ] Create new starter tile with: single Costco edge, straight road parallel to that edge, field occupying remainder
+  - [ ] Follow tile notation describing features clockwise from north (e.g., C-R-F-R pattern)
+  - [ ] Update game initialization to use proper starter tile
+
+### 2. Testing Infrastructure (Critical)
 
 - [ ] Install testing framework: `npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event`
 - [ ] Create `vitest.config.ts` configuration file
