@@ -8,7 +8,7 @@ import { Position, TileDefinition } from "../types";
 const { buildDeckMock, getStartTileMock } = vi.hoisted(() => ({
   buildDeckMock: vi.fn(),
   getStartTileMock: vi.fn(),
-})) as { buildDeckMock: Mock; getStartTileMock: Mock };
+}));
 
 vi.mock("../tileLibrary", () => ({
   buildDeck: buildDeckMock,
