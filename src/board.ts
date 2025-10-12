@@ -357,7 +357,7 @@ export class Board {
           return;
         }
 
-        const direction = segment as Direction;
+        const direction = segment;
         feature.edges.add(`${posKey}:${direction}`);
 
         const neighborPos = addDelta(position, direction);
