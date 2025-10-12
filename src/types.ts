@@ -14,13 +14,41 @@ export interface TileEdges {
   west: TerrainType;
 }
 
+export interface NormalizedPoint {
+  x: number;
+  y: number;
+}
+
+export interface CostcoZoneDefinition {
+  /**
+   * Unique identifier for the Costco area on the tile. Used for follower placement
+   * and feature tracking.
+   */
+  id: string;
+  /**
+   * Cardinal directions (and optional center) that the zone touches. These drive
+   * connection logic between neighbouring tiles.
+   */
+  edges: Array<Direction | "center">;
+  /**
+   * Normalized polygon describing the visual footprint of the Costco segment. The
+   * polygon uses coordinates in the [0,1] range and is rotated together with the tile.
+   */
+  polygon: NormalizedPoint[];
+  /**
+   * Number of pennant markers present in the zone (awards bonus points when the
+   * Costco is completed).
+   */
+  pennants?: number;
+}
+
 export interface TileDefinition {
   id: string;
   name: string;
   edges: TileEdges;
   center: TerrainType;
   roadConnections: string[][];
-  costcoZones: string[][];
+  costcoZones: CostcoZoneDefinition[];
   isStart?: boolean;
 }
 

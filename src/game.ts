@@ -218,8 +218,8 @@ export class Game {
     });
 
     // Check Costco zones
-    tile.costcoZones.forEach((_zone, index) => {
-      claimable.push({ type: "costco", identifier: `costco_${index}` });
+    tile.costcoZones.forEach((zone) => {
+      claimable.push({ type: "costco", identifier: zone.id });
     });
 
     // Check McDonalds

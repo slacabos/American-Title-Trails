@@ -88,49 +88,96 @@ const drawRoad = (
 
 const drawCostcoZone = (
   ctx: CanvasRenderingContext2D,
-  directions: string[],
+  zone: Tile["costcoZones"][number],
   size: number
 ) => {
-  ctx.fillStyle = COSTCO_COLOR;
-  ctx.strokeStyle = "#1E90FF";
-  ctx.lineWidth = 2;
-
-  const center = size / 2;
-  const quarter = size / 4;
-
-  // Simple Costco zone representation
-  ctx.beginPath();
-
-  if (directions.includes("north") && directions.includes("east")) {
-    // Northeast quadrant
-    ctx.rect(center, 0, center, center);
-  } else if (directions.includes("north") && directions.includes("west")) {
-    // Northwest quadrant
-    ctx.rect(0, 0, center, center);
-  } else if (directions.includes("south") && directions.includes("east")) {
-    // Southeast quadrant
-    ctx.rect(center, center, center, center);
-  } else if (directions.includes("south") && directions.includes("west")) {
-    // Southwest quadrant
-    ctx.rect(0, center, center, center);
-  } else {
-    // Full side or center
-    if (directions.includes("north")) {
-      ctx.rect(quarter, 0, center, quarter);
-    }
-    if (directions.includes("south")) {
-      ctx.rect(quarter, size - quarter, center, quarter);
-    }
-    if (directions.includes("east")) {
-      ctx.rect(size - quarter, quarter, quarter, center);
-    }
-    if (directions.includes("west")) {
-      ctx.rect(0, quarter, quarter, center);
-    }
+  if (!zone.polygon.length) {
+    return;
   }
 
+  const points = zone.polygon.map((point) => ({
+    x: point.x * size,
+    y: point.y * size,
+  }));
+
+  ctx.fillStyle = COSTCO_COLOR;
+  ctx.strokeStyle = "#1E90FF";
+  ctx.lineWidth = Math.max(1, size * 0.02);
+  ctx.lineJoin = "round";
+
+  drawSmoothPolygon(ctx, points);
   ctx.fill();
   ctx.stroke();
+
+  if (zone.pennants && zone.pennants > 0) {
+    drawPennants(ctx, points, zone.pennants, size);
+  }
+};
+
+const drawSmoothPolygon = (
+  ctx: CanvasRenderingContext2D,
+  points: Array<{ x: number; y: number }>
+) => {
+  if (points.length < 2) return;
+
+  const first = points[0];
+  const last = points[points.length - 1];
+  const start = {
+    x: (first.x + last.x) / 2,
+    y: (first.y + last.y) / 2,
+  };
+
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+
+  for (let i = 0; i < points.length; i += 1) {
+    const current = points[i];
+    const next = points[(i + 1) % points.length];
+    const midpoint = {
+      x: (current.x + next.x) / 2,
+      y: (current.y + next.y) / 2,
+    };
+    ctx.quadraticCurveTo(current.x, current.y, midpoint.x, midpoint.y);
+  }
+
+  ctx.closePath();
+};
+
+const drawPennants = (
+  ctx: CanvasRenderingContext2D,
+  polygon: Array<{ x: number; y: number }>,
+  count: number,
+  size: number
+) => {
+  const centroid = polygon.reduce(
+    (acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }),
+    { x: 0, y: 0 }
+  );
+
+  centroid.x /= polygon.length;
+  centroid.y /= polygon.length;
+
+  const pennantHeight = size * 0.18;
+  const pennantWidth = size * 0.12;
+  const spacing = pennantWidth * 1.2;
+
+  ctx.save();
+  ctx.fillStyle = "#FFD700";
+  ctx.strokeStyle = "#B45309";
+  ctx.lineWidth = Math.max(1, size * 0.015);
+
+  for (let i = 0; i < count; i += 1) {
+    const offset = (i - (count - 1) / 2) * spacing;
+    ctx.beginPath();
+    ctx.moveTo(centroid.x + offset, centroid.y - pennantHeight / 2);
+    ctx.lineTo(centroid.x + offset, centroid.y + pennantHeight / 2);
+    ctx.lineTo(centroid.x + offset + pennantWidth, centroid.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.restore();
 };
 
 const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
