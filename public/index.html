@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>American Tile Trails</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="board-panel">
+        <canvas id="board" width="768" height="768" aria-label="American Tile Trails board"></canvas>
+        <div id="boardHint" class="hint">Click a highlighted square to place your tile.</div>
+      </section>
+      <aside class="sidebar">
+        <h1>American Tile Trails</h1>
+        <p class="tagline">McDonalds abbeys, Costco castles, and cross-country roads.</p>
+
+        <section class="tile-preview" aria-live="polite">
+          <canvas id="tilePreview" width="128" height="128"></canvas>
+          <div class="tile-details">
+            <strong>Next tile:</strong>
+            <span id="tileName">Draw a tile to begin.</span>
+          </div>
+        </section>
+
+        <section class="controls" aria-label="Turn controls">
+          <div class="control-group">
+            <button id="rotateLeft" type="button">⟲ Rotate</button>
+            <button id="rotateRight" type="button">Rotate ⟳</button>
+          </div>
+          <div class="control-group">
+            <label for="followerType">Follower placement</label>
+            <select id="followerType">
+              <option value="none">None</option>
+              <option value="road">Road</option>
+              <option value="costco">Costco</option>
+              <option value="mcdonalds">McDonalds</option>
+            </select>
+          </div>
+          <div class="control-group" id="directionGroup">
+            <label for="followerDirection">Edge</label>
+            <select id="followerDirection">
+              <option value="north">North</option>
+              <option value="east">East</option>
+              <option value="south">South</option>
+              <option value="west">West</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <button id="skipTurn" type="button">Discard tile</button>
+          </div>
+          <p id="turnStatus" class="status" aria-live="polite"></p>
+        </section>
+
+        <section class="scoreboard" aria-label="Scoreboard">
+          <h2>Scoreboard</h2>
+          <ul id="scoreList"></ul>
+          <p class="deck-count">Tiles remaining: <span id="tilesRemaining"></span></p>
+        </section>
+
+        <section class="log" aria-label="Activity log">
+          <h2>Game log</h2>
+          <ul id="logEntries"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
