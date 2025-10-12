@@ -1,22 +1,76 @@
 # American Tile Trails
 
-American Tile Trails is a Carcassonne-inspired board game engine with a built-in pixel art GUI. Place tiles across an American landscape where abbeys are McDonalds, castles are sprawling Costcos, and highways stitch everything together. Challenge two built-in AI opponents or take the code further with your own house rules.
+American Tile Trails is a Carcassonne-inspired board game built with **TypeScript** and **React**. Place tiles across an American landscape where abbeys are McDonalds, castles are sprawling Costcos, and highways stitch everything together. Challenge AI opponents in local multiplayer with support for up to 5 players (human + AI mix).
 
 ## Getting started
 
 ```bash
 npm install
-npm start
+npm run dev
 ```
 
-Running `npm start` launches a lightweight Node.js server and opens the interactive board at [http://localhost:3000](http://localhost:3000). The interface includes:
+Running `npm run dev` launches the Vite development server and opens the interactive board at [http://localhost:3000](http://localhost:3000). The modern React interface includes:
 
 - **Pixel art tile rendering** – Each tile is drawn with chunky asphalt roads, bright Costco warehouses, and the Golden Arches for McDonalds abbeys.
-- **Human vs. AI play** – Take the first seat while two heuristic-driven AI planners expand the map alongside you.
+- **Local multiplayer** – Configure 2-5 players with any combination of human and AI players.
 - **Follower placement controls** – Choose whether to deploy a representative on a road, Costco edge, or McDonalds before finalizing each tile.
-- **Activity log & scoreboard** – Track scoring events, follower counts, and the remaining tiles in the deck.
+- **Real-time scoreboard** – Track scoring events, follower counts, and turn indicators with player colors.
+- **Activity log** – Live feed of game events and scoring updates.
 
-If you prefer the narrated console walkthrough from the original version you can still run it with `node src/index.js`.
+## Technology Stack
+
+- **TypeScript** – Full type safety and modern JavaScript features
+- **React 18** – Component-based UI with hooks for state management
+- **Vite** – Fast development server and optimized production builds
+- **HTML5 Canvas** – Hardware-accelerated pixel art rendering
+- **CSS3** – Custom styling with CSS variables and modern layout
+
+## Game Features
+
+- **Local Multiplayer**: 2-5 players on the same device
+- **Smart AI**: Heuristic-driven AI opponents with configurable difficulty
+- **Tile Management**: 41 unique tiles with rotation and validation
+- **Feature Scoring**: Roads (1pt/tile), Costcos (2pts/tile), McDonalds (9pts)
+- **Interactive Setup**: Choose player count, names, and human vs AI
+- **Real-time Updates**: Live game state with visual feedback
+
+## Development Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Type checking
+npx tsc --noEmit
+```
+
+## Project Structure
+
+```text
+src/
+├── components/           # React components
+│   ├── GameSetup.tsx    # Player configuration
+│   ├── GameBoard.tsx    # Main game interface
+│   └── ...              # Additional UI components
+├── types.ts             # TypeScript type definitions
+├── game.ts              # Core game logic
+├── board.ts             # Board state management
+├── player.ts            # Player class
+├── tile.ts              # Tile system
+├── tileLibrary.ts       # Tile definitions
+├── ai.ts                # AI player logic
+├── directions.ts        # Direction utilities
+└── main.tsx             # React entry point
+```
 
 ## Game concepts
 
@@ -28,12 +82,12 @@ If you prefer the narrated console walkthrough from the original version you can
 
 ## Customizing the experience
 
-The core classes remain exportable and can be incorporated into other applications:
+The core classes are fully typed and can be easily extended:
 
-- `Tile`, `buildDeck`, and `getStartTile` in `src/tileLibrary.js`
-- `Board` in `src/board.js`
-- `Player` in `src/player.js`
-- `Game` in `src/game.js`
-- `SimpleAI` in `src/ai.js`
+- `Tile`, `buildDeck`, and `getStartTile` in `src/tileLibrary.ts`
+- `Board` in `src/board.ts`
+- `Player` in `src/player.ts`
+- `Game` in `src/game.ts`
+- `SimpleAI` in `src/ai.ts`
 
-Feel free to extend the deck with new tile definitions, tweak the AI weights, or wire the engine into a multiplayer backend.
+Feel free to extend the deck with new tile definitions, tweak the AI weights, add new React components, or integrate with a multiplayer backend.
