@@ -59,29 +59,32 @@ export default {
           4: "var(--chart-4)",
           5: "var(--chart-5)",
         },
-        // Game-specific colors
+        // Game-specific colors - imported from constants/colors.ts
+        // Note: These should match the GAME_COLORS object for consistency
         game: {
-          "bg-primary": "#1d3557", // Main background gradient start
-          "bg-secondary": "#0b132b", // Main background gradient end
-          panel: "rgba(13, 27, 42, 0.85)", // Panel background
-          accent: "#ffca3a", // Yellow accent color
-          text: "#f1faee", // Main text color
-          blue: "#457b9d", // Blue accent
-          "green-start": "#43aa8b", // Button gradient start
-          "green-end": "#277da1", // Button gradient end
-          "blue-start": "#457b9d", // Alt button gradient start
-          "blue-end": "#1d3557", // Alt button gradient end
+          primary: "#E84B26", // Bright orange-red - Action buttons, key highlights
+          accent: "#F9D65B", // Warm yellow - Headings, neon edges, focus rings
+          asphalt: "#2C3039", // Blue-gray - Backgrounds, road textures
+          grass: "#6E7F4F", // Olive green - Map elements, tiles
+          road: "#474B52", // Neutral gray - Secondary surfaces
+          neutral: "#1F2229", // Deep navy-gray - App shell, footer, dark UI
+          text: "#f1faee", // Light text color for contrast
+          // Legacy aliases for backward compatibility
+          "bg-primary": "#2C3039",
+          "bg-secondary": "#1F2229",
+          panel: "rgba(47, 48, 57, 0.85)",
+          blue: "#2C3039",
         },
       },
       backgroundImage: {
         "game-radial":
-          "radial-gradient(circle at top, #1d3557 0%, #0b132b 70%)",
-        "btn-primary": "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-        "btn-secondary": "linear-gradient(135deg, #457b9d 0%, #1d3557 100%)",
+          "radial-gradient(circle at top, #2C3039 0%, #1F2229 70%)",
+        "btn-primary": "linear-gradient(135deg, #E84B26 0%, #d63e1f 100%)",
+        "btn-secondary": "linear-gradient(135deg, #474B52 0%, #2C3039 100%)",
         "btn-primary-hover":
-          "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+          "linear-gradient(135deg, #f55d3a 0%, #E84B26 100%)",
         "btn-secondary-hover":
-          "linear-gradient(135deg, #6c9bd1 0%, #2d4a6b 100%)",
+          "linear-gradient(135deg, #5a5e67 0%, #474B52 100%)",
       },
       boxShadow: {
         game: "0 20px 40px rgba(0, 0, 0, 0.4)",

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { Tile } from "../tile";
+import { TILE_COLORS } from "../constants/colors";
 
 interface TileRendererProps {
   tile: Tile;
@@ -10,10 +11,10 @@ interface TileRendererProps {
 }
 
 const TILE_SIZE = 64; // Base tile size in pixels
-const ROAD_COLOR = "#8B4513"; // Brown for roads
-const COSTCO_COLOR = "#4169E1"; // Royal blue for Costco
-const MCDONALDS_COLOR = "#FFD700"; // Gold for McDonalds
-const FIELD_COLOR = "#90EE90"; // Light green for fields
+const ROAD_COLOR = TILE_COLORS.road;
+const COSTCO_COLOR = TILE_COLORS.costco;
+const MCDONALDS_COLOR = TILE_COLORS.mcdonalds;
+const FIELD_COLOR = TILE_COLORS.field;
 
 const drawTileBackground = (ctx: CanvasRenderingContext2D, size: number) => {
   ctx.fillStyle = FIELD_COLOR;
@@ -57,11 +58,34 @@ const drawRoad = (
   ctx.beginPath();
 
   if (from === "center" || to === "center") {
-    // Road to/from center
-    ctx.moveTo(start.x - roadWidth / 2, start.y);
-    ctx.lineTo(end.x - roadWidth / 2, end.y);
-    ctx.lineTo(end.x + roadWidth / 2, end.y);
-    ctx.lineTo(start.x + roadWidth / 2, start.y);
+    // Road to/from center - properly handle horizontal and vertical roads
+    const isHorizontal = start.y === end.y;
+    const isVertical = start.x === end.x;
+
+    if (isHorizontal) {
+      // Horizontal road - apply width to Y axis
+      ctx.moveTo(start.x, start.y - roadWidth / 2);
+      ctx.lineTo(end.x, end.y - roadWidth / 2);
+      ctx.lineTo(end.x, end.y + roadWidth / 2);
+      ctx.lineTo(start.x, start.y + roadWidth / 2);
+    } else if (isVertical) {
+      // Vertical road - apply width to X axis
+      ctx.moveTo(start.x - roadWidth / 2, start.y);
+      ctx.lineTo(end.x - roadWidth / 2, end.y);
+      ctx.lineTo(end.x + roadWidth / 2, end.y);
+      ctx.lineTo(start.x + roadWidth / 2, start.y);
+    } else {
+      // Diagonal road - use the existing perpendicular calculation
+      const angle = Math.atan2(end.y - start.y, end.x - start.x);
+      const perpAngle = angle + Math.PI / 2;
+      const dx = (Math.cos(perpAngle) * roadWidth) / 2;
+      const dy = (Math.sin(perpAngle) * roadWidth) / 2;
+
+      ctx.moveTo(start.x + dx, start.y + dy);
+      ctx.lineTo(end.x + dx, end.y + dy);
+      ctx.lineTo(end.x - dx, end.y - dy);
+      ctx.lineTo(start.x - dx, start.y - dy);
+    }
   } else {
     // Direct road connection
     const angle = Math.atan2(end.y - start.y, end.x - start.x);
@@ -88,7 +112,7 @@ const drawCostcoZone = (
 ) => {
   const directions = zone.segments;
   ctx.fillStyle = COSTCO_COLOR;
-  ctx.strokeStyle = "#1E90FF";
+  ctx.strokeStyle = COSTCO_COLOR;
   ctx.lineWidth = 2;
 
   const center = size / 2;
@@ -137,7 +161,7 @@ const drawCurves = (
   const roadWidth = size * 0.2;
 
   ctx.fillStyle = ROAD_COLOR;
-  ctx.strokeStyle = "#654321";
+  ctx.strokeStyle = ROAD_COLOR;
   ctx.lineWidth = 1;
 
   // Check for curved road patterns using the public edgeAt method

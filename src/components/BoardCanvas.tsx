@@ -3,17 +3,18 @@ import { Board } from "../board";
 import { Tile } from "../tile";
 import { CostcoSegment } from "../types";
 import { Position } from "../types";
+import { TILE_COLORS } from "../constants/colors";
 
-// Tile rendering constants (same as TileRenderer)
-const ROAD_COLOR = "#8B4513";
-const FIELD_COLOR = "#90EE90";
-const COSTCO_COLOR = "#4169E1";
-const MCDONALDS_COLOR = "#FFD700";
+// Tile rendering constants - Using centralized game color palette
+const ROAD_COLOR = TILE_COLORS.road;
+const FIELD_COLOR = TILE_COLORS.field;
+const COSTCO_COLOR = TILE_COLORS.costco;
+const MCDONALDS_COLOR = TILE_COLORS.mcdonalds;
 
 // Pennant rendering constants
 const PENNANT_SIZE_RATIO = 0.15;
-const PENNANT_GOLD_COLOR = "#FFD700";
-const PENNANT_ORANGE_COLOR = "#FFA500";
+const PENNANT_GOLD_COLOR = TILE_COLORS.pennantGold;
+const PENNANT_ORANGE_COLOR = TILE_COLORS.pennantOrange;
 
 // Positioning constants
 const QUARTER_POSITION = 0.25;
@@ -85,10 +86,24 @@ const drawRoad = (
 
   // Draw road between connection points
   ctx.beginPath();
-  ctx.moveTo(start.x - roadWidth / 2, start.y);
-  ctx.lineTo(end.x - roadWidth / 2, end.y);
-  ctx.lineTo(end.x + roadWidth / 2, end.y);
-  ctx.lineTo(start.x + roadWidth / 2, start.y);
+
+  // Determine if the road is horizontal or vertical
+  const isHorizontal = start.y === end.y;
+
+  if (isHorizontal) {
+    // For horizontal roads, apply width perpendicular (on Y axis)
+    ctx.moveTo(start.x, start.y - roadWidth / 2);
+    ctx.lineTo(end.x, end.y - roadWidth / 2);
+    ctx.lineTo(end.x, end.y + roadWidth / 2);
+    ctx.lineTo(start.x, start.y + roadWidth / 2);
+  } else {
+    // For vertical roads, apply width perpendicular (on X axis)
+    ctx.moveTo(start.x - roadWidth / 2, start.y);
+    ctx.lineTo(end.x - roadWidth / 2, end.y);
+    ctx.lineTo(end.x + roadWidth / 2, end.y);
+    ctx.lineTo(start.x + roadWidth / 2, start.y);
+  }
+
   ctx.closePath();
   ctx.fill();
   ctx.stroke();

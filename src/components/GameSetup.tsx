@@ -58,10 +58,10 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
 
   return (
     <>
-      <div className="relative bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
+      <div className="relative bg-card backdrop-blur-sm border border-border rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
         <div className="flex flex-col justify-center min-h-[500px] p-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-center mb-6 text-game-accent font-game">
+            <h2 className="text-2xl font-bold text-center mb-6 text-accent font-game">
               🎮 Game Setup
             </h2>
             <p className="text-center text-muted-foreground mb-8 font-game text-xxs">
@@ -103,7 +103,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
               {playerConfigs.map((config, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 bg-slate-100/10 p-2 rounded-lg border border-game-accent/20 transition-all duration-200 hover:bg-slate-100/15 hover:border-game-accent/30"
+                  className="flex items-center gap-3 bg-muted/10 p-2 rounded-lg border border-accent/20 transition-all duration-200 hover:bg-muted/15 hover:border-accent/30"
                 >
                   <div
                     className="w-5 h-5 rounded-full border-2 border-game-text inline-block"
@@ -149,8 +149,8 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         </div>
       </div>
 
-      <aside className="relative bg-slate-800/95 backdrop-blur-md border-2 border-slate-600 rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
-        <h1 className="m-0 text-xl text-game-accent font-game">
+      <aside className="relative bg-card backdrop-blur-md border-2 border-accent/30 rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
+        <h1 className="m-0 text-xl text-accent font-game">
           American Tile Trails
         </h1>
         <img
@@ -162,7 +162,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
           McDonalds abbeys, Costco castles, and cross-country roads.
         </p>
 
-        <div className="mt-auto pt-4 border-t border-game-accent/20">
+        <div className="mt-auto pt-4 border-t border-accent/20">
           <Button
             onClick={() => setShowHelp(true)}
             variant="outline"

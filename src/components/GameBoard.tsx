@@ -164,7 +164,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
   return (
     <>
-      <div className="relative bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
+      <div className="relative bg-card backdrop-blur-sm border border-border rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
         <BoardCanvas
           board={gameState.board}
           currentTile={gameState.currentTile}
@@ -179,8 +179,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         )}
 
         {gameState.phase === GamePhase.CLAIM_FEATURE && (
-          <div className="mt-3 p-3 bg-game-accent/10 rounded-lg border border-game-accent/20">
-            <h3 className="m-0 mb-2 text-xs text-game-accent font-game">
+          <div className="mt-3 p-3 bg-accent/10 rounded-lg border border-accent/20">
+            <h3 className="m-0 mb-2 text-xs text-accent font-game">
               Claim a Feature
             </h3>
             <p className="text-xs opacity-80 mb-3 leading-tight font-game">
@@ -227,13 +227,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         )}
       </div>
 
-      <aside className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
+      <aside className="bg-card backdrop-blur-sm border border-border rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
         <section>
-          <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
+          <h2 className="m-0 mb-3 text-sm text-accent font-game">
             Current Tile
           </h2>
           {gameState.currentTile ? (
-            <div className="bg-game-bg-primary/30 rounded-xl p-4 flex flex-col items-center gap-3">
+            <div className="bg-muted/30 rounded-xl p-4 flex flex-col items-center gap-3">
               <TileRenderer
                 tile={gameState.currentTile}
                 size={96}
@@ -278,8 +278,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         </section>
 
         {showHelp && (
-          <section className="bg-game-bg-primary/30 rounded-xl p-4">
-            <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
+          <section className="bg-muted/30 rounded-xl p-4">
+            <h2 className="m-0 mb-3 text-sm text-accent font-game">
               Quick Guide
             </h2>
             <div>
@@ -342,8 +342,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </section>
         )}
 
-        <section className="bg-game-bg-primary/30 rounded-xl p-4">
-          <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
+        <section className="bg-muted/30 rounded-xl p-4">
+          <h2 className="m-0 mb-3 text-sm text-accent font-game">
             Players & Scores
           </h2>
           <ul className="list-none m-0 p-0 flex flex-col gap-2">
@@ -373,8 +373,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </ul>
         </section>
 
-        <section className="bg-game-bg-primary/30 rounded-xl p-4">
-          <div className="text-xxs text-center p-2 bg-game-bg-primary/50 rounded-md leading-tight font-game">
+        <section className="bg-muted/30 rounded-xl p-4">
+          <div className="text-xxs text-center p-2 bg-secondary/50 rounded-md leading-tight font-game">
             <div>Turn: {gameState.turnNumber}</div>
             <div>
               Tiles: {tileStats.placed}/{tileStats.total}
@@ -383,8 +383,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </div>
         </section>
 
-        <section className="bg-game-bg-primary/30 rounded-xl p-4 flex flex-col gap-1">
-          <h2 className="m-0 text-sm text-game-accent font-game mb-2">
+        <section className="bg-muted/30 rounded-xl p-4 flex flex-col gap-1">
+          <h2 className="m-0 text-sm text-accent font-game mb-2">
             Game Controls
           </h2>
           <Button
@@ -403,8 +403,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </Button>
         </section>
 
-        <section className="bg-game-bg-primary/30 rounded-xl p-4">
-          <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
+        <section className="bg-muted/30 rounded-xl p-4">
+          <h2 className="m-0 mb-3 text-sm text-accent font-game">
             Activity Log
           </h2>
           <ul className="list-none m-0 p-0 flex flex-col gap-1 max-h-48 overflow-y-auto">
