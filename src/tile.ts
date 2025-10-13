@@ -116,6 +116,10 @@ export class Tile {
     }
     return this.edges[index];
   }
+
+  toString(): string {
+    return `${this.name} (${this.id})`;
+  }
 }
 
 export const TileDirections = DIRECTIONS;
