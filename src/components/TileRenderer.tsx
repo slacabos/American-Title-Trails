@@ -129,6 +129,104 @@ const drawCostcoZone = (
   ctx.stroke();
 };
 
+const drawCurves = (
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  tile: Tile
+) => {
+  const roadWidth = size * 0.2;
+
+  ctx.fillStyle = ROAD_COLOR;
+  ctx.strokeStyle = "#654321";
+  ctx.lineWidth = 1;
+
+  // Check for curved road patterns using the public edgeAt method
+  const hasRoads = {
+    north: tile.edgeAt("north") === "road",
+    south: tile.edgeAt("south") === "road",
+    east: tile.edgeAt("east") === "road",
+    west: tile.edgeAt("west") === "road",
+  };
+
+  // Draw curves for adjacent road connections (90-degree turns)
+  if (hasRoads.north && hasRoads.east && !hasRoads.south && !hasRoads.west) {
+    // North-East curve
+    drawCurve(ctx, size, "north", "east", roadWidth);
+  }
+  if (hasRoads.east && hasRoads.south && !hasRoads.west && !hasRoads.north) {
+    // East-South curve
+    drawCurve(ctx, size, "east", "south", roadWidth);
+  }
+  if (hasRoads.south && hasRoads.west && !hasRoads.north && !hasRoads.east) {
+    // South-West curve
+    drawCurve(ctx, size, "south", "west", roadWidth);
+  }
+  if (hasRoads.west && hasRoads.north && !hasRoads.east && !hasRoads.south) {
+    // West-North curve
+    drawCurve(ctx, size, "west", "north", roadWidth);
+  }
+};
+
+const drawCurve = (
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  from: string,
+  to: string,
+  roadWidth: number
+) => {
+  ctx.beginPath();
+
+  // Determine curve parameters based on directions
+  // The curve should be positioned at the corner where the roads meet
+  if (from === "north" && to === "east") {
+    // North to East curve - arc from top-right corner
+    const centerX = size;
+    const centerY = 0;
+    const radius = size / 2;
+    const startAngle = Math.PI; // Start from west
+    const endAngle = Math.PI / 2; // End at south
+
+    // Outer arc (larger radius)
+    ctx.arc(centerX, centerY, radius, startAngle, endAngle, true);
+    // Inner arc (smaller radius)
+    ctx.arc(centerX, centerY, radius - roadWidth, endAngle, startAngle, false);
+  } else if (from === "east" && to === "south") {
+    // East to South curve - arc from bottom-right corner
+    const centerX = size;
+    const centerY = size;
+    const radius = size / 2;
+    const startAngle = Math.PI; // Start from west
+    const endAngle = (3 * Math.PI) / 2; // End at north
+
+    ctx.arc(centerX, centerY, radius, startAngle, endAngle, true);
+    ctx.arc(centerX, centerY, radius - roadWidth, endAngle, startAngle, false);
+  } else if (from === "south" && to === "west") {
+    // South to West curve - arc from bottom-left corner
+    const centerX = 0;
+    const centerY = size;
+    const radius = size / 2;
+    const startAngle = 0; // Start from east
+    const endAngle = (3 * Math.PI) / 2; // End at north
+
+    ctx.arc(centerX, centerY, radius, startAngle, endAngle, true);
+    ctx.arc(centerX, centerY, radius - roadWidth, endAngle, startAngle, false);
+  } else if (from === "west" && to === "north") {
+    // West to North curve - arc from top-left corner
+    const centerX = 0;
+    const centerY = 0;
+    const radius = size / 2;
+    const startAngle = Math.PI / 2; // Start from south
+    const endAngle = 0; // End at east
+
+    ctx.arc(centerX, centerY, radius, startAngle, endAngle, true);
+    ctx.arc(centerX, centerY, radius - roadWidth, endAngle, startAngle, false);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+};
+
 const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
   const center = size / 2;
   const radius = size * 0.15;
@@ -167,9 +265,23 @@ export const TileRenderer: React.FC<TileRendererProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas size
-    canvas.width = size;
-    canvas.height = size;
+    // Get device pixel ratio for hi-DPI displays
+    const dpr = window.devicePixelRatio || 1;
+
+    // Set the actual canvas size in memory (scaled up for hi-DPI)
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+
+    // Set the display size (CSS size)
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+
+    // Scale the drawing context so everything draws at the higher resolution
+    ctx.scale(dpr, dpr);
+
+    // Enable anti-aliasing for smoother rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 
     // Apply rotation
     ctx.save();
@@ -181,12 +293,29 @@ export const TileRenderer: React.FC<TileRendererProps> = ({
     ctx.clearRect(0, 0, size, size);
     drawTileBackground(ctx, size);
 
-    // Draw roads
-    tile.roadConnections.forEach((connection) => {
-      for (let i = 0; i < connection.length - 1; i++) {
-        drawRoad(ctx, connection[i], connection[i + 1], size);
-      }
-    });
+    // Check if this is a curved road tile (only 2 adjacent edges have roads)
+    const roadEdges = ["north", "east", "south", "west"].filter(
+      (dir) => tile.edgeAt(dir as any) === "road"
+    );
+    const isCurvedRoad =
+      (roadEdges.length === 2 &&
+        Math.abs(
+          ["north", "east", "south", "west"].indexOf(roadEdges[0]) -
+            ["north", "east", "south", "west"].indexOf(roadEdges[1])
+        ) === 1) ||
+      (roadEdges.includes("north") && roadEdges.includes("west"));
+
+    if (isCurvedRoad) {
+      // Draw curves for curved road tiles
+      drawCurves(ctx, size, tile);
+    } else {
+      // Draw straight roads for non-curved tiles
+      tile.roadConnections.forEach((connection) => {
+        for (let i = 0; i < connection.length - 1; i++) {
+          drawRoad(ctx, connection[i], connection[i + 1], size);
+        }
+      });
+    }
 
     // Draw Costco zones
     tile.costcoZones.forEach((zone) => {

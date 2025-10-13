@@ -92,7 +92,6 @@ const TileGallery = () => {
           fontSize: "24px",
           marginBottom: "32px",
           textAlign: "center",
-          color: "#333",
         }}
       >
         American Title Trails - Tile Gallery
