@@ -66,26 +66,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     setLogs((prev) => [`${timestamp} — ${message}`, ...prev.slice(0, 19)]);
   }, []);
 
-  const updateClaimableFeatures = (_gameInstance: Game, state: any) => {
-    if (state.phase === GamePhase.CLAIM_FEATURE && state.currentTile) {
-      // Get features that can be claimed on the last placed tile
-      const features: Array<{ type: TerrainType; identifier?: string }> = [];
-
-      // Check road connections
-      state.currentTile.roadConnections.forEach((_: any, index: number) => {
-        features.push({ type: "road", identifier: `road_${index}` });
-      });
-
-      // Check Costco zones
-      state.currentTile.costcoZones.forEach((_: any, index: number) => {
-        features.push({ type: "costco", identifier: `costco_${index}` });
-      });
-
-      // Check McDonalds
-      if (state.currentTile.center === "mcdonalds") {
-        features.push({ type: "mcdonalds" });
-      }
-
+  const updateClaimableFeatures = (gameInstance: Game, state: any) => {
+    if (state.phase === GamePhase.CLAIM_FEATURE) {
+      // Use the game's method to get claimable features for the current turn
+      const features = gameInstance.getClaimableFeaturesForCurrentTurn();
       setClaimableFeatures(features);
     } else {
       setClaimableFeatures([]);
@@ -170,6 +154,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           currentTile={gameState.currentTile}
           onTilePlace={handleTilePlace}
           showValidPlacements={gameState.phase === GamePhase.PLACE_TILE}
+          gameState={gameState}
         />
 
         {gameState.phase === GamePhase.PLACE_TILE && (

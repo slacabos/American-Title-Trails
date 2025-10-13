@@ -31,6 +31,7 @@ interface GameState {
   isGameOver: boolean;
   winner?: string;
   turnNumber: number;
+  lastPlacedPosition?: Position;
 }
 
 interface TilePlacementResult {
@@ -155,6 +156,9 @@ export class Game {
       // Place the tile
       const result = this.state.board.placeTile(rotatedTile, position);
 
+      // Track the position where this tile was placed
+      this.state.lastPlacedPosition = position;
+
       // Add tile to discard pile
       this.state.discardPile.push(this.state.currentTile);
       this.state.currentTile = undefined;
@@ -230,6 +234,27 @@ export class Game {
     return claimable;
   }
 
+  public getClaimableFeaturesForCurrentTurn(): Array<{
+    type: TerrainType;
+    identifier?: string;
+  }> {
+    if (this.state.phase !== GamePhase.CLAIM_FEATURE) {
+      return [];
+    }
+
+    const lastPlacedPosition = this.getLastPlacedTilePosition();
+    if (!lastPlacedPosition) {
+      return [];
+    }
+
+    const tileRecord = this.state.board.getTile(lastPlacedPosition);
+    if (!tileRecord) {
+      return [];
+    }
+
+    return this.getClaimableFeatures(tileRecord.tile);
+  }
+
   public claimFeature(type: TerrainType, identifier?: string): boolean {
     if (this.state.phase !== GamePhase.CLAIM_FEATURE) {
       return false;
@@ -271,18 +296,14 @@ export class Game {
   }
 
   private getLastPlacedTilePosition(): Position | undefined {
-    // For now, we'll need to track this. In a more sophisticated implementation,
-    // we'd maintain a history of moves.
-    // This is a simplified approach - in practice you'd track the last placement
-    const boardTiles = Array.from(this.state.board.tiles.values());
-    if (boardTiles.length > 0) {
-      return boardTiles[boardTiles.length - 1].position;
-    }
-    return undefined;
+    return this.state.lastPlacedPosition;
   }
 
   private endTurn(): void {
     this.state.phase = GamePhase.END_TURN;
+
+    // Clear the last placed position for the new turn
+    this.state.lastPlacedPosition = undefined;
 
     // Move to next player
     this.state.currentPlayerIndex =

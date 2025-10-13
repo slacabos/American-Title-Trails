@@ -141,9 +141,9 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
 
             <Button
               onClick={handleStartGame}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 text-lg mt-8 shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full bg-btn-primary hover:bg-btn-primary-hover text-white font-semibold py-4 px-6 text-lg mt-8 shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              🚀 Start Game
+              Start Game
             </Button>
           </div>
         </div>

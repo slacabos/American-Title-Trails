@@ -3,7 +3,7 @@ import { Board } from "../board";
 import { Tile } from "../tile";
 import { CostcoSegment } from "../types";
 import { Position } from "../types";
-import { TILE_COLORS } from "../constants/colors";
+import { TILE_COLORS, UI_COLORS } from "../constants/colors";
 
 // Tile rendering constants - Using centralized game color palette
 const ROAD_COLOR = TILE_COLORS.road;
@@ -47,9 +47,11 @@ const renderTileToCanvas = (
     drawCostcoZone(ctx, zone, size);
   });
 
-  // Draw McDonalds
+  // Draw center features
   if (tile.center === "mcdonalds") {
     drawMcDonalds(ctx, size);
+  } else if (tile.center === "road") {
+    drawCenterRoad(ctx, size);
   }
 };
 
@@ -63,8 +65,10 @@ const drawRoad = (
   const center = size / 2;
 
   ctx.fillStyle = ROAD_COLOR;
-  ctx.strokeStyle = "#654321";
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = ROAD_COLOR;
+  ctx.lineWidth = roadWidth;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
   const getConnectionPoint = (direction: string) => {
     switch (direction) {
@@ -84,28 +88,34 @@ const drawRoad = (
   const start = getConnectionPoint(from);
   const end = getConnectionPoint(to);
 
-  // Draw road between connection points
+  // Check if this is a curved road (corner connection)
+  const isCornerConnection =
+    (from === "north" && to === "east") ||
+    (from === "east" && to === "north") ||
+    (from === "north" && to === "west") ||
+    (from === "west" && to === "north") ||
+    (from === "south" && to === "east") ||
+    (from === "east" && to === "south") ||
+    (from === "south" && to === "west") ||
+    (from === "west" && to === "south");
+
   ctx.beginPath();
 
-  // Determine if the road is horizontal or vertical
-  const isHorizontal = start.y === end.y;
+  if (isCornerConnection) {
+    // Draw curved road for corner connections
+    const controlX =
+      from.includes("north") || from.includes("south") ? start.x : end.x;
+    const controlY =
+      from.includes("east") || from.includes("west") ? start.y : end.y;
 
-  if (isHorizontal) {
-    // For horizontal roads, apply width perpendicular (on Y axis)
-    ctx.moveTo(start.x, start.y - roadWidth / 2);
-    ctx.lineTo(end.x, end.y - roadWidth / 2);
-    ctx.lineTo(end.x, end.y + roadWidth / 2);
-    ctx.lineTo(start.x, start.y + roadWidth / 2);
+    ctx.moveTo(start.x, start.y);
+    ctx.quadraticCurveTo(controlX, controlY, end.x, end.y);
   } else {
-    // For vertical roads, apply width perpendicular (on X axis)
-    ctx.moveTo(start.x - roadWidth / 2, start.y);
-    ctx.lineTo(end.x - roadWidth / 2, end.y);
-    ctx.lineTo(end.x + roadWidth / 2, end.y);
-    ctx.lineTo(start.x + roadWidth / 2, start.y);
+    // Draw straight road for opposite or center connections
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
   }
 
-  ctx.closePath();
-  ctx.fill();
   ctx.stroke();
 };
 
@@ -115,7 +125,7 @@ const drawCostcoZone = (
   size: number
 ) => {
   ctx.fillStyle = COSTCO_COLOR;
-  ctx.strokeStyle = "#1E40AF";
+  ctx.strokeStyle = COSTCO_COLOR;
   ctx.lineWidth = 1;
 
   // Draw based on zone shape and segments
@@ -340,12 +350,27 @@ const drawPennant = (
   ctx.stroke();
 };
 
+const drawCenterRoad = (ctx: CanvasRenderingContext2D, size: number) => {
+  const center = size / 2;
+  const roadRadius = size * 0.25; // Make center road area reasonably sized
+
+  ctx.fillStyle = ROAD_COLOR;
+  ctx.strokeStyle = ROAD_COLOR;
+  ctx.lineWidth = 1;
+
+  // Draw center road as a circle
+  ctx.beginPath();
+  ctx.arc(center, center, roadRadius, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.stroke();
+};
+
 const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
   const center = size / 2;
   const radius = size * 0.15;
 
   ctx.fillStyle = MCDONALDS_COLOR;
-  ctx.strokeStyle = "#DAA520";
+  ctx.strokeStyle = MCDONALDS_COLOR;
   ctx.lineWidth = 2;
 
   // Draw McDonalds as a star/special symbol
@@ -355,11 +380,142 @@ const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
   ctx.stroke();
 
   // Add "M" text
-  ctx.fillStyle = "#B8860B";
+  ctx.fillStyle = MCDONALDS_COLOR;
   ctx.font = `bold ${size * 0.2}px Arial`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText("M", center, center);
+};
+
+// Helper function to render follower dots on claimed features
+const renderFollowerDots = (
+  ctx: CanvasRenderingContext2D,
+  record: any,
+  x: number,
+  y: number,
+  scaledTileSize: number,
+  gameState: any,
+  board: Board
+) => {
+  const featureClaims = board.getFeatureClaims();
+  const positionKey = `${record.position.x},${record.position.y}`;
+
+  // Find claims for this tile
+  const tileClaims = featureClaims.filter((claim) =>
+    claim.edge.startsWith(positionKey)
+  );
+
+  tileClaims.forEach((claim) => {
+    // Get player info for the claiming player
+    const player = gameState.players.find((p: any) =>
+      claim.players.includes(p.id)
+    );
+    if (!player) return;
+
+    // Determine dot position based on feature type and identifier
+    const dotPosition = getFollowerDotPosition(claim, scaledTileSize, record);
+
+    // Draw the follower dot
+    ctx.fillStyle = player.color;
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 1;
+
+    const dotRadius = Math.max(3, scaledTileSize * 0.08);
+    const dotX = x + dotPosition.x;
+    const dotY = y + dotPosition.y;
+
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, dotRadius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+  });
+};
+
+// Helper function to determine follower dot position based on feature type
+const getFollowerDotPosition = (
+  claim: any,
+  tileSize: number,
+  record: any
+): { x: number; y: number } => {
+  // Define segment positions on the tile (5 segments: N, E, S, W, Center)
+  const segmentPositions: { [key: string]: { x: number; y: number } } = {
+    north: { x: tileSize / 2, y: tileSize * 0.15 }, // Top edge
+    east: { x: tileSize * 0.85, y: tileSize / 2 }, // Right edge
+    south: { x: tileSize / 2, y: tileSize * 0.85 }, // Bottom edge
+    west: { x: tileSize * 0.15, y: tileSize / 2 }, // Left edge
+    center: { x: tileSize / 2, y: tileSize / 2 }, // Center
+  };
+
+  // Extract identifier from edge (format: "x,y:identifier" or just "x,y")
+  const parts = claim.edge.split(":");
+  const identifier = parts.length > 1 ? parts[1] : "";
+  const tile = record.tile;
+
+  if (claim.type === "road") {
+    const roadIndex = parseInt(identifier.replace("road_", "")) || 0;
+
+    if (tile.roadConnections && tile.roadConnections[roadIndex]) {
+      const roadConnection = tile.roadConnections[roadIndex];
+
+      // Calculate average position of all segments in this road connection
+      let totalX = 0;
+      let totalY = 0;
+      let validSegments = 0;
+
+      roadConnection.forEach((segment: string) => {
+        if (segmentPositions[segment]) {
+          totalX += segmentPositions[segment].x;
+          totalY += segmentPositions[segment].y;
+          validSegments++;
+        }
+      });
+
+      if (validSegments > 0) {
+        return {
+          x: totalX / validSegments,
+          y: totalY / validSegments,
+        };
+      }
+    }
+
+    // Fallback: use first available road segment position
+    return segmentPositions["center"];
+  } else if (claim.type === "costco") {
+    const costcoIndex = parseInt(identifier.replace("costco_", "")) || 0;
+
+    if (tile.costcoZones && tile.costcoZones[costcoIndex]) {
+      const zone = tile.costcoZones[costcoIndex];
+
+      // Calculate average position of all segments in this Costco zone
+      let totalX = 0;
+      let totalY = 0;
+      let validSegments = 0;
+
+      zone.segments.forEach((segment: string) => {
+        if (segmentPositions[segment]) {
+          totalX += segmentPositions[segment].x;
+          totalY += segmentPositions[segment].y;
+          validSegments++;
+        }
+      });
+
+      if (validSegments > 0) {
+        return {
+          x: totalX / validSegments,
+          y: totalY / validSegments,
+        };
+      }
+    }
+
+    // Fallback: use center position
+    return segmentPositions["center"];
+  } else if (claim.type === "mcdonalds") {
+    // McDonald's is always at center
+    return segmentPositions["center"];
+  }
+
+  // Default position
+  return segmentPositions["center"];
 };
 
 interface BoardCanvasProps {
@@ -369,6 +525,7 @@ interface BoardCanvasProps {
   tileSize?: number;
   showGrid?: boolean;
   showValidPlacements?: boolean;
+  gameState?: any; // Game state for accessing feature claims and player info
 }
 
 interface CanvasState {
@@ -383,7 +540,7 @@ interface CanvasState {
 const INITIAL_SCALE = 1;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 4;
-const GRID_COLOR = "#ddd";
+const GRID_COLOR = UI_COLORS.muted;
 const VALID_PLACEMENT_COLOR = "rgba(0, 255, 0, 0.3)";
 const HOVER_COLOR = "rgba(0, 0, 255, 0.2)";
 
@@ -394,6 +551,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
   tileSize = 64,
   showGrid = true,
   showValidPlacements = true,
+  gameState,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -521,6 +679,19 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
 
           // Draw the tile to main canvas
           ctx.drawImage(tileCanvas, x, y, scaledTileSize, scaledTileSize);
+
+          // Draw follower dots for claimed features
+          if (gameState) {
+            renderFollowerDots(
+              ctx,
+              record,
+              x,
+              y,
+              scaledTileSize,
+              gameState,
+              board
+            );
+          }
         }
       }
     });
@@ -562,6 +733,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     showGrid,
     showValidPlacements,
     boardToScreen,
+    gameState,
   ]);
 
   // Handle canvas resize
