@@ -214,7 +214,11 @@ export class Game {
   private getClaimableFeatures(
     tile: Tile
   ): Array<{ type: TerrainType; identifier?: string; displayName?: string }> {
-    const claimable: Array<{ type: TerrainType; identifier?: string }> = [];
+    const claimable: Array<{
+      type: TerrainType;
+      identifier?: string;
+      displayName?: string;
+    }> = [];
 
     // Check road connections with descriptive labels
     tile.roadConnections.forEach((connection, index) => {
