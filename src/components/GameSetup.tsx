@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import useTranslations from "@/hooks/useTranslations";
 
 interface GameSetupProps {
   onStartGame: (players: PlayerDefinition[]) => void;
@@ -19,6 +20,7 @@ interface GameSetupProps {
 const palette = ["#ff595e", "#1982c4", "#ffca3a", "#6a4c93", "#43aa8b"];
 
 const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
+  const { t } = useTranslations();
   const [playerCount, setPlayerCount] = useState(3);
   const [playerConfigs, setPlayerConfigs] = useState<PlayerDefinition[]>([]);
   const [showHelp, setShowHelp] = useState(false);
@@ -27,14 +29,17 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
     const configs: PlayerDefinition[] = [];
     for (let i = 0; i < playerCount; i++) {
       configs.push({
-        name: i === 0 ? "You" : `Player ${i + 1}`,
+        name:
+          i === 0
+            ? t("setup.defaultPlayerName")
+            : t("setup.defaultPlayerNameTemplate", { number: i + 1 }),
         id: `player-${i + 1}`,
         isAI: i > 0,
         color: palette[i],
       });
     }
     setPlayerConfigs(configs);
-  }, [playerCount]);
+  }, [playerCount, t]);
 
   const updatePlayerConfig = (
     index: number,
@@ -49,7 +54,9 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
   const handleStartGame = () => {
     const validatedPlayers = playerConfigs.map((config, index) => ({
       ...config,
-      name: config.name.trim() || `Player ${index + 1}`,
+      name:
+        config.name.trim() ||
+        t("setup.defaultPlayerNameTemplate", { number: index + 1 }),
       id: `player-${index + 1}`,
       color: palette[index],
     }));
@@ -62,10 +69,10 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         <div className="flex flex-col justify-center min-h-[500px] p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-center mb-6 text-accent font-game">
-              🎮 Game Setup
+              🎮 {t("setup.gameSetup")}
             </h2>
             <p className="text-center text-muted-foreground mb-8 font-game text-xxs">
-              Configure your game settings to get started
+              {t("setup.configureHint")}
             </p>
           </div>
 
@@ -75,7 +82,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
                 htmlFor="playerCount"
                 className="text-white text-base font-medium"
               >
-                Number of players (2-5):
+                {t("setup.numberOfPlayers")}
               </Label>
               <Select
                 value={playerCount.toString()}
@@ -85,20 +92,20 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
                   id="playerCount"
                   className="w-full h-12 text-base font-game"
                 >
-                  <SelectValue placeholder="Select number of players" />
+                  <SelectValue placeholder={t("setup.selectNumberOfPlayers")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2">2 Players</SelectItem>
-                  <SelectItem value="3">3 Players</SelectItem>
-                  <SelectItem value="4">4 Players</SelectItem>
-                  <SelectItem value="5">5 Players</SelectItem>
+                  <SelectItem value="2">{t("setup.playersCount.2")}</SelectItem>
+                  <SelectItem value="3">{t("setup.playersCount.3")}</SelectItem>
+                  <SelectItem value="4">{t("setup.playersCount.4")}</SelectItem>
+                  <SelectItem value="5">{t("setup.playersCount.5")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex flex-col gap-3 my-4">
               <Label className="text-white text-base font-medium font-game text-xxs">
-                Players:
+                {t("setup.players")}
               </Label>
               {playerConfigs.map((config, index) => (
                 <div
@@ -110,7 +117,8 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
                     style={{ backgroundColor: config.color }}
                   />
                   <Label className="text-white min-w-[50px] text-sm font-game text-xxs">
-                    P{index + 1}:
+                    {t("setup.playerPrefix")}
+                    {index + 1}:
                   </Label>
                   <Input
                     type="text"
@@ -118,7 +126,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
                     onChange={(e) =>
                       updatePlayerConfig(index, "name", e.target.value)
                     }
-                    placeholder={`Player ${index + 1}`}
+                    placeholder={`${t("setup.playerPlaceholder")} ${index + 1}`}
                     className="flex-1 h-10"
                   />
                   <Select
@@ -131,8 +139,12 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="human">Human</SelectItem>
-                      <SelectItem value="ai">AI</SelectItem>
+                      <SelectItem value="human">
+                        {t("setup.playerTypes.human")}
+                      </SelectItem>
+                      <SelectItem value="ai">
+                        {t("setup.playerTypes.ai")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -141,25 +153,24 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
 
             <Button
               onClick={handleStartGame}
-              className="w-full bg-btn-primary hover:bg-btn-primary-hover text-white font-semibold py-4 px-6 text-lg mt-8 shadow-lg hover:shadow-xl transition-all duration-200"
+              variant="default"
+              className="w-full font-semibold py-4 px-6 text-lg mt-8 shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              Start Game
+              {t("setup.startGame")}
             </Button>
           </div>
         </div>
       </div>
 
       <aside className="relative bg-card backdrop-blur-md border-2 border-accent/30 rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
-        <h1 className="m-0 text-xl text-accent font-game">
-          American Tile Trails
-        </h1>
+        <h1 className="m-0 text-xl text-accent font-game">{t("app.title")}</h1>
         <img
           src="/src/assets/icon.png"
-          alt="American Tile Trails Game Icon"
+          alt={t("app.gameIcon")}
           className="w-full mx-auto my-2 block rounded-lg shadow-game-sm"
         />
         <p className="m-0 text-xxs opacity-80 leading-tight font-game">
-          McDonalds abbeys, Costco castles, and cross-country roads.
+          {t("app.tagline")}
         </p>
 
         <div className="mt-auto pt-4 border-t border-accent/20">
@@ -168,7 +179,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
             variant="outline"
             className="w-full font-game text-xxs"
           >
-            📖 How to Play
+            {t("setup.howToPlay")}
           </Button>
         </div>
       </aside>

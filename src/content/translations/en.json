@@ -1,311 +1,310 @@
 {
-  "en": {
-    "app": {
-      "title": "American Tile Trails",
-      "tagline": "McDonalds abbeys, Costco castles, and cross-country roads.",
-      "taglineGame": "TypeScript + React Edition",
-      "gameIcon": "American Tile Trails Game Icon"
+  "app": {
+    "title": "American Tile Trails",
+    "tagline": "McDonalds abbeys, Costco castles, and cross-country roads.",
+    "taglineGame": "TypeScript + React Edition",
+    "gameIcon": "American Tile Trails Game Icon"
+  },
+  "setup": {
+    "gameSetup": "Game Setup",
+    "numberOfPlayers": "Number of players (2-5):",
+    "selectNumberOfPlayers": "Select number of players",
+    "players": "Players:",
+    "playersCount": {
+      "2": "2 Players",
+      "3": "3 Players",
+      "4": "4 Players",
+      "5": "5 Players"
     },
-    "setup": {
-      "gameSetup": "Game Setup",
-      "numberOfPlayers": "Number of players (2-5):",
-      "selectNumberOfPlayers": "Select number of players",
-      "playersCount": {
-        "2": "2 Players",
-        "3": "3 Players",
-        "4": "4 Players",
-        "5": "5 Players"
-      },
-      "playerPrefix": "P",
-      "playerPlaceholder": "Player",
-      "defaultPlayerName": "You",
-      "defaultPlayerNameTemplate": "Player {number}",
-      "playerTypes": {
-        "human": "Human",
-        "ai": "AI"
-      },
-      "startGame": "Start Game",
-      "howToPlay": "📖 How to Play",
-      "readyToPlay": "🎮 Ready to Play!",
-      "configureHint": "Configure your game settings and click Start Game."
+    "playerPrefix": "P",
+    "playerPlaceholder": "Player",
+    "defaultPlayerName": "You",
+    "defaultPlayerNameTemplate": "Player {number}",
+    "playerTypes": {
+      "human": "Human",
+      "ai": "AI"
     },
-    "game": {
-      "loading": "Loading game...",
-      "currentTile": "Current Tile",
-      "gameControls": "Game Controls",
-      "newGame": "New Game",
-      "showHelp": "📖 Show Help",
-      "gameStats": {
-        "turn": "Turn",
-        "tiles": "Tiles",
-        "remaining": "Remaining"
-      },
-      "phases": {
-        "placeTile": "Place Tile",
-        "claimFeature": "Claim Feature",
-        "scoreFeatures": "Score Features",
-        "endTurn": "End Turn",
-        "gameOver": "Game Over"
-      },
-      "phaseCurrent": "Phase: {phase}",
-      "noCurrentTile": "No current tile",
-      "rotateTile": "🔄 Rotate Tile",
-      "controlHint": "💡 Click green areas to place • Wheel to zoom • Drag to pan"
+    "startGame": "Start Game",
+    "howToPlay": "📖 How to Play",
+    "readyToPlay": "🎮 Ready to Play!",
+    "configureHint": "Configure your game settings and click Start Game."
+  },
+  "game": {
+    "loading": "Loading game...",
+    "currentTile": "Current Tile",
+    "gameControls": "Game Controls",
+    "newGame": "New Game",
+    "showHelp": "📖 Show Help",
+    "gameStats": {
+      "turn": "Turn",
+      "tiles": "Tiles",
+      "remaining": "Remaining"
     },
-    "features": {
-      "claimFeature": "Claim a Feature",
-      "claimHint": "💡 Place a follower to score points when features complete. You have {followers} followers remaining.",
-      "claimButton": "Claim {type}",
-      "skipClaiming": "Skip Claiming",
-      "types": {
-        "road": "road",
-        "costco": "Costco Areas",
-        "mcdonalds": "McDonald's"
-      }
+    "phases": {
+      "placeTile": "Place Tile",
+      "claimFeature": "Claim Feature",
+      "scoreFeatures": "Score Features",
+      "endTurn": "End Turn",
+      "gameOver": "Game Over"
     },
-    "gameOver": {
-      "title": "Game Over!",
-      "winner": "Winner: {winner}",
-      "playAgain": "Play Again"
+    "phaseCurrent": "Phase: {phase}",
+    "noCurrentTile": "No current tile",
+    "rotateTile": "🔄 Rotate Tile",
+    "controlHint": "💡 Click green areas to place • Wheel to zoom • Drag to pan"
+  },
+  "features": {
+    "claimFeature": "Claim a Feature",
+    "claimHint": "💡 Place a follower to score points when features complete. You have {followers} followers remaining.",
+    "claimButton": "Claim {type}",
+    "skipClaiming": "Skip Claiming",
+    "types": {
+      "road": "road",
+      "costco": "Costco Areas",
+      "mcdonalds": "McDonald's"
+    }
+  },
+  "gameOver": {
+    "title": "Game Over!",
+    "winner": "Winner: {winner}",
+    "playAgain": "Play Again"
+  },
+  "scoreboard": {
+    "title": "Players & Scores",
+    "points": "pts",
+    "followers": "followers",
+    "aiIndicator": "🤖"
+  },
+  "activityLog": {
+    "title": "Activity Log"
+  },
+  "quickGuide": {
+    "title": "Quick Guide",
+    "howToPlay": "🎯 How to Play",
+    "steps": {
+      "placeTile": "Place Tile:",
+      "placeTileDesc": "Click green areas on board",
+      "rotate": "Rotate:",
+      "rotateDesc": "Use \"Rotate Tile\" button",
+      "claim": "Claim:",
+      "claimDesc": "Optional - claim roads, Costcos, McDonalds",
+      "score": "Score:",
+      "scoreDesc": "Get points when features complete"
     },
-    "scoreboard": {
-      "title": "Players & Scores",
-      "points": "pts",
-      "followers": "followers",
-      "aiIndicator": "🤖"
+    "scoring": "📊 Scoring",
+    "scoringRules": {
+      "roads": "Roads:",
+      "roadsDesc": "1 point per tile",
+      "costcos": "Costcos:",
+      "costcosDesc": "2 points per tile",
+      "mcdonalds": "McDonalds:",
+      "mcdonaldsDesc": "9 points (when surrounded)"
     },
-    "activityLog": {
-      "title": "Activity Log"
+    "controls": "🎮 Controls",
+    "controlsDesc": {
+      "zoom": "Zoom:",
+      "zoomDesc": "Mouse wheel",
+      "pan": "Pan:",
+      "panDesc": "Click and drag board",
+      "place": "Place:",
+      "placeDesc": "Click valid (green) positions"
     },
-    "quickGuide": {
-      "title": "Quick Guide",
-      "howToPlay": "🎯 How to Play",
-      "steps": {
-        "placeTile": "Place Tile:",
-        "placeTileDesc": "Click green areas on board",
-        "rotate": "Rotate:",
-        "rotateDesc": "Use \"Rotate Tile\" button",
-        "claim": "Claim:",
-        "claimDesc": "Optional - claim roads, Costcos, McDonalds",
-        "score": "Score:",
-        "scoreDesc": "Get points when features complete"
-      },
-      "scoring": "📊 Scoring",
-      "scoringRules": {
-        "roads": "Roads:",
-        "roadsDesc": "1 point per tile",
-        "costcos": "Costcos:",
-        "costcosDesc": "2 points per tile",
-        "mcdonalds": "McDonalds:",
-        "mcdonaldsDesc": "9 points (when surrounded)"
-      },
-      "controls": "🎮 Controls",
-      "controlsDesc": {
-        "zoom": "Zoom:",
-        "zoomDesc": "Mouse wheel",
-        "pan": "Pan:",
-        "panDesc": "Click and drag board",
-        "place": "Place:",
-        "placeDesc": "Click valid (green) positions"
-      },
-      "completeInstructions": "📖 Complete Instructions"
+    "completeInstructions": "📖 Complete Instructions"
+  },
+  "messages": {
+    "gameStarted": "Game started!",
+    "failedToInitialize": "Failed to initialize game:",
+    "failedToStart": "Failed to start game. Please try again.",
+    "placedTile": "{playerName} placed tile at ({x}, {y})",
+    "featuresCompleted": "{count} features completed!",
+    "failedToPlace": "Failed to place tile: {message}",
+    "tileRotated": "Tile rotated",
+    "claimedFeature": "{playerName} claimed {type}{identifier}",
+    "failedToClaim": "Failed to claim feature",
+    "skippedClaiming": "{playerName} skipped claiming"
+  },
+  "errors": {
+    "notInPlacementPhase": "Not in tile placement phase",
+    "noCurrentTile": "No current tile to place",
+    "invalidPlacement": "Invalid tile placement",
+    "tilePlacedSuccessfully": "Tile placed successfully. {count} features completed.",
+    "failedToPlaceTile": "Failed to place tile"
+  },
+  "help": {
+    "title": "🎮 American Tile Trails - Complete Guide",
+    "subtitle": "Everything you need to know to play American Tile Trails",
+    "close": "Close",
+    "gotIt": "Got it!",
+
+    "overview": {
+      "title": "🌟 Overview",
+      "description": "American Title Trails is a tile-placement strategy game inspired by Carcassonne, set in the American landscape. Players take turns placing tiles to build roads, Costco shopping areas, and McDonald's restaurants while claiming features with followers to score points."
     },
-    "messages": {
-      "gameStarted": "Game started!",
-      "failedToInitialize": "Failed to initialize game:",
-      "failedToStart": "Failed to start game. Please try again.",
-      "placedTile": "{playerName} placed tile at ({x}, {y})",
-      "featuresCompleted": "{count} features completed!",
-      "failedToPlace": "Failed to place tile: {message}",
-      "tileRotated": "Tile rotated",
-      "claimedFeature": "{playerName} claimed {type}{identifier}",
-      "failedToClaim": "Failed to claim feature",
-      "skippedClaiming": "{playerName} skipped claiming"
+
+    "objective": {
+      "title": "🎯 Objective",
+      "description": "Score the most points by strategically placing tiles and claiming completed features with your followers."
     },
-    "errors": {
-      "notInPlacementPhase": "Not in tile placement phase",
-      "noCurrentTile": "No current tile to place",
-      "invalidPlacement": "Invalid tile placement",
-      "tilePlacedSuccessfully": "Tile placed successfully. {count} features completed.",
-      "failedToPlaceTile": "Failed to place tile"
+
+    "gameSetup": {
+      "title": "🎲 Game Setup",
+      "playerConfig": "Player Configuration",
+      "numberOfPlayers": "Number of Players:",
+      "numberOfPlayersDesc": "2-5 players (mix of human and AI players)",
+      "playerSetup": "Player Setup:",
+      "playerSetupDesc": "Enter player names, choose colors, select human or AI",
+      "startingResources": "Starting Resources:",
+      "startingResourcesDesc": "Each player begins with 7 followers",
+      "startingGame": "Starting the Game",
+      "firstTile": "First Tile:",
+      "firstTileDesc": "A random starting tile is placed at the center of the board",
+      "shuffledDeck": "Shuffled Deck:",
+      "shuffledDeckDesc": "Remaining 40 tiles form a shuffled deck for gameplay"
     },
-    "help": {
-      "title": "🎮 American Tile Trails - Complete Guide",
-      "subtitle": "Everything you need to know to play American Tile Trails",
-      "close": "Close",
-      "gotIt": "Got it!",
 
-      "overview": {
-        "title": "🌟 Overview",
-        "description": "American Title Trails is a tile-placement strategy game inspired by Carcassonne, set in the American landscape. Players take turns placing tiles to build roads, Costco shopping areas, and McDonald's restaurants while claiming features with followers to score points."
+    "gameplay": {
+      "title": "🎮 Gameplay",
+      "turnStructure": "Turn Structure",
+      "tilePlacementPhase": "1. Tile Placement Phase 🏗️ (Required)",
+      "drawTile": "Draw a Tile:",
+      "drawTileDesc": "You automatically receive a random tile from the deck",
+      "rotateTile": "Rotate the Tile:",
+      "rotateTileDesc": "Click \"Rotate Tile\" button to change orientation",
+      "placeTile": "Place the Tile:",
+      "placeTileDesc": "Click on a valid (green highlighted) position on the board",
+
+      "featureClaimingPhase": "2. Feature Claiming Phase 🏴 (Optional)",
+      "claimingDesc": "After placing a tile, you may claim ONE feature on that tile",
+      "roads": "Roads:",
+      "roadsDesc": "Claim a road segment",
+      "costcoAreas": "Costco Areas:",
+      "costcoAreasDesc": "Claim a shopping area",
+      "mcdonalds": "McDonald's:",
+      "mcdonaldsDesc": "Claim the restaurant (worth 9 points when surrounded)",
+      "followerLimit": "Follower Limit:",
+      "followerLimitDesc": "You can only claim if you have followers available",
+      "skipOption": "Skip Option:",
+      "skipOptionDesc": "You can choose not to claim any feature",
+
+      "scoringPhase": "3. Scoring Phase 📈 (Automatic)",
+      "immediateScoring": "Immediate Scoring:",
+      "immediateScoringDesc": "When features are completed, points are awarded instantly",
+      "followerReturn": "Follower Return:",
+      "followerReturnDesc": "Followers on completed features return to your supply"
+    },
+
+    "controls": {
+      "title": "🎮 Controls & Interface",
+      "boardInteraction": "Board Interaction",
+      "zoom": "Zoom:",
+      "zoomDesc": "Mouse wheel to zoom in/out (25% - 400%)",
+      "pan": "Pan:",
+      "panDesc": "Click and drag to move around the board",
+      "tilePlacement": "Tile Placement:",
+      "tilePlacementDesc": "Click on green highlighted areas to place tiles",
+
+      "gameInterface": "Game Interface",
+      "currentTileDisplay": "Current Tile Display:",
+      "currentTileDisplayDesc": "Shows the tile you need to place with rotation controls",
+      "scoreboard": "Scoreboard:",
+      "scoreboardDesc": "Live player scores, followers, and turn indicator",
+      "activityLog": "Activity Log:",
+      "activityLogDesc": "Real-time feed of game events and player actions",
+
+      "buttonControls": "Button Controls",
+      "rotateTileButton": "Rotate Tile:",
+      "rotateTileButtonDesc": "Rotate current tile 90° clockwise",
+      "newGameButton": "New Game:",
+      "newGameButtonDesc": "Reset and start a fresh game",
+      "helpButton": "Help:",
+      "helpButtonDesc": "Open this comprehensive guide"
+    },
+
+    "scoring": {
+      "title": "📊 Scoring System",
+      "roads": {
+        "title": "Roads (1 point per tile)",
+        "completion": "Completion:",
+        "completionDesc": "Road segments connect from one end to another or form loops",
+        "scoring": "Scoring:",
+        "scoringDesc": "1 point per tile in the completed road",
+        "strategy": "Strategy:",
+        "strategyDesc": "Quick to complete but lower point value"
       },
-
-      "objective": {
-        "title": "🎯 Objective",
-        "description": "Score the most points by strategically placing tiles and claiming completed features with your followers."
+      "costco": {
+        "title": "Costco Shopping Areas (2 points per tile)",
+        "completion": "Completion:",
+        "completionDesc": "Costco areas are completely surrounded by roads or board edges",
+        "scoring": "Scoring:",
+        "scoringDesc": "2 points per tile in the completed Costco area",
+        "strategy": "Strategy:",
+        "strategyDesc": "Higher point value but harder to complete than roads"
       },
-
-      "gameSetup": {
-        "title": "🎲 Game Setup",
-        "playerConfig": "Player Configuration",
-        "numberOfPlayers": "Number of Players:",
-        "numberOfPlayersDesc": "2-5 players (mix of human and AI players)",
-        "playerSetup": "Player Setup:",
-        "playerSetupDesc": "Enter player names, choose colors, select human or AI",
-        "startingResources": "Starting Resources:",
-        "startingResourcesDesc": "Each player begins with 7 followers",
-        "startingGame": "Starting the Game",
-        "firstTile": "First Tile:",
-        "firstTileDesc": "A random starting tile is placed at the center of the board",
-        "shuffledDeck": "Shuffled Deck:",
-        "shuffledDeckDesc": "Remaining 40 tiles form a shuffled deck for gameplay"
+      "mcdonalds": {
+        "title": "McDonald's Restaurants (9 points)",
+        "completion": "Completion:",
+        "completionDesc": "Complete when all 8 surrounding positions have tiles",
+        "riskReward": "Risk/Reward:",
+        "riskRewardDesc": "Difficult to complete but worth many points"
       },
-
-      "gameplay": {
-        "title": "🎮 Gameplay",
-        "turnStructure": "Turn Structure",
-        "tilePlacementPhase": "1. Tile Placement Phase 🏗️ (Required)",
-        "drawTile": "Draw a Tile:",
-        "drawTileDesc": "You automatically receive a random tile from the deck",
-        "rotateTile": "Rotate the Tile:",
-        "rotateTileDesc": "Click \"Rotate Tile\" button to change orientation",
-        "placeTile": "Place the Tile:",
-        "placeTileDesc": "Click on a valid (green highlighted) position on the board",
-
-        "featureClaimingPhase": "2. Feature Claiming Phase 🏴 (Optional)",
-        "claimingDesc": "After placing a tile, you may claim ONE feature on that tile",
-        "roads": "Roads:",
-        "roadsDesc": "Claim a road segment",
-        "costcoAreas": "Costco Areas:",
-        "costcoAreasDesc": "Claim a shopping area",
-        "mcdonalds": "McDonald's:",
-        "mcdonaldsDesc": "Claim the restaurant (worth 9 points when surrounded)",
-        "followerLimit": "Follower Limit:",
-        "followerLimitDesc": "You can only claim if you have followers available",
-        "skipOption": "Skip Option:",
-        "skipOptionDesc": "You can choose not to claim any feature",
-
-        "scoringPhase": "3. Scoring Phase 📈 (Automatic)",
-        "immediateScoring": "Immediate Scoring:",
-        "immediateScoringDesc": "When features are completed, points are awarded instantly",
-        "followerReturn": "Follower Return:",
-        "followerReturnDesc": "Followers on completed features return to your supply"
-      },
-
-      "controls": {
-        "title": "🎮 Controls & Interface",
-        "boardInteraction": "Board Interaction",
-        "zoom": "Zoom:",
-        "zoomDesc": "Mouse wheel to zoom in/out (25% - 400%)",
-        "pan": "Pan:",
-        "panDesc": "Click and drag to move around the board",
-        "tilePlacement": "Tile Placement:",
-        "tilePlacementDesc": "Click on green highlighted areas to place tiles",
-
-        "gameInterface": "Game Interface",
-        "currentTileDisplay": "Current Tile Display:",
-        "currentTileDisplayDesc": "Shows the tile you need to place with rotation controls",
-        "scoreboard": "Scoreboard:",
-        "scoreboardDesc": "Live player scores, followers, and turn indicator",
-        "activityLog": "Activity Log:",
-        "activityLogDesc": "Real-time feed of game events and player actions",
-
-        "buttonControls": "Button Controls",
-        "rotateTileButton": "Rotate Tile:",
-        "rotateTileButtonDesc": "Rotate current tile 90° clockwise",
-        "newGameButton": "New Game:",
-        "newGameButtonDesc": "Reset and start a fresh game",
-        "helpButton": "Help:",
-        "helpButtonDesc": "Open this comprehensive guide"
-      },
-
-      "scoring": {
-        "title": "📊 Scoring System",
-        "roads": {
-          "title": "Roads (1 point per tile)",
-          "completion": "Completion:",
-          "completionDesc": "Road segments connect from one end to another or form loops",
-          "scoring": "Scoring:",
-          "scoringDesc": "1 point per tile in the completed road",
-          "strategy": "Strategy:",
-          "strategyDesc": "Quick to complete but lower point value"
-        },
-        "costco": {
-          "title": "Costco Shopping Areas (2 points per tile)",
-          "completion": "Completion:",
-          "completionDesc": "Costco areas are completely surrounded by roads or board edges",
-          "scoring": "Scoring:",
-          "scoringDesc": "2 points per tile in the completed Costco area",
-          "strategy": "Strategy:",
-          "strategyDesc": "Higher point value but harder to complete than roads"
-        },
-        "mcdonalds": {
-          "title": "McDonald's Restaurants (9 points)",
-          "completion": "Completion:",
-          "completionDesc": "Complete when all 8 surrounding positions have tiles",
-          "riskReward": "Risk/Reward:",
-          "riskRewardDesc": "Difficult to complete but worth many points"
-        },
-        "gameEndScoring": {
-          "title": "Game End Scoring",
-          "incompleteFeatures": "Incomplete Features:",
-          "incompleteFeaturesDesc": "1 point per tile for any uncompleted claimed features",
-          "winner": "Winner:",
-          "winnerDesc": "Player with the most total points wins"
-        }
-      },
-
-      "ai": {
-        "title": "🤖 AI Players",
-        "behavior": "AI Behavior",
-        "delay": "AI players make moves with a 1-second delay",
-        "strategy": "AI considers feature completion opportunities, tile adjacency, Costco preferences, and follower conservation",
-        "indicator": "AI players are marked with 🤖 in the scoreboard"
-      },
-
-      "strategy": {
-        "title": "💡 Strategy Tips",
-        "general": "General Strategy",
-        "balanceClaimingExpansion": "Balance Claiming and Expansion:",
-        "balanceClaimingExpansionDesc": "Don't claim every feature - save followers for high-value opportunities",
-        "blockOpponents": "Block Opponents:",
-        "blockOpponentsDesc": "Place tiles to make opponent features harder to complete",
-        "multipleFeatures": "Multiple Features:",
-        "multipleFeaturesDesc": "Look for tiles that contribute to multiple features simultaneously",
-
-        "advanced": "Advanced Tips",
-        "followerConservation": "Follower Conservation:",
-        "followerConservationDesc": "Manage your 7 followers carefully - you can't get more during the game",
-        "costcoStrategy": "Costco Strategy:",
-        "costcoStrategyDesc": "Costcos are worth 2x points but require more planning to complete",
-        "mcdonaldsRisk": "McDonald's Risk:",
-        "mcdonaldsRiskDesc": "9 points is tempting, but McDonald's are very hard to complete safely"
-      },
-
-      "winning": {
-        "title": "🎯 Winning Conditions",
-        "gameEnd": "Game End:",
-        "gameEndDesc": "Game ends when no more tiles remain in the deck",
-        "finalScoring": "Final Scoring:",
-        "finalScoringDesc": "All incomplete features score 1 point per tile",
+      "gameEndScoring": {
+        "title": "Game End Scoring",
+        "incompleteFeatures": "Incomplete Features:",
+        "incompleteFeaturesDesc": "1 point per tile for any uncompleted claimed features",
         "winner": "Winner:",
-        "winnerDesc": "Player with highest total score wins (tied players share victory)"
-      },
-
-      "gettingStarted": {
-        "title": "🚀 Getting Started",
-        "configurePlayers": "Configure Players:",
-        "configurePlayersDesc": "Set up 2-5 players with names and types",
-        "startPlaying": "Start Playing:",
-        "startPlayingDesc": "Begin placing tiles and claiming features",
-        "learnByPlaying": "Learn by Playing:",
-        "learnByPlayingDesc": "The interface guides you through each phase"
-      },
-
-      "finalNote": {
-        "title": "🗺️ Have fun building your American landscape!",
-        "description": "The game combines strategic thinking with tactical tile placement for an engaging multiplayer experience. Each game creates a unique map of roads, shopping centers, and restaurants across the American countryside."
+        "winnerDesc": "Player with the most total points wins"
       }
+    },
+
+    "ai": {
+      "title": "🤖 AI Players",
+      "behavior": "AI Behavior",
+      "delay": "AI players make moves with a 1-second delay",
+      "strategy": "AI considers feature completion opportunities, tile adjacency, Costco preferences, and follower conservation",
+      "indicator": "AI players are marked with 🤖 in the scoreboard"
+    },
+
+    "strategy": {
+      "title": "💡 Strategy Tips",
+      "general": "General Strategy",
+      "balanceClaimingExpansion": "Balance Claiming and Expansion:",
+      "balanceClaimingExpansionDesc": "Don't claim every feature - save followers for high-value opportunities",
+      "blockOpponents": "Block Opponents:",
+      "blockOpponentsDesc": "Place tiles to make opponent features harder to complete",
+      "multipleFeatures": "Multiple Features:",
+      "multipleFeaturesDesc": "Look for tiles that contribute to multiple features simultaneously",
+
+      "advanced": "Advanced Tips",
+      "followerConservation": "Follower Conservation:",
+      "followerConservationDesc": "Manage your 7 followers carefully - you can't get more during the game",
+      "costcoStrategy": "Costco Strategy:",
+      "costcoStrategyDesc": "Costcos are worth 2x points but require more planning to complete",
+      "mcdonaldsRisk": "McDonald's Risk:",
+      "mcdonaldsRiskDesc": "9 points is tempting, but McDonald's are very hard to complete safely"
+    },
+
+    "winning": {
+      "title": "🎯 Winning Conditions",
+      "gameEnd": "Game End:",
+      "gameEndDesc": "Game ends when no more tiles remain in the deck",
+      "finalScoring": "Final Scoring:",
+      "finalScoringDesc": "All incomplete features score 1 point per tile",
+      "winner": "Winner:",
+      "winnerDesc": "Player with highest total score wins (tied players share victory)"
+    },
+
+    "gettingStarted": {
+      "title": "🚀 Getting Started",
+      "configurePlayers": "Configure Players:",
+      "configurePlayersDesc": "Set up 2-5 players with names and types",
+      "startPlaying": "Start Playing:",
+      "startPlayingDesc": "Begin placing tiles and claiming features",
+      "learnByPlaying": "Learn by Playing:",
+      "learnByPlayingDesc": "The interface guides you through each phase"
+    },
+
+    "finalNote": {
+      "title": "🗺️ Have fun building your American landscape!",
+      "description": "The game combines strategic thinking with tactical tile placement for an engaging multiplayer experience. Each game creates a unique map of roads, shopping centers, and restaurants across the American countryside."
     }
   }
 }
