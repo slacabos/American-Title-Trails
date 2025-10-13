@@ -110,10 +110,17 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     }
   };
 
-  const handleRotateTile = () => {
+  const handleRotateClockwise = () => {
     if (game && game.canRotateTile()) {
-      game.rotateTile();
-      addLog("Tile rotated");
+      game.rotateTileClockwise();
+      addLog("Tile rotated clockwise");
+    }
+  };
+
+  const handleRotateCounterClockwise = () => {
+    if (game && game.canRotateTile()) {
+      game.rotateTileCounterClockwise();
+      addLog("Tile rotated counter-clockwise");
     }
   };
 
@@ -165,6 +172,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           showValidPlacements={gameState.phase === GamePhase.PLACE_TILE}
         />
 
+        {gameState.phase === GamePhase.PLACE_TILE && (
+          <div className="mt-2 text-xs opacity-70 text-center leading-tight font-game">
+            💡 Click green areas to place • Wheel to zoom • Drag to pan
+          </div>
+        )}
+
         {gameState.phase === GamePhase.CLAIM_FEATURE && (
           <div className="mt-3 p-3 bg-game-accent/10 rounded-lg border border-game-accent/20">
             <h3 className="m-0 mb-2 text-xs text-game-accent font-game">
@@ -215,18 +228,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       </div>
 
       <aside className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
-        <h1 className="m-0 text-xl text-game-accent font-game">
-          American Tile Trails
-        </h1>
-        <img
-          src="/src/assets/icon.png"
-          alt="American Tile Trails Game Icon"
-          className="w-full mx-auto my-2 block rounded-lg shadow-game-sm"
-        />
-        <p className="m-0 text-xxs opacity-80 leading-tight font-game">
-          TypeScript + React Edition
-        </p>
-
         <section>
           <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
             Current Tile
@@ -246,15 +247,25 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
               </div>
               {gameState.phase === GamePhase.PLACE_TILE && (
                 <div className="flex flex-col gap-2 w-full mt-2">
-                  <Button
-                    onClick={handleRotateTile}
-                    disabled={!gameState.currentTile}
-                    className="w-full bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-4 py-2 font-game text-xxs cursor-pointer transition-all duration-200"
-                  >
-                    🔄 Rotate Tile
-                  </Button>
-                  <div className="text-xs opacity-70 text-center leading-tight mt-1 font-game">
-                    💡 Click green areas to place • Wheel to zoom • Drag to pan
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={handleRotateClockwise}
+                      disabled={!gameState.currentTile}
+                      className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
+                      title="Rotate Clockwise"
+                      style={{ fontSize: "32px" }}
+                    >
+                      ⟳
+                    </Button>
+                    <Button
+                      onClick={handleRotateCounterClockwise}
+                      disabled={!gameState.currentTile}
+                      className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
+                      title="Rotate Counter-Clockwise"
+                      style={{ fontSize: "32px" }}
+                    >
+                      ⟲
+                    </Button>
                   </div>
                 </div>
               )}
@@ -264,33 +275,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
               No current tile
             </div>
           )}
-        </section>
-
-        <section className="bg-game-bg-primary/30 rounded-xl p-4 flex flex-col gap-3">
-          <h2 className="m-0 text-sm text-game-accent font-game">
-            Game Controls
-          </h2>
-          <Button
-            onClick={onReset}
-            variant="outline"
-            className="mb-2 font-game text-xxs"
-          >
-            New Game
-          </Button>
-          <Button
-            onClick={() => setShowHelp(true)}
-            variant="outline"
-            className="font-game text-xxs"
-          >
-            📖 Show Help
-          </Button>
-          <div className="text-xxs text-center p-2 bg-game-bg-primary/50 rounded-md leading-tight font-game">
-            <div>Turn: {gameState.turnNumber}</div>
-            <div>
-              Tiles: {tileStats.placed}/{tileStats.total}
-            </div>
-            <div>Remaining: {tileStats.remaining}</div>
-          </div>
         </section>
 
         {showHelp && (
@@ -387,6 +371,36 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="bg-game-bg-primary/30 rounded-xl p-4">
+          <div className="text-xxs text-center p-2 bg-game-bg-primary/50 rounded-md leading-tight font-game">
+            <div>Turn: {gameState.turnNumber}</div>
+            <div>
+              Tiles: {tileStats.placed}/{tileStats.total}
+            </div>
+            <div>Remaining: {tileStats.remaining}</div>
+          </div>
+        </section>
+
+        <section className="bg-game-bg-primary/30 rounded-xl p-4 flex flex-col gap-1">
+          <h2 className="m-0 text-sm text-game-accent font-game mb-2">
+            Game Controls
+          </h2>
+          <Button
+            onClick={onReset}
+            variant="outline"
+            className="font-game text-xxs"
+          >
+            New Game
+          </Button>
+          <Button
+            onClick={() => setShowHelp(true)}
+            variant="outline"
+            className="font-game text-xxs"
+          >
+            📖 Show Help
+          </Button>
         </section>
 
         <section className="bg-game-bg-primary/30 rounded-xl p-4">

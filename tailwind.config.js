@@ -76,10 +76,10 @@ export default {
       backgroundImage: {
         "game-radial":
           "radial-gradient(circle at top, #1d3557 0%, #0b132b 70%)",
-        "btn-primary": "linear-gradient(135deg, #43aa8b 0%, #277da1 100%)",
+        "btn-primary": "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
         "btn-secondary": "linear-gradient(135deg, #457b9d 0%, #1d3557 100%)",
         "btn-primary-hover":
-          "linear-gradient(135deg, #56c4a3 0%, #309fc9 100%)",
+          "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
         "btn-secondary-hover":
           "linear-gradient(135deg, #6c9bd1 0%, #2d4a6b 100%)",
       },

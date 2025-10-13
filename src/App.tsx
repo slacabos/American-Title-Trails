@@ -18,11 +18,31 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="grid grid-cols-[minmax(640px,1fr)_360px] gap-8 p-6 w-full min-w-fit max-w-[1200px] mx-auto">
-      {gameStarted ? (
-        <GameBoard players={players} onReset={handleResetGame} />
-      ) : (
-        <GameSetup onStartGame={handleStartGame} />
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1 grid grid-cols-[minmax(640px,1fr)_360px] gap-8 p-6 w-full min-w-fit max-w-[1200px] mx-auto">
+        {gameStarted ? (
+          <GameBoard players={players} onReset={handleResetGame} />
+        ) : (
+          <GameSetup onStartGame={handleStartGame} />
+        )}
+      </main>
+
+      {gameStarted && (
+        <footer className="bg-slate-800/90 backdrop-blur-sm border-t border-slate-700/50 p-4 flex items-center justify-center gap-4">
+          <img
+            src="/src/assets/icon.png"
+            alt="American Tile Trails Game Icon"
+            className="w-8 h-8 rounded-md"
+          />
+          <div className="text-center">
+            <h1 className="text-sm text-yellow-400 font-game mb-1">
+              American Tile Trails
+            </h1>
+            <p className="text-xs opacity-80 leading-tight font-game">
+              TypeScript + React Edition
+            </p>
+          </div>
+        </footer>
       )}
     </div>
   );

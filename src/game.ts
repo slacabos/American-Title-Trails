@@ -461,11 +461,19 @@ export class Game {
     );
   }
 
-  public rotateTile(): void {
+  public rotateTile(times: number = 1): void {
     if (this.canRotateTile() && this.state.currentTile) {
-      this.state.currentTile = this.state.currentTile.rotate();
+      this.state.currentTile = this.state.currentTile.rotate(times);
       this.notifyStateChange();
     }
+  }
+
+  public rotateTileClockwise(): void {
+    this.rotateTile(1);
+  }
+
+  public rotateTileCounterClockwise(): void {
+    this.rotateTile(-1);
   }
 
   public getValidPlacements(): Position[] {

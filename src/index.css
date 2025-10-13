@@ -72,6 +72,12 @@ canvas {
   aside {
     order: -1;
   }
+
+  /* Stack footer content vertically on mobile */
+  footer {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
 
 @theme inline {
