@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Game, GamePhase } from "../game";
-import { PlayerDefinition, Position } from "../types";
+import { PlayerDefinition } from "../types";
 import { getStartTile } from "../tileLibrary";
 
 describe("Game", () => {

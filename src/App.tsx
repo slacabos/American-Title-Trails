@@ -18,7 +18,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="layout">
+    <div className="grid grid-cols-[minmax(640px,1fr)_360px] gap-8 p-6 w-full min-w-fit max-w-[1200px] mx-auto">
       {gameStarted ? (
         <GameBoard players={players} onReset={handleResetGame} />
       ) : (

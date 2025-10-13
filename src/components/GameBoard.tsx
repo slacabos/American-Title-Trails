@@ -143,16 +143,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
   if (!game || !gameState) {
     return (
-      <div className="layout">
-        <div className="board-panel">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "400px",
-            }}
-          >
+      <div className="grid grid-cols-[minmax(640px,1fr)_360px] gap-6 p-8 w-full min-w-fit max-w-[1200px]">
+        <div className="relative bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
+          <div className="flex items-center justify-center h-96">
             Loading game...
           </div>
         </div>
@@ -164,7 +157,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
   return (
     <>
-      <div className="board-panel">
+      <div className="relative bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
         <BoardCanvas
           board={gameState.board}
           currentTile={gameState.currentTile}
@@ -173,22 +166,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         />
 
         {gameState.phase === GamePhase.CLAIM_FEATURE && (
-          <div className="claim-controls">
-            <h3>Claim a Feature</h3>
-            <p className="claim-hint">
+          <div className="mt-3 p-3 bg-game-accent/10 rounded-lg border border-game-accent/20">
+            <h3 className="m-0 mb-2 text-xs text-game-accent font-game">
+              Claim a Feature
+            </h3>
+            <p className="text-xs opacity-80 mb-3 leading-tight font-game">
               💡 Place a follower to score points when features complete. You
               have{" "}
               {gameState.players[gameState.currentPlayerIndex]?.followers || 0}{" "}
               followers remaining.
             </p>
-            <div className="feature-buttons">
+            <div className="flex flex-col gap-2">
               {claimableFeatures.map((feature, index) => (
                 <Button
                   key={index}
                   onClick={() =>
                     handleClaimFeature(feature.type, feature.identifier)
                   }
-                  className={`feature-button feature-${feature.type} bg-blue-600 hover:bg-blue-700 text-white`}
+                  className="bg-btn-secondary hover:bg-btn-secondary-hover text-game-text font-game text-xxs"
                 >
                   Claim {feature.type}
                   {feature.identifier && ` (${feature.identifier})`}
@@ -197,7 +192,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
               <Button
                 onClick={handleSkipClaim}
                 variant="outline"
-                className="skip-button"
+                className="font-game text-xxs"
               >
                 Skip Claiming
               </Button>
@@ -219,59 +214,77 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         )}
       </div>
 
-      <aside className="sidebar">
-        <h1>American Tile Trails</h1>
+      <aside className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
+        <h1 className="m-0 text-xl text-game-accent font-game">
+          American Tile Trails
+        </h1>
         <img
           src="/src/assets/icon.png"
           alt="American Tile Trails Game Icon"
-          className="game-icon"
+          className="w-full mx-auto my-2 block rounded-lg shadow-game-sm"
         />
-        <p className="tagline">TypeScript + React Edition</p>
+        <p className="m-0 text-xxs opacity-80 leading-tight font-game">
+          TypeScript + React Edition
+        </p>
 
-        <section className="current-tile">
-          <h2>Current Tile</h2>
+        <section>
+          <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
+            Current Tile
+          </h2>
           {gameState.currentTile ? (
-            <div className="tile-preview">
+            <div className="bg-game-bg-primary/30 rounded-xl p-4 flex flex-col items-center gap-3">
               <TileRenderer
                 tile={gameState.currentTile}
                 size={96}
-                className="preview-tile"
+                className="preview-tile border-2 border-game-blue bg-game-bg-primary"
               />
-              <div className="tile-details">
+              <div className="text-center text-xxs leading-tight font-game">
                 <strong>{gameState.currentTile.name}</strong>
-                <div className="phase-info">
+                <div className="opacity-80 mt-1">
                   Phase: {gameState.phase.replace("_", " ")}
                 </div>
               </div>
               {gameState.phase === GamePhase.PLACE_TILE && (
-                <div className="tile-controls">
+                <div className="flex flex-col gap-2 w-full mt-2">
                   <Button
                     onClick={handleRotateTile}
                     disabled={!gameState.currentTile}
-                    className="rotate-button bg-purple-600 hover:bg-purple-700 text-white"
+                    className="w-full bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-4 py-2 font-game text-xxs cursor-pointer transition-all duration-200"
                   >
                     🔄 Rotate Tile
                   </Button>
-                  <div className="control-hint">
+                  <div className="text-xs opacity-70 text-center leading-tight mt-1 font-game">
                     💡 Click green areas to place • Wheel to zoom • Drag to pan
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <div className="no-tile">No current tile</div>
+            <div className="text-center text-xxs opacity-60 font-game">
+              No current tile
+            </div>
           )}
         </section>
 
-        <section className="game-controls">
-          <h2>Game Controls</h2>
-          <Button onClick={onReset} variant="outline" className="mb-2">
+        <section className="bg-game-bg-primary/30 rounded-xl p-4 flex flex-col gap-3">
+          <h2 className="m-0 text-sm text-game-accent font-game">
+            Game Controls
+          </h2>
+          <Button
+            onClick={onReset}
+            variant="outline"
+            className="mb-2 font-game text-xxs"
+          >
             New Game
           </Button>
-          <Button onClick={() => setShowHelp(true)} variant="outline">
+          <Button
+            onClick={() => setShowHelp(true)}
+            variant="outline"
+            className="font-game text-xxs"
+          >
             📖 Show Help
           </Button>
-          <div className="game-stats">
+          <div className="text-xxs text-center p-2 bg-game-bg-primary/50 rounded-md leading-tight font-game">
             <div>Turn: {gameState.turnNumber}</div>
             <div>
               Tiles: {tileStats.placed}/{tileStats.total}
@@ -281,9 +294,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         </section>
 
         {showHelp && (
-          <section className="help-section">
-            <h2>Quick Guide</h2>
-            <div className="help-content">
+          <section className="bg-game-bg-primary/30 rounded-xl p-4">
+            <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
+              Quick Guide
+            </h2>
+            <div>
               <h3>🎯 How to Play</h3>
               <ol>
                 <li>
@@ -343,28 +358,29 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </section>
         )}
 
-        <section className="scoreboard">
-          <h2>Players & Scores</h2>
-          <ul className="score-list">
+        <section className="bg-game-bg-primary/30 rounded-xl p-4">
+          <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
+            Players & Scores
+          </h2>
+          <ul className="list-none m-0 p-0 flex flex-col gap-2">
             {gameState.players.map((player: any, index: number) => (
               <li
                 key={player.id}
-                className={`score-entry ${
-                  index === gameState.currentPlayerIndex ? "current-player" : ""
-                }`}
-                style={
-                  { "--player-color": player.color } as React.CSSProperties
-                }
+                className="flex items-center gap-2 p-2 rounded-md border-l-2"
+                style={{
+                  backgroundColor: `${player.color}15`,
+                  borderLeftColor: player.color,
+                }}
               >
-                <span className="turn-marker">
+                <span className="text-xs w-4 font-game">
                   {index === gameState.currentPlayerIndex ? "▶" : ""}
                 </span>
-                <div className="details">
-                  <strong>
+                <div className="flex-1 flex flex-col gap-1">
+                  <strong className="text-xxs font-game">
                     {player.name}
                     {player.isAI ? " 🤖" : ""}
                   </strong>
-                  <span>
+                  <span className="text-xs opacity-80 font-game">
                     {player.score} pts • {player.followers} followers
                   </span>
                 </div>
@@ -373,11 +389,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </ul>
         </section>
 
-        <section className="log">
-          <h2>Activity Log</h2>
-          <ul className="log-entries">
+        <section className="bg-game-bg-primary/30 rounded-xl p-4">
+          <h2 className="m-0 mb-3 text-sm text-game-accent font-game">
+            Activity Log
+          </h2>
+          <ul className="list-none m-0 p-0 flex flex-col gap-1 max-h-48 overflow-y-auto">
             {logs.map((log, index) => (
-              <li key={index}>{log}</li>
+              <li
+                key={index}
+                className="text-xs leading-tight py-1 opacity-80 border-b border-slate-100/10 last:border-b-0 font-game"
+              >
+                {log}
+              </li>
             ))}
           </ul>
         </section>
