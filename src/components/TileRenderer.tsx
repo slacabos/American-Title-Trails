@@ -18,11 +18,6 @@ const FIELD_COLOR = "#90EE90"; // Light green for fields
 const drawTileBackground = (ctx: CanvasRenderingContext2D, size: number) => {
   ctx.fillStyle = FIELD_COLOR;
   ctx.fillRect(0, 0, size, size);
-
-  // Add a subtle border
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(0, 0, size, size);
 };
 
 const drawRoad = (
@@ -213,14 +208,28 @@ export const TileRenderer: React.FC<TileRendererProps> = ({
   }, [tile, size, rotation, showPreview]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className={`tile-renderer ${className}`}
+    <div
+      className={`tile-renderer-container ${className}`}
       style={{
-        display: "block",
-        imageRendering: "pixelated",
+        display: "inline-block",
+        border: "2px solid #333",
+        borderRadius: "12px",
+        overflow: "hidden",
+        width: `${size}px`,
+        height: `${size}px`,
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        className="tile-renderer"
+        style={{
+          display: "block",
+          imageRendering: "pixelated",
+          width: "100%",
+          height: "100%",
+        }}
+      />
+    </div>
   );
 };
 
