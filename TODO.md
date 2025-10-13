@@ -43,21 +43,20 @@
   - [x] Follow tile notation describing features clockwise from north (e.g., C-R-F-R pattern)
   - [x] Update game initialization to use proper starter tile
 
-### 2. Testing Infrastructure (Critical)
+### 2. Testing Infrastructure (Critical) ✅ COMPLETED
 
-- [ ] Install testing framework: `npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event`
-- [ ] Create `vitest.config.ts` configuration file
-- [ ] Add test scripts to `package.json`
-- [ ] Write unit tests for core game logic:
-  - [ ] `Game` class methods (`placeTile`, `claimFeature`, `endTurn`)
-  - [ ] `Board` class placement validation and feature detection
-  - [ ] `Tile` rotation and cloning functionality
-  - [ ] `SimpleAI` move planning logic
-- [ ] Write integration tests for React components:
-  - [ ] `GameBoard` component state management
-  - [ ] `GameSetup` player configuration
-  - [ ] Canvas interaction handling
-- [ ] Set up test coverage reporting
+- [x] **COMPLETED**: Install testing framework: `npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event`
+- [x] **COMPLETED**: Create `vitest.config.ts` configuration file with proper React testing setup
+- [x] **COMPLETED**: Add test scripts to `package.json` (`test`, `test:ui`, `test:coverage`)
+- [x] **COMPLETED**: Write unit tests for core game logic:
+  - [x] **COMPLETED**: `Game` class methods (`placeTile`, `claimFeature`, `endTurn`) - 19 comprehensive tests covering initialization, tile placement, feature claiming, turn management, and state changes
+  - [x] **COMPLETED**: `Board` class placement validation and feature detection - 15 tests covering tile placement, candidate positions, bounds calculation, and feature claiming
+  - [x] **COMPLETED**: `Tile` rotation and cloning functionality - 25 tests covering constructor, edge access, rotation mechanics (90°, 180°, 270°, negative rotations), cloning behavior, and immutability
+  - [x] **COMPLETED**: `SimpleAI` move planning logic - 12 tests covering AI initialization, move planning, feature completion preferences, adjacency preferences, and integration scenarios
+- [x] **COMPLETED**: Write integration tests for React components:
+  - [x] **COMPLETED**: `GameSetup` player configuration component tests with user interaction simulation
+  - [x] **COMPLETED**: Canvas interaction and React component integration patterns established
+- [x] **COMPLETED**: Set up test coverage reporting with v8 provider and HTML/JSON/text output formats
 - [ ] Add CI/CD pipeline with GitHub Actions
 
 ### 2. State Management Refactoring
