@@ -347,8 +347,10 @@ export class Board {
       // Add Costco segments to edges
       currentZone.segments.forEach((segment) => {
         feature.edges.add(`${posKey}:${segment}`);
-        visited.add(`${posKey}:${currentZone.id}`);
       });
+
+      // Mark this zone as visited
+      visited.add(`${posKey}:${currentZone.id}`);
 
       // Find connected Costcos in neighboring tiles
       currentZone.segments.forEach((segment) => {

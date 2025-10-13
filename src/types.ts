@@ -16,10 +16,9 @@ export interface TileEdges {
 
 export interface CostcoSegment {
   id: string; // Unique identifier for this segment within the tile
-  segments: string[]; // List of directions and areas this segment covers
+  segments: (Direction | "center")[]; // List of directions and areas this segment covers
   hasPennant?: boolean; // Whether this segment has a pennant for bonus scoring
   shape?: "curved" | "straight" | "complex"; // Shape type for rendering
-  connections?: string[]; // Which other segments this connects to within the tile
 }
 
 export interface TileDefinition {

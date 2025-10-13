@@ -5,10 +5,19 @@ import { CostcoSegment } from "../types";
 import { Position } from "../types";
 
 // Tile rendering constants (same as TileRenderer)
-const ROAD_COLOR = "#8B4513"; // Brown for roads
-const COSTCO_COLOR = "#4169E1"; // Royal blue for Costco
-const MCDONALDS_COLOR = "#FFD700"; // Gold for McDonalds
-const FIELD_COLOR = "#90EE90"; // Light green for fields
+const ROAD_COLOR = "#8B4513";
+const FIELD_COLOR = "#90EE90";
+const COSTCO_COLOR = "#4169E1";
+const MCDONALDS_COLOR = "#FFD700";
+
+// Pennant rendering constants
+const PENNANT_SIZE_RATIO = 0.15;
+const PENNANT_GOLD_COLOR = "#FFD700";
+const PENNANT_ORANGE_COLOR = "#FFA500";
+
+// Positioning constants
+const QUARTER_POSITION = 0.25;
+const THREE_QUARTER_POSITION = 0.75;
 
 // Helper function to render a tile to a canvas context
 const renderTileToCanvas = (
@@ -241,28 +250,70 @@ const drawPennant = (
   size: number
 ) => {
   const center = size / 2;
-  const pennantSize = size * 0.15;
+  const pennantSize = size * PENNANT_SIZE_RATIO;
 
   // Find the best position for the pennant based on zone segments
+  // Calculate center position of the zone, then offset slightly
   let pennantX = center;
   let pennantY = center;
 
-  if (zone.segments.includes("north")) {
-    pennantY = size * 0.25;
-  }
-  if (zone.segments.includes("south")) {
-    pennantY = size * 0.75;
-  }
-  if (zone.segments.includes("east")) {
-    pennantX = size * 0.75;
-  }
-  if (zone.segments.includes("west")) {
-    pennantX = size * 0.25;
+  const directions = zone.segments.filter((s) => s !== "center");
+
+  if (directions.length === 0) {
+    // Center-only zone, keep center position
+  } else if (directions.length === 1) {
+    // Single direction - position pennant towards that edge
+    const direction = directions[0];
+    switch (direction) {
+      case "north":
+        pennantY = size * QUARTER_POSITION;
+        break;
+      case "south":
+        pennantY = size * THREE_QUARTER_POSITION;
+        break;
+      case "east":
+        pennantX = size * THREE_QUARTER_POSITION;
+        break;
+      case "west":
+        pennantX = size * QUARTER_POSITION;
+        break;
+    }
+  } else {
+    // Multiple directions - find the average position
+    let avgX = 0;
+    let avgY = 0;
+    let count = 0;
+
+    directions.forEach((direction) => {
+      switch (direction) {
+        case "north":
+          avgY += QUARTER_POSITION;
+          count++;
+          break;
+        case "south":
+          avgY += THREE_QUARTER_POSITION;
+          count++;
+          break;
+        case "east":
+          avgX += THREE_QUARTER_POSITION;
+          count++;
+          break;
+        case "west":
+          avgX += QUARTER_POSITION;
+          count++;
+          break;
+      }
+    });
+
+    if (count > 0) {
+      pennantX = avgX > 0 ? size * (avgX / count) : center;
+      pennantY = avgY > 0 ? size * (avgY / count) : center;
+    }
   }
 
   // Draw pennant as a small triangle flag
-  ctx.fillStyle = "#FFD700"; // Gold color for pennant
-  ctx.strokeStyle = "#FFA500";
+  ctx.fillStyle = PENNANT_GOLD_COLOR;
+  ctx.strokeStyle = PENNANT_ORANGE_COLOR;
   ctx.lineWidth = 1;
 
   ctx.beginPath();

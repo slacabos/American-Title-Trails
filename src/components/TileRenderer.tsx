@@ -88,9 +88,10 @@ const drawRoad = (
 
 const drawCostcoZone = (
   ctx: CanvasRenderingContext2D,
-  directions: string[],
+  zone: import("../types").CostcoSegment,
   size: number
 ) => {
+  const directions = zone.segments;
   ctx.fillStyle = COSTCO_COLOR;
   ctx.strokeStyle = "#1E90FF";
   ctx.lineWidth = 2;

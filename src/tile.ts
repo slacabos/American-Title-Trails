@@ -38,7 +38,6 @@ export class Tile {
       segments: [...zone.segments],
       hasPennant: zone.hasPennant,
       shape: zone.shape,
-      connections: zone.connections ? [...zone.connections] : undefined,
     }));
     this.isStart = isStart;
     this.orientation = 0;
@@ -67,12 +66,9 @@ export class Tile {
         id: zone.id,
         segments: zone.segments.map((segment) =>
           rotateDirection(segment, normalized)
-        ),
+        ) as (Direction | "center")[],
         hasPennant: zone.hasPennant,
         shape: zone.shape,
-        connections: zone.connections?.map((conn) =>
-          rotateDirection(conn, normalized)
-        ),
       }));
 
     const rotated = new Tile({

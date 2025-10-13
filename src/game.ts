@@ -324,24 +324,103 @@ export class Game {
   }
 
   private calculateFinalScores(): void {
-    // Score incomplete features
-    const claims = this.state.board.getFeatureClaims();
+    // Score incomplete features by finding all incomplete Costco features
+    this.scoreIncompleteCostcoFeatures();
 
+    // Score other incomplete features using simplified scoring
+    const claims = this.state.board.getFeatureClaims();
     claims.forEach((claim) => {
       const player = this.state.players.find((p) =>
         claim.players.includes(p.id)
       );
-      if (player) {
-        if (claim.type === "costco") {
-          // TODO: Implement proper incomplete Costco scoring with pennants
-          // For now, use simplified scoring: 1 point per tile + 1 point for pennant if present
-          player.score += 2; // Temporary simplified scoring
-        } else {
-          // Other features: simplified final scoring - 1 point per tile
-          player.score += 1;
-        }
+      if (player && claim.type !== "costco") {
+        // Other features: simplified final scoring - 1 point per tile
+        player.score += 1;
       }
     });
+  }
+
+  private scoreIncompleteCostcoFeatures(): void {
+    // Find all incomplete Costco features across the board
+    const allIncompleteFeatures = this.findAllIncompleteCostcoFeatures();
+
+    allIncompleteFeatures.forEach((feature) => {
+      // Create proper feature object for claimant lookup
+      const featureForClaimants = {
+        type: "costco" as const,
+        tiles: feature.tiles,
+        edges: feature.edges,
+        isComplete: false,
+        pennants: feature.pennants,
+      };
+
+      const claimants = (this.state.board as any).getFeatureClaimants(
+        featureForClaimants
+      );
+      if (claimants.length > 0) {
+        // Incomplete Costco scoring: 1 point per tile + 1 point per pennant
+        const tilePoints = feature.tiles.size;
+        const pennantPoints = feature.pennants;
+        const totalPoints = tilePoints + pennantPoints;
+
+        claimants.forEach((playerId: string) => {
+          const player = this.state.players.find((p) => p.id === playerId);
+          if (player) {
+            player.score += totalPoints;
+          }
+        });
+      }
+    });
+  }
+
+  private findAllIncompleteCostcoFeatures(): Array<{
+    tiles: Set<string>;
+    pennants: number;
+    edges: Set<string>;
+  }> {
+    const allFeatures: Array<{
+      tiles: Set<string>;
+      pennants: number;
+      edges: Set<string>;
+    }> = [];
+    const processedTiles = new Set<string>();
+
+    // Iterate through all tiles to find Costco features
+    (this.state.board as any).tiles.forEach(
+      (tileRecord: any, positionKey: string) => {
+        if (processedTiles.has(positionKey)) return;
+
+        const position = this.parsePositionKey(positionKey);
+        tileRecord.tile.costcoZones.forEach((zone: any) => {
+          const visited = new Set<string>();
+          const feature = (this.state.board as any).traceCostcoFeature(
+            position,
+            zone,
+            visited
+          );
+
+          // Only include if feature is incomplete
+          if (!(this.state.board as any).isCostcoComplete(feature)) {
+            // Mark all tiles in this feature as processed
+            feature.tiles.forEach((tileKey: string) =>
+              processedTiles.add(tileKey)
+            );
+            allFeatures.push({
+              tiles: feature.tiles,
+              pennants: feature.pennants || 0,
+              edges: feature.edges,
+            });
+          }
+        });
+      }
+    );
+
+    return allFeatures;
+  }
+
+  private parsePositionKey(key: string): { x: number; y: number } {
+    const [x, y] = key.split(",").map(Number);
+    return { x, y };
   }
 
   public processAITurn(): void {
