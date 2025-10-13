@@ -2,46 +2,46 @@
 
 ## 🎯 High Priority
 
-### 1. Costco Tile System Redesign (Critical)
+### 1. Costco Tile System Redesign (Critical) ✅ COMPLETED
 
-- [ ] Redesign Costco tiles to follow proper Carcassonne city mechanics instead of road-like connections:
-  - [ ] **Update tile definitions** to use complex city-like segments rather than simple edge-to-edge connections
-  - [ ] **Add multiple separate Costco areas** on single tiles (like cities can have multiple segments)
-  - [ ] **Implement curved boundaries** that don't follow straight edge patterns
-  - [ ] **Add pennant system** for bonus scoring (e.g., "Costco Plus" or "Gas Station" markers)
-  - [ ] **Create diverse tile varieties** matching original Carcassonne city tile complexity
-  - [ ] **Detailed Costco/City Area Behavior Requirements**:
-    - [ ] **Enclosure Rules**: Costco areas must form completely enclosed shopping districts (no open edges to fields)
-    - [ ] **Connection Logic**: Adjacent Costco edges automatically connect into larger shopping complexes
-    - [ ] **Separation Handling**: Multiple Costco segments on same tile remain separate unless explicitly connected
-    - [ ] **Curved Segments**: Costco areas can curve around tile corners (not limited to straight edge connections)
-    - [ ] **Peninsula Support**: Allow Costco segments that jut into field areas without connecting to edges
-    - [ ] **Bridge Connections**: Support Costco areas that span across field areas (like city bridges)
-    - [ ] **Size Validation**: Completed Costco areas must contain at least 2 tiles (prevent single-tile completion)
-    - [ ] **Edge Matching**: Costco edge segments must align properly with adjacent tiles' Costco segments
-    - [ ] **Field Boundaries**: Clear distinction between Costco commercial areas and surrounding field regions
-    - [ ] **Completion Detection**: Efficient algorithm to detect when Costco shopping districts are fully enclosed
-    - [ ] **Scoring Mechanics**:
+- [x] **COMPLETED**: Redesigned Costco tiles to follow proper Carcassonne city mechanics instead of road-like connections:
+  - [x] **Updated tile definitions** to use complex city-like segments rather than simple edge-to-edge connections
+  - [x] **Added multiple separate Costco areas** on single tiles (like cities can have multiple segments)
+  - [x] **Implemented curved boundaries** that don't follow straight edge patterns
+  - [x] **Added pennant system** for bonus scoring (e.g., "Gas Station" markers)
+  - [x] **Created diverse tile varieties** matching original Carcassonne city tile complexity
+  - [x] **Detailed Costco/City Area Behavior Requirements**:
+    - [x] **Enclosure Rules**: Costco areas must form completely enclosed shopping districts (no open edges to fields)
+    - [x] **Connection Logic**: Adjacent Costco edges automatically connect into larger shopping complexes
+    - [x] **Separation Handling**: Multiple Costco segments on same tile remain separate unless explicitly connected
+    - [x] **Curved Segments**: Costco areas can curve around tile corners (not limited to straight edge connections)
+    - [x] **Peninsula Support**: Allow Costco segments that jut into field areas without connecting to edges
+    - [x] **Bridge Connections**: Support Costco areas that span across field areas (like city bridges)
+    - [x] **Size Validation**: Completed Costco areas must contain at least 2 tiles (prevent single-tile completion)
+    - [x] **Edge Matching**: Costco edge segments must align properly with adjacent tiles' Costco segments
+    - [x] **Field Boundaries**: Clear distinction between Costco commercial areas and surrounding field regions
+    - [x] **Completion Detection**: Efficient algorithm to detect when Costco shopping districts are fully enclosed
+    - [x] **Scoring Mechanics**:
       - Complete Costco: 2 points per tile + 2 points per pennant
       - Incomplete Costco: 1 point per tile + 1 point per pennant (end game)
       - Shared ownership: Points divided among players with most followers in area
-- [ ] Update `costcoZones` data structure to support:
-  - [ ] Multiple separate Costco areas per tile
-  - [ ] Complex segment shapes and curves
-  - [ ] Pennant markers for bonus points
-- [ ] Redesign visual rendering in `BoardCanvas.tsx`:
-  - [ ] Draw curved Costco boundaries instead of rectangular zones
-  - [ ] Add visual pennant indicators
-  - [ ] Support multiple separate Costco areas per tile
-- [ ] Update completion logic in `board.ts`:
-  - [ ] Handle complex enclosed Costco areas properly
-  - [ ] Implement pennant bonus scoring
-  - [ ] Support multiple separate completable areas per tile
-- [ ] **Replace starter tile** with proper CRFR-style starting tile:
-  - [ ] Current starter tile is 4-way road crossroads (not standard Carcassonne)
-  - [ ] Create new starter tile with: single Costco edge, straight road parallel to that edge, field occupying remainder
-  - [ ] Follow tile notation describing features clockwise from north (e.g., C-R-F-R pattern)
-  - [ ] Update game initialization to use proper starter tile
+- [x] Updated `costcoZones` data structure to support:
+  - [x] Multiple separate Costco areas per tile
+  - [x] Complex segment shapes and curves
+  - [x] Pennant markers for bonus points
+- [x] Redesigned visual rendering in `BoardCanvas.tsx`:
+  - [x] Draw curved Costco boundaries instead of rectangular zones
+  - [x] Add visual pennant indicators
+  - [x] Support multiple separate Costco areas per tile
+- [x] Updated completion logic in `board.ts`:
+  - [x] Handle complex enclosed Costco areas properly
+  - [x] Implement pennant bonus scoring
+  - [x] Support multiple separate completable areas per tile
+- [x] **Replaced starter tile** with proper CRFR-style starting tile:
+  - [x] Current starter tile is 4-way road crossroads (not standard Carcassonne)
+  - [x] Create new starter tile with: single Costco edge, straight road parallel to that edge, field occupying remainder
+  - [x] Follow tile notation describing features clockwise from north (e.g., C-R-F-R pattern)
+  - [x] Update game initialization to use proper starter tile
 
 ### 2. Testing Infrastructure (Critical)
 

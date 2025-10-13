@@ -14,13 +14,21 @@ export interface TileEdges {
   west: TerrainType;
 }
 
+export interface CostcoSegment {
+  id: string; // Unique identifier for this segment within the tile
+  segments: string[]; // List of directions and areas this segment covers
+  hasPennant?: boolean; // Whether this segment has a pennant for bonus scoring
+  shape?: "curved" | "straight" | "complex"; // Shape type for rendering
+  connections?: string[]; // Which other segments this connects to within the tile
+}
+
 export interface TileDefinition {
   id: string;
   name: string;
   edges: TileEdges;
   center: TerrainType;
   roadConnections: string[][];
-  costcoZones: string[][];
+  costcoZones: CostcoSegment[]; // Changed from string[][] to support complex areas
   isStart?: boolean;
 }
 

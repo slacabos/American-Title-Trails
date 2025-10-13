@@ -1,5 +1,11 @@
 import { DIRECTIONS, rotateDirection } from "./directions";
-import { Direction, TileDefinition, TileEdges, TerrainType } from "./types";
+import {
+  Direction,
+  TileDefinition,
+  TileEdges,
+  TerrainType,
+  CostcoSegment,
+} from "./types";
 
 const directionIndex = (direction: Direction): number =>
   DIRECTIONS.indexOf(direction);
@@ -9,7 +15,7 @@ export class Tile {
   public readonly name: string;
   public readonly center: TerrainType;
   public readonly roadConnections: string[][];
-  public readonly costcoZones: string[][];
+  public readonly costcoZones: CostcoSegment[];
   public readonly isStart: boolean;
   public readonly orientation: number;
   private readonly edges: TerrainType[];
@@ -27,7 +33,13 @@ export class Tile {
     this.name = name;
     this.center = center;
     this.roadConnections = roadConnections.map((connection) => [...connection]);
-    this.costcoZones = costcoZones.map((zone) => [...zone]);
+    this.costcoZones = costcoZones.map((zone) => ({
+      id: zone.id,
+      segments: [...zone.segments],
+      hasPennant: zone.hasPennant,
+      shape: zone.shape,
+      connections: zone.connections ? [...zone.connections] : undefined,
+    }));
     this.isStart = isStart;
     this.orientation = 0;
 
@@ -50,6 +62,19 @@ export class Tile {
         items.map((item) => rotateDirection(item, normalized))
       );
 
+    const rotateCostcoZones = (zones: CostcoSegment[]): CostcoSegment[] =>
+      zones.map((zone) => ({
+        id: zone.id,
+        segments: zone.segments.map((segment) =>
+          rotateDirection(segment, normalized)
+        ),
+        hasPennant: zone.hasPennant,
+        shape: zone.shape,
+        connections: zone.connections?.map((conn) =>
+          rotateDirection(conn, normalized)
+        ),
+      }));
+
     const rotated = new Tile({
       id: this.id,
       name: this.name,
@@ -61,7 +86,7 @@ export class Tile {
       } as TileEdges,
       center: this.center,
       roadConnections: rotateCollection(this.roadConnections),
-      costcoZones: rotateCollection(this.costcoZones),
+      costcoZones: rotateCostcoZones(this.costcoZones),
       isStart: this.isStart,
     });
 

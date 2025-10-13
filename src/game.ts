@@ -332,8 +332,14 @@ export class Game {
         claim.players.includes(p.id)
       );
       if (player) {
-        // Simplified final scoring - incomplete features score 1 point per tile
-        player.score += 1;
+        if (claim.type === "costco") {
+          // TODO: Implement proper incomplete Costco scoring with pennants
+          // For now, use simplified scoring: 1 point per tile + 1 point for pennant if present
+          player.score += 2; // Temporary simplified scoring
+        } else {
+          // Other features: simplified final scoring - 1 point per tile
+          player.score += 1;
+        }
       }
     });
   }

@@ -3,18 +3,20 @@ import { TileDefinition } from "./types";
 
 const TILE_LIBRARY: TileDefinition[] = [
   {
-    id: "starter-crossroads",
-    name: "Route 66 Crossroads",
+    id: "starter-proper",
+    name: "Costco Plaza Entrance",
     isStart: true,
-    edges: { north: "road", east: "road", south: "road", west: "road" },
-    center: "road",
-    roadConnections: [
-      ["north", "center"],
-      ["east", "center"],
-      ["south", "center"],
-      ["west", "center"],
+    edges: { north: "costco", east: "road", south: "field", west: "road" },
+    center: "field",
+    roadConnections: [["east", "west"]],
+    costcoZones: [
+      {
+        id: "plaza",
+        segments: ["north"],
+        hasPennant: false,
+        shape: "straight",
+      },
     ],
-    costcoZones: [],
   },
   {
     id: "straight-road",
@@ -54,35 +56,63 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "costco-straight",
-    name: "Costco Logistics Row",
+    name: "Costco Shopping Strip",
     edges: { north: "costco", east: "field", south: "costco", west: "field" },
     center: "costco",
     roadConnections: [],
-    costcoZones: [["north", "south", "center"]],
+    costcoZones: [
+      {
+        id: "shopping-strip",
+        segments: ["north", "south", "center"],
+        hasPennant: false,
+        shape: "straight",
+      },
+    ],
   },
   {
     id: "costco-corner",
-    name: "Costco Distribution Corner",
+    name: "Costco Plaza Corner",
     edges: { north: "costco", east: "costco", south: "field", west: "field" },
     center: "costco",
     roadConnections: [],
-    costcoZones: [["north", "east", "center"]],
+    costcoZones: [
+      {
+        id: "plaza-corner",
+        segments: ["north", "east", "center"],
+        hasPennant: false,
+        shape: "curved",
+      },
+    ],
   },
   {
     id: "costco-road",
-    name: "Costco Exit Ramp",
+    name: "Costco with Gas Station",
     edges: { north: "costco", east: "costco", south: "road", west: "field" },
     center: "mixed",
     roadConnections: [["south", "center"]],
-    costcoZones: [["north", "east", "center"]],
+    costcoZones: [
+      {
+        id: "main-plaza",
+        segments: ["north", "east", "center"],
+        hasPennant: true,
+        shape: "curved",
+      },
+    ],
   },
   {
     id: "costco-cap",
-    name: "Costco Cul-de-sac",
+    name: "Costco Store Front",
     edges: { north: "costco", east: "field", south: "field", west: "field" },
     center: "costco",
     roadConnections: [],
-    costcoZones: [["north", "center"]],
+    costcoZones: [
+      {
+        id: "store-front",
+        segments: ["north", "center"],
+        hasPennant: false,
+        shape: "straight",
+      },
+    ],
   },
   {
     id: "mcdonalds-abbey",
@@ -94,20 +124,111 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "road-costco-split",
-    name: "Downtown Complex",
+    name: "Downtown Shopping District",
     edges: { north: "costco", east: "road", south: "road", west: "costco" },
     center: "mixed",
     roadConnections: [["east", "south", "center"]],
     costcoZones: [
-      ["north", "center"],
-      ["west", "center"],
+      {
+        id: "north-plaza",
+        segments: ["north"],
+        hasPennant: false,
+        shape: "straight",
+      },
+      {
+        id: "west-plaza",
+        segments: ["west"],
+        hasPennant: false,
+        shape: "straight",
+      },
+    ],
+  },
+  {
+    id: "costco-complex-l",
+    name: "Costco Supermarket Complex",
+    edges: { north: "costco", east: "costco", south: "costco", west: "field" },
+    center: "costco",
+    roadConnections: [],
+    costcoZones: [
+      {
+        id: "main-complex",
+        segments: ["north", "east", "south", "center"],
+        hasPennant: true,
+        shape: "complex",
+      },
+    ],
+  },
+  {
+    id: "costco-peninsula",
+    name: "Costco Business Park",
+    edges: { north: "field", east: "costco", south: "field", west: "field" },
+    center: "costco",
+    roadConnections: [],
+    costcoZones: [
+      {
+        id: "business-park",
+        segments: ["east", "center"],
+        hasPennant: false,
+        shape: "straight",
+      },
+    ],
+  },
+  {
+    id: "costco-separate-dual",
+    name: "Dual Costco Outlets",
+    edges: { north: "costco", east: "field", south: "costco", west: "field" },
+    center: "field",
+    roadConnections: [],
+    costcoZones: [
+      {
+        id: "north-outlet",
+        segments: ["north"],
+        hasPennant: false,
+        shape: "straight",
+      },
+      {
+        id: "south-outlet",
+        segments: ["south"],
+        hasPennant: false,
+        shape: "straight",
+      },
+    ],
+  },
+  {
+    id: "costco-mega-complex",
+    name: "Costco Mega Shopping Plaza",
+    edges: { north: "costco", east: "costco", south: "costco", west: "costco" },
+    center: "costco",
+    roadConnections: [],
+    costcoZones: [
+      {
+        id: "mega-plaza",
+        segments: ["north", "east", "south", "west", "center"],
+        hasPennant: true,
+        shape: "complex",
+      },
+    ],
+  },
+  {
+    id: "costco-bridge",
+    name: "Costco Shopping Bridge",
+    edges: { north: "field", east: "costco", south: "field", west: "costco" },
+    center: "costco",
+    roadConnections: [],
+    costcoZones: [
+      {
+        id: "shopping-bridge",
+        segments: ["east", "west", "center"],
+        hasPennant: false,
+        shape: "complex",
+      },
     ],
   },
 ];
 
 // Add quantity property for deck building
 const TILE_QUANTITIES: Record<string, number> = {
-  "starter-crossroads": 1,
+  "starter-proper": 1,
   "straight-road": 6,
   "curve-road": 6,
   "road-end": 5,
@@ -118,6 +239,11 @@ const TILE_QUANTITIES: Record<string, number> = {
   "costco-cap": 2,
   "mcdonalds-abbey": 4,
   "road-costco-split": 3,
+  "costco-complex-l": 2,
+  "costco-peninsula": 3,
+  "costco-separate-dual": 2,
+  "costco-mega-complex": 1,
+  "costco-bridge": 2,
 };
 
 export const buildDeck = (): Tile[] => {

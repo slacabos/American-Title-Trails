@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Board } from "../board";
 import { Tile } from "../tile";
+import { CostcoSegment } from "../types";
 import { Position } from "../types";
 
 // Tile rendering constants (same as TileRenderer)
@@ -86,18 +87,42 @@ const drawRoad = (
 
 const drawCostcoZone = (
   ctx: CanvasRenderingContext2D,
-  directions: string[],
+  zone: CostcoSegment,
   size: number
 ) => {
-  const center = size / 2;
-  const quarter = size / 4;
-
   ctx.fillStyle = COSTCO_COLOR;
   ctx.strokeStyle = "#1E40AF";
   ctx.lineWidth = 1;
 
-  // Simple Costco zone representation
+  // Draw based on zone shape and segments
   ctx.beginPath();
+
+  if (zone.shape === "curved") {
+    drawCurvedCostcoZone(ctx, zone, size);
+  } else if (zone.shape === "complex") {
+    drawComplexCostcoZone(ctx, zone, size);
+  } else {
+    // Default straight shape
+    drawStraightCostcoZone(ctx, zone, size);
+  }
+
+  ctx.fill();
+  ctx.stroke();
+
+  // Draw pennant if present
+  if (zone.hasPennant) {
+    drawPennant(ctx, zone, size);
+  }
+};
+
+const drawStraightCostcoZone = (
+  ctx: CanvasRenderingContext2D,
+  zone: CostcoSegment,
+  size: number
+) => {
+  const center = size / 2;
+  const quarter = size / 4;
+  const directions = zone.segments;
 
   if (directions.includes("north") && directions.includes("east")) {
     // Northeast quadrant
@@ -125,8 +150,126 @@ const drawCostcoZone = (
     if (directions.includes("west")) {
       ctx.rect(0, quarter, quarter, center);
     }
+    if (directions.includes("center")) {
+      ctx.rect(quarter, quarter, center, center);
+    }
+  }
+};
+
+const drawCurvedCostcoZone = (
+  ctx: CanvasRenderingContext2D,
+  zone: CostcoSegment,
+  size: number
+) => {
+  const center = size / 2;
+  const directions = zone.segments;
+
+  // Create curved boundaries for corner connections
+  if (directions.includes("north") && directions.includes("east")) {
+    // Curved northeast corner
+    ctx.moveTo(center, 0);
+    ctx.quadraticCurveTo(size, 0, size, center);
+    ctx.lineTo(center, center);
+    ctx.closePath();
+  } else if (directions.includes("north") && directions.includes("west")) {
+    // Curved northwest corner
+    ctx.moveTo(0, center);
+    ctx.quadraticCurveTo(0, 0, center, 0);
+    ctx.lineTo(center, center);
+    ctx.closePath();
+  } else if (directions.includes("south") && directions.includes("east")) {
+    // Curved southeast corner
+    ctx.moveTo(size, center);
+    ctx.quadraticCurveTo(size, size, center, size);
+    ctx.lineTo(center, center);
+    ctx.closePath();
+  } else if (directions.includes("south") && directions.includes("west")) {
+    // Curved southwest corner
+    ctx.moveTo(center, size);
+    ctx.quadraticCurveTo(0, size, 0, center);
+    ctx.lineTo(center, center);
+    ctx.closePath();
+  }
+};
+
+const drawComplexCostcoZone = (
+  ctx: CanvasRenderingContext2D,
+  zone: CostcoSegment,
+  size: number
+) => {
+  const center = size / 2;
+  const quarter = size / 4;
+  const directions = zone.segments;
+
+  // Complex shape covering multiple areas
+  if (directions.includes("center")) {
+    ctx.rect(quarter, quarter, center, center);
   }
 
+  // Add connecting areas
+  directions.forEach((direction) => {
+    switch (direction) {
+      case "north":
+        ctx.rect(quarter, 0, center, quarter + center / 4);
+        break;
+      case "south":
+        ctx.rect(
+          quarter,
+          size - quarter - center / 4,
+          center,
+          quarter + center / 4
+        );
+        break;
+      case "east":
+        ctx.rect(
+          size - quarter - center / 4,
+          quarter,
+          quarter + center / 4,
+          center
+        );
+        break;
+      case "west":
+        ctx.rect(0, quarter, quarter + center / 4, center);
+        break;
+    }
+  });
+};
+
+const drawPennant = (
+  ctx: CanvasRenderingContext2D,
+  zone: CostcoSegment,
+  size: number
+) => {
+  const center = size / 2;
+  const pennantSize = size * 0.15;
+
+  // Find the best position for the pennant based on zone segments
+  let pennantX = center;
+  let pennantY = center;
+
+  if (zone.segments.includes("north")) {
+    pennantY = size * 0.25;
+  }
+  if (zone.segments.includes("south")) {
+    pennantY = size * 0.75;
+  }
+  if (zone.segments.includes("east")) {
+    pennantX = size * 0.75;
+  }
+  if (zone.segments.includes("west")) {
+    pennantX = size * 0.25;
+  }
+
+  // Draw pennant as a small triangle flag
+  ctx.fillStyle = "#FFD700"; // Gold color for pennant
+  ctx.strokeStyle = "#FFA500";
+  ctx.lineWidth = 1;
+
+  ctx.beginPath();
+  ctx.moveTo(pennantX - pennantSize / 2, pennantY - pennantSize / 2);
+  ctx.lineTo(pennantX + pennantSize / 2, pennantY);
+  ctx.lineTo(pennantX - pennantSize / 2, pennantY + pennantSize / 2);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
 };

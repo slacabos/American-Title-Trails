@@ -6,6 +6,7 @@ import {
   FeatureClaim,
   Direction,
   TerrainType,
+  CostcoSegment,
 } from "./types";
 import { Tile } from "./tile";
 
@@ -31,6 +32,7 @@ interface Feature {
   tiles: Set<string>;
   edges: Set<string>;
   isComplete: boolean;
+  pennants?: number; // Track pennants for Costco areas
 }
 
 interface CompletedFeature extends Feature {
@@ -177,11 +179,14 @@ export class Board {
     costcoFeatures.forEach((feature) => {
       if (this.isCostcoComplete(feature)) {
         const claimedBy = this.getFeatureClaimants(feature);
+        // Complete Costco: 2 points per tile + 2 points per pennant
+        const basePoints = feature.tiles.size * 2;
+        const pennantPoints = (feature.pennants || 0) * 2;
         completed.push({
           ...feature,
           isComplete: true,
           claimedBy,
-          points: feature.tiles.size * 2,
+          points: basePoints + pennantPoints,
         });
       }
     });
@@ -295,7 +300,7 @@ export class Board {
 
     // Check each Costco zone on the placed tile
     startTile.costcoZones.forEach((zone) => {
-      const featureKey = `${positionKey(startPosition)}:${zone.join(",")}`;
+      const featureKey = `${positionKey(startPosition)}:${zone.id}`;
       if (visited.has(featureKey)) return;
 
       const feature = this.traceCostcoFeature(startPosition, zone, visited);
@@ -309,7 +314,7 @@ export class Board {
 
   private traceCostcoFeature(
     startPosition: Position,
-    zone: string[],
+    zone: CostcoSegment,
     visited: Set<string>
   ): Feature {
     const feature: Feature = {
@@ -317,14 +322,15 @@ export class Board {
       tiles: new Set(),
       edges: new Set(),
       isComplete: false,
+      pennants: 0,
     };
 
-    const queue: Array<{ position: Position; segments: string[] }> = [
-      { position: startPosition, segments: zone },
+    const queue: Array<{ position: Position; zone: CostcoSegment }> = [
+      { position: startPosition, zone },
     ];
 
     while (queue.length > 0) {
-      const { position, segments } = queue.shift()!;
+      const { position, zone: currentZone } = queue.shift()!;
       const posKey = positionKey(position);
 
       if (feature.tiles.has(posKey)) continue;
@@ -333,27 +339,37 @@ export class Board {
       const tile = this.getTile(position)?.tile;
       if (!tile) continue;
 
+      // Count pennants
+      if (currentZone.hasPennant) {
+        feature.pennants = (feature.pennants || 0) + 1;
+      }
+
       // Add Costco segments to edges
-      segments.forEach((segment) => {
+      currentZone.segments.forEach((segment) => {
         feature.edges.add(`${posKey}:${segment}`);
-        visited.add(`${posKey}:${segment}`);
+        visited.add(`${posKey}:${currentZone.id}`);
       });
 
       // Find connected Costcos in neighboring tiles
-      DIRECTIONS.forEach((direction) => {
-        if (!segments.includes(direction)) return;
+      currentZone.segments.forEach((segment) => {
+        if (!DIRECTIONS.includes(segment as Direction)) return;
 
+        const direction = segment as Direction;
         const neighborPos = addDelta(position, direction);
         const neighbor = this.getTile(neighborPos);
         if (!neighbor) return;
 
         const oppositeDir = OPPOSITE[direction];
         const neighborCostcos = neighbor.tile.costcoZones.filter(
-          (zone: string[]) => zone.includes(oppositeDir)
+          (neighborZone: CostcoSegment) =>
+            neighborZone.segments.includes(oppositeDir)
         );
 
-        neighborCostcos.forEach((costcoZone: string[]) => {
-          queue.push({ position: neighborPos, segments: costcoZone });
+        neighborCostcos.forEach((costcoZone: CostcoSegment) => {
+          const neighborKey = `${positionKey(neighborPos)}:${costcoZone.id}`;
+          if (!visited.has(neighborKey)) {
+            queue.push({ position: neighborPos, zone: costcoZone });
+          }
         });
       });
     }
@@ -415,12 +431,14 @@ export class Board {
 
         const oppositeDir = OPPOSITE[segment as Direction];
         const hasConnectingCostco = neighbor.tile.costcoZones.some(
-          (zone: string[]) => zone.includes(oppositeDir)
+          (zone: CostcoSegment) => zone.segments.includes(oppositeDir)
         );
         if (!hasConnectingCostco) return false; // Open edge to non-Costco
       }
     }
-    return true;
+
+    // Additional requirement: Costco areas must contain at least 2 tiles
+    return feature.tiles.size >= 2;
   }
 
   private isMcDonaldsComplete(position: Position): boolean {
