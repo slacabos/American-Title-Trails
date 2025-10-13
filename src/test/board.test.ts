@@ -34,7 +34,12 @@ describe("Board", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "field", east: "field", south: "costco", west: "field" },
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco",
+          west: "field",
+        },
         center: "field",
         roadConnections: [],
         costcoZones: [],
@@ -73,7 +78,12 @@ describe("Board", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "field", east: "field", south: "costco", west: "field" },
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco",
+          west: "field",
+        },
         center: "field",
         roadConnections: [],
         costcoZones: [],
@@ -128,7 +138,12 @@ describe("Board", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "field", east: "field", south: "costco", west: "field" },
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco",
+          west: "field",
+        },
         center: "field",
         roadConnections: [["north"]],
         costcoZones: [],
@@ -151,7 +166,12 @@ describe("Board", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "field", east: "field", south: "costco", west: "field" },
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco",
+          west: "field",
+        },
         center: "field",
         roadConnections: [["north"]],
         costcoZones: [],
