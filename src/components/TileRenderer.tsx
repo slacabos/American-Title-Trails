@@ -31,7 +31,7 @@ const drawRoad = (
   const center = size / 2;
 
   ctx.fillStyle = ROAD_COLOR;
-  ctx.strokeStyle = "#654321";
+  ctx.strokeStyle = ROAD_COLOR;
   ctx.lineWidth = 1;
 
   const getConnectionPoint = (direction: string) => {
@@ -251,6 +251,21 @@ const drawCurve = (
   ctx.stroke();
 };
 
+const drawCenterRoad = (ctx: CanvasRenderingContext2D, size: number) => {
+  const center = size / 2;
+  const roadRadius = size * 0.15; // Smaller center road area so connections are visible
+
+  ctx.fillStyle = ROAD_COLOR;
+  ctx.strokeStyle = ROAD_COLOR;
+  ctx.lineWidth = 1;
+
+  // Draw center road as a circle
+  ctx.beginPath();
+  ctx.arc(center, center, roadRadius, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.stroke();
+};
+
 const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
   const center = size / 2;
   const radius = size * 0.15;
@@ -333,7 +348,19 @@ export const TileRenderer: React.FC<TileRendererProps> = ({
       // Draw curves for curved road tiles
       drawCurves(ctx, size, tile);
     } else {
-      // Draw straight roads for non-curved tiles
+      // Draw straight roads for non-curved tiles (including cloverleaf)
+      tile.roadConnections.forEach((connection) => {
+        for (let i = 0; i < connection.length - 1; i++) {
+          drawRoad(ctx, connection[i], connection[i + 1], size);
+        }
+      });
+    }
+
+    // For cloverleaf tiles (center is road), draw center road first, then draw roads on top
+    if (tile.center === "road") {
+      drawCenterRoad(ctx, size);
+
+      // Redraw road connections on top of center road for cloverleaf visibility
       tile.roadConnections.forEach((connection) => {
         for (let i = 0; i < connection.length - 1; i++) {
           drawRoad(ctx, connection[i], connection[i + 1], size);
@@ -346,7 +373,7 @@ export const TileRenderer: React.FC<TileRendererProps> = ({
       drawCostcoZone(ctx, zone, size);
     });
 
-    // Draw McDonalds
+    // Draw other center features (road is handled above)
     if (tile.center === "mcdonalds") {
       drawMcDonalds(ctx, size);
     }
