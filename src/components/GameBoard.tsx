@@ -13,6 +13,7 @@ interface GameBoardProps {
 
 const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const [game, setGame] = useState<Game | null>(null);
+  // TODO: Replace 'any' with proper GameState interface from src/types.ts
   const [gameState, setGameState] = useState<any>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
