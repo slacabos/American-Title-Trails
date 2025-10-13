@@ -1,182 +1,184 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { Tile } from '../tile';
-import { TileDefinition } from '../types';
+import { describe, it, expect, beforeEach } from "vitest";
+import { Tile } from "../tile";
+import { TileDefinition } from "../types";
 
-describe('Tile', () => {
+describe("Tile", () => {
   let basicTile: Tile;
   let roadTile: Tile;
   let costcoTile: Tile;
 
   beforeEach(() => {
     basicTile = new Tile({
-      id: 'basic',
-      name: 'Basic Field',
-      edges: { north: 'field', east: 'field', south: 'field', west: 'field' },
-      center: 'field',
+      id: "basic",
+      name: "Basic Field",
+      edges: { north: "field", east: "field", south: "field", west: "field" },
+      center: "field",
       roadConnections: [],
-      costcoZones: []
+      costcoZones: [],
     } as TileDefinition);
 
     roadTile = new Tile({
-      id: 'road',
-      name: 'Straight Road',
-      edges: { north: 'road', east: 'field', south: 'road', west: 'field' },
-      center: 'field',
-      roadConnections: [['north', 'south']],
-      costcoZones: []
+      id: "road",
+      name: "Straight Road",
+      edges: { north: "road", east: "field", south: "road", west: "field" },
+      center: "field",
+      roadConnections: [["north", "south"]],
+      costcoZones: [],
     } as TileDefinition);
 
     costcoTile = new Tile({
-      id: 'costco',
-      name: 'Costco Tile',
-      edges: { north: 'costco', east: 'field', south: 'field', west: 'costco' },
-      center: 'field',
+      id: "costco",
+      name: "Costco Tile",
+      edges: { north: "costco", east: "field", south: "field", west: "costco" },
+      center: "field",
       roadConnections: [],
-      costcoZones: [{
-        id: 'costco1',
-        segments: ['north', 'west'],
-        hasPennant: true
-      }]
+      costcoZones: [
+        {
+          id: "costco1",
+          segments: ["north", "west"],
+          hasPennant: true,
+        },
+      ],
     } as TileDefinition);
   });
 
-  describe('constructor', () => {
-    it('should create a tile with correct properties', () => {
-      expect(basicTile.id).toBe('basic');
-      expect(basicTile.name).toBe('Basic Field');
-      expect(basicTile.center).toBe('field');
+  describe("constructor", () => {
+    it("should create a tile with correct properties", () => {
+      expect(basicTile.id).toBe("basic");
+      expect(basicTile.name).toBe("Basic Field");
+      expect(basicTile.center).toBe("field");
       expect(basicTile.orientation).toBe(0);
       expect(basicTile.isStart).toBe(false);
     });
 
-    it('should handle optional properties', () => {
+    it("should handle optional properties", () => {
       const minimalTile = new Tile({
-        id: 'minimal',
-        name: 'Minimal',
-        edges: { north: 'field', east: 'field', south: 'field', west: 'field' }
+        id: "minimal",
+        name: "Minimal",
+        edges: { north: "field", east: "field", south: "field", west: "field" },
       } as TileDefinition);
 
-      expect(minimalTile.center).toBe('field');
+      expect(minimalTile.center).toBe("field");
       expect(minimalTile.roadConnections).toEqual([]);
       expect(minimalTile.costcoZones).toEqual([]);
       expect(minimalTile.isStart).toBe(false);
     });
   });
 
-  describe('edgeAt', () => {
-    it('should return correct edge terrain for each direction', () => {
-      expect(roadTile.edgeAt('north')).toBe('road');
-      expect(roadTile.edgeAt('east')).toBe('field');
-      expect(roadTile.edgeAt('south')).toBe('road');
-      expect(roadTile.edgeAt('west')).toBe('field');
+  describe("edgeAt", () => {
+    it("should return correct edge terrain for each direction", () => {
+      expect(roadTile.edgeAt("north")).toBe("road");
+      expect(roadTile.edgeAt("east")).toBe("field");
+      expect(roadTile.edgeAt("south")).toBe("road");
+      expect(roadTile.edgeAt("west")).toBe("field");
     });
   });
 
-  describe('rotate', () => {
-    it('should return same tile when rotating 0 times', () => {
+  describe("rotate", () => {
+    it("should return same tile when rotating 0 times", () => {
       const rotated = basicTile.rotate(0);
       expect(rotated).toEqual(basicTile);
       expect(rotated.orientation).toBe(0);
     });
 
-    it('should rotate edges correctly 90 degrees clockwise', () => {
+    it("should rotate edges correctly 90 degrees clockwise", () => {
       const rotated = roadTile.rotate(1);
-      
-      expect(rotated.edgeAt('north')).toBe('field'); // was west
-      expect(rotated.edgeAt('east')).toBe('road'); // was north
-      expect(rotated.edgeAt('south')).toBe('field'); // was east
-      expect(rotated.edgeAt('west')).toBe('road'); // was south
+
+      expect(rotated.edgeAt("north")).toBe("field"); // was west
+      expect(rotated.edgeAt("east")).toBe("road"); // was north
+      expect(rotated.edgeAt("south")).toBe("field"); // was east
+      expect(rotated.edgeAt("west")).toBe("road"); // was south
       expect(rotated.orientation).toBe(1);
     });
 
-    it('should rotate edges correctly 180 degrees', () => {
+    it("should rotate edges correctly 180 degrees", () => {
       const rotated = roadTile.rotate(2);
-      
-      expect(rotated.edgeAt('north')).toBe('road'); // was south
-      expect(rotated.edgeAt('east')).toBe('field'); // was west
-      expect(rotated.edgeAt('south')).toBe('road'); // was north
-      expect(rotated.edgeAt('west')).toBe('field'); // was east
+
+      expect(rotated.edgeAt("north")).toBe("road"); // was south
+      expect(rotated.edgeAt("east")).toBe("field"); // was west
+      expect(rotated.edgeAt("south")).toBe("road"); // was north
+      expect(rotated.edgeAt("west")).toBe("field"); // was east
       expect(rotated.orientation).toBe(2);
     });
 
-    it('should rotate edges correctly 270 degrees clockwise', () => {
+    it("should rotate edges correctly 270 degrees clockwise", () => {
       const rotated = roadTile.rotate(3);
-      
-      expect(rotated.edgeAt('north')).toBe('field'); // was east
-      expect(rotated.edgeAt('east')).toBe('road'); // was south
-      expect(rotated.edgeAt('south')).toBe('field'); // was west
-      expect(rotated.edgeAt('west')).toBe('road'); // was north
+
+      expect(rotated.edgeAt("north")).toBe("field"); // was east
+      expect(rotated.edgeAt("east")).toBe("road"); // was south
+      expect(rotated.edgeAt("south")).toBe("field"); // was west
+      expect(rotated.edgeAt("west")).toBe("road"); // was north
       expect(rotated.orientation).toBe(3);
     });
 
-    it('should handle full rotation (4 times = 360 degrees)', () => {
+    it("should handle full rotation (4 times = 360 degrees)", () => {
       const rotated = roadTile.rotate(4);
-      
-      expect(rotated.edgeAt('north')).toBe(roadTile.edgeAt('north'));
-      expect(rotated.edgeAt('east')).toBe(roadTile.edgeAt('east'));
-      expect(rotated.edgeAt('south')).toBe(roadTile.edgeAt('south'));
-      expect(rotated.edgeAt('west')).toBe(roadTile.edgeAt('west'));
+
+      expect(rotated.edgeAt("north")).toBe(roadTile.edgeAt("north"));
+      expect(rotated.edgeAt("east")).toBe(roadTile.edgeAt("east"));
+      expect(rotated.edgeAt("south")).toBe(roadTile.edgeAt("south"));
+      expect(rotated.edgeAt("west")).toBe(roadTile.edgeAt("west"));
       expect(rotated.orientation).toBe(0); // Should wrap around
     });
 
-    it('should rotate road connections correctly', () => {
+    it("should rotate road connections correctly", () => {
       const original = new Tile({
-        id: 'corner-road',
-        name: 'Corner Road',
-        edges: { north: 'road', east: 'road', south: 'field', west: 'field' },
-        center: 'field',
-        roadConnections: [['north', 'east']],
-        costcoZones: []
+        id: "corner-road",
+        name: "Corner Road",
+        edges: { north: "road", east: "road", south: "field", west: "field" },
+        center: "field",
+        roadConnections: [["north", "east"]],
+        costcoZones: [],
       } as TileDefinition);
 
       const rotated = original.rotate(1);
-      
+
       // After 90-degree rotation, north->east, east->south
-      expect(rotated.roadConnections).toContainEqual(['east', 'south']);
+      expect(rotated.roadConnections).toContainEqual(["east", "south"]);
     });
 
-    it('should rotate costco zones correctly', () => {
+    it("should rotate costco zones correctly", () => {
       const rotated = costcoTile.rotate(1);
-      
+
       // north->east, west->north after 90-degree rotation
       const rotatedZone = rotated.costcoZones[0];
-      expect(rotatedZone.segments).toContain('east'); // was north
-      expect(rotatedZone.segments).toContain('north'); // was west
+      expect(rotatedZone.segments).toContain("east"); // was north
+      expect(rotatedZone.segments).toContain("north"); // was west
       expect(rotatedZone.hasPennant).toBe(true); // Should preserve other properties
     });
 
-    it('should handle negative rotations', () => {
+    it("should handle negative rotations", () => {
       const rotated = roadTile.rotate(-1); // Counter-clockwise
-      
-      expect(rotated.edgeAt('north')).toBe('field'); // was east
-      expect(rotated.edgeAt('east')).toBe('road'); // was south
-      expect(rotated.edgeAt('south')).toBe('field'); // was west
-      expect(rotated.edgeAt('west')).toBe('road'); // was north
+
+      expect(rotated.edgeAt("north")).toBe("field"); // was east
+      expect(rotated.edgeAt("east")).toBe("road"); // was south
+      expect(rotated.edgeAt("south")).toBe("field"); // was west
+      expect(rotated.edgeAt("west")).toBe("road"); // was north
     });
 
-    it('should not modify original tile when rotating', () => {
-      const originalNorth = roadTile.edgeAt('north');
+    it("should not modify original tile when rotating", () => {
+      const originalNorth = roadTile.edgeAt("north");
       const originalOrientation = roadTile.orientation;
-      
+
       roadTile.rotate(1);
-      
+
       // Original tile should be unchanged
-      expect(roadTile.edgeAt('north')).toBe(originalNorth);
+      expect(roadTile.edgeAt("north")).toBe(originalNorth);
       expect(roadTile.orientation).toBe(originalOrientation);
     });
   });
 
-  describe('clone', () => {
-    it('should create an exact copy of the tile', () => {
+  describe("clone", () => {
+    it("should create an exact copy of the tile", () => {
       const cloned = roadTile.clone();
-      
+
       expect(cloned).toEqual(roadTile);
       expect(cloned).not.toBe(roadTile); // Should be different objects
     });
 
-    it('should clone all properties including complex ones', () => {
+    it("should clone all properties including complex ones", () => {
       const cloned = costcoTile.clone();
-      
+
       expect(cloned.id).toBe(costcoTile.id);
       expect(cloned.name).toBe(costcoTile.name);
       expect(cloned.center).toBe(costcoTile.center);
@@ -185,33 +187,35 @@ describe('Tile', () => {
       expect(cloned.orientation).toBe(costcoTile.orientation);
     });
 
-    it('should not share references with original', () => {
+    it("should not share references with original", () => {
       const tileWithArrays = new Tile({
-        id: 'complex',
-        name: 'Complex',
-        edges: { north: 'road', east: 'field', south: 'road', west: 'field' },
-        center: 'field',
-        roadConnections: [['north', 'south']],
-        costcoZones: [{
-          id: 'zone1',
-          segments: ['north'],
-          hasPennant: false
-        }]
+        id: "complex",
+        name: "Complex",
+        edges: { north: "road", east: "field", south: "road", west: "field" },
+        center: "field",
+        roadConnections: [["north", "south"]],
+        costcoZones: [
+          {
+            id: "zone1",
+            segments: ["north"],
+            hasPennant: false,
+          },
+        ],
       } as TileDefinition);
-      
+
       const cloned = tileWithArrays.clone();
-      
+
       // Modifying cloned arrays shouldn't affect original
       expect(cloned.roadConnections).not.toBe(tileWithArrays.roadConnections);
       expect(cloned.costcoZones).not.toBe(tileWithArrays.costcoZones);
     });
   });
 
-  describe('toString', () => {
-    it('should return a string representation of the tile', () => {
+  describe("toString", () => {
+    it("should return a string representation of the tile", () => {
       const str = roadTile.toString();
-      expect(str).toContain('road');
-      expect(str).toContain('Straight Road');
+      expect(str).toContain("road");
+      expect(str).toContain("Straight Road");
     });
   });
 });
