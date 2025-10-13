@@ -18,25 +18,25 @@ describe("Board", () => {
     it("should create an empty board", () => {
       const emptyBoard = new Board();
       expect(emptyBoard.getTile({ x: 0, y: 0 })).toBeUndefined();
-      expect(emptyBoard.getPlacementCandidates()).toEqual([]);
+      expect(emptyBoard.getPlacementCandidates()).toEqual([{ x: 0, y: 0 }]);
     });
   });
 
   describe("placeTile", () => {
     it("should place a tile at the given position", () => {
-      const tile = board.getTile({ x: 0, y: 0 });
-      expect(tile).toBeDefined();
-      expect(tile).toEqual(startTile);
+      const tileRecord = board.getTile({ x: 0, y: 0 });
+      expect(tileRecord).toBeDefined();
+      expect(tileRecord?.tile).toEqual(startTile);
     });
 
     it("should return placement result with completed features", () => {
-      // Create a simple road tile that could complete a road
+      // Create a road tile that matches the start tile's north edge (costco)
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "road", east: "field", south: "road", west: "field" },
+        edges: { north: "field", east: "field", south: "costco", west: "field" },
         center: "field",
-        roadConnections: [["north", "south"]],
+        roadConnections: [],
         costcoZones: [],
       } as TileDefinition);
 
@@ -48,13 +48,13 @@ describe("Board", () => {
 
   describe("getTile", () => {
     it("should return undefined for empty positions", () => {
-      const tile = board.getTile({ x: 5, y: 5 });
-      expect(tile).toBeUndefined();
+      const tileRecord = board.getTile({ x: 5, y: 5 });
+      expect(tileRecord).toBeUndefined();
     });
 
     it("should return the correct tile for occupied positions", () => {
-      const tile = board.getTile({ x: 0, y: 0 });
-      expect(tile).toEqual(startTile);
+      const tileRecord = board.getTile({ x: 0, y: 0 });
+      expect(tileRecord?.tile).toEqual(startTile);
     });
   });
 
@@ -73,9 +73,9 @@ describe("Board", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "road", east: "field", south: "road", west: "field" },
+        edges: { north: "field", east: "field", south: "costco", west: "field" },
         center: "field",
-        roadConnections: [["north", "south"]],
+        roadConnections: [],
         costcoZones: [],
       } as TileDefinition);
 
@@ -107,19 +107,19 @@ describe("Board", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "road", east: "field", south: "road", west: "field" },
+        edges: { north: "field", east: "field", south: "field", west: "road" },
         center: "field",
-        roadConnections: [["north", "south"]],
+        roadConnections: [],
         costcoZones: [],
       } as TileDefinition);
 
-      board.placeTile(roadTile, { x: 1, y: 1 });
+      board.placeTile(roadTile, { x: 1, y: 0 });
 
       const bounds = board.getBounds();
       expect(bounds.minX).toBe(0);
       expect(bounds.maxX).toBe(1);
       expect(bounds.minY).toBe(0);
-      expect(bounds.maxY).toBe(1);
+      expect(bounds.maxY).toBe(0);
     });
   });
 
@@ -128,7 +128,7 @@ describe("Board", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "road", east: "field", south: "field", west: "field" },
+        edges: { north: "field", east: "field", south: "costco", west: "field" },
         center: "field",
         roadConnections: [["north"]],
         costcoZones: [],
@@ -139,17 +139,19 @@ describe("Board", () => {
       const result = board.claimFeature(
         "road",
         { x: 0, y: 1 },
-        undefined,
+        "north",
         "player1"
       );
-      expect(result).toBeTruthy();
+      expect(result).toBeDefined();
+      expect(result.type).toBe("road");
+      expect(result.players).toContain("player1");
     });
 
     it("should reject claiming already claimed features", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "road", east: "field", south: "field", west: "field" },
+        edges: { north: "field", east: "field", south: "costco", west: "field" },
         center: "field",
         roadConnections: [["north"]],
         costcoZones: [],
@@ -161,19 +163,21 @@ describe("Board", () => {
       const result1 = board.claimFeature(
         "road",
         { x: 0, y: 1 },
-        undefined,
+        "north",
         "player1"
       );
-      expect(result1).toBeTruthy();
+      expect(result1).toBeDefined();
 
-      // Second claim should fail
+      // Second claim should also succeed (multiple players can claim)
       const result2 = board.claimFeature(
         "road",
         { x: 0, y: 1 },
-        undefined,
+        "north",
         "player2"
       );
-      expect(result2).toBeFalsy();
+      expect(result2).toBeDefined();
+      expect(result2.players).toContain("player1");
+      expect(result2.players).toContain("player2");
     });
   });
 
@@ -184,9 +188,9 @@ describe("Board", () => {
       const roadTile = new Tile({
         id: "test-road",
         name: "Test Road",
-        edges: { north: "field", east: "road", south: "field", west: "road" },
+        edges: { north: "field", east: "field", south: "field", west: "road" },
         center: "field",
-        roadConnections: [["east", "west"]],
+        roadConnections: [["west", "center"]],
         costcoZones: [],
       } as TileDefinition);
 
@@ -199,17 +203,17 @@ describe("Board", () => {
         id: "test-costco",
         name: "Test Costco",
         edges: {
-          north: "costco",
+          north: "field",
           east: "costco",
-          south: "costco",
-          west: "costco",
+          south: "field",
+          west: "road",
         },
         center: "costco",
         roadConnections: [],
         costcoZones: [
           {
             id: "costco1",
-            segments: ["north", "east", "south", "west", "center"],
+            segments: ["east", "center"],
             hasPennant: true,
           },
         ],

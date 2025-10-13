@@ -485,15 +485,16 @@ export class Board {
     const existingClaim = this.featureClaims.get(edge);
     if (existingClaim) {
       existingClaim.players.push(playerId);
+      return { edge, type, players: existingClaim.players };
     } else {
-      this.featureClaims.set(edge, {
+      const newClaim = {
         edge,
         type,
         players: [playerId],
-      });
+      };
+      this.featureClaims.set(edge, newClaim);
+      return { edge, type, players: [playerId] };
     }
-
-    return { edge, type, players: [playerId] };
   }
 
   getFeatureClaims(): FeatureClaim[] {
