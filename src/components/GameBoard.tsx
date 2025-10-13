@@ -17,7 +17,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const [logs, setLogs] = useState<string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [claimableFeatures, setClaimableFeatures] = useState<
-    Array<{ type: TerrainType; identifier?: string }>
+    Array<{ type: TerrainType; identifier?: string; displayName?: string }>
   >([]);
 
   // Initialize game
@@ -184,7 +184,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
                   className="bg-btn-secondary hover:bg-btn-secondary-hover text-game-text font-game text-xxs"
                 >
                   Claim {feature.type}
-                  {feature.identifier && ` (${feature.identifier})`}
+                  {feature.displayName && ` (${feature.displayName})`}
                 </Button>
               ))}
               <Button

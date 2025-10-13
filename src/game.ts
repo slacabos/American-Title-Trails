@@ -213,17 +213,48 @@ export class Game {
 
   private getClaimableFeatures(
     tile: Tile
-  ): Array<{ type: TerrainType; identifier?: string }> {
+  ): Array<{ type: TerrainType; identifier?: string; displayName?: string }> {
     const claimable: Array<{ type: TerrainType; identifier?: string }> = [];
 
-    // Check road connections
-    tile.roadConnections.forEach((_connection, index) => {
-      claimable.push({ type: "road", identifier: `road_${index}` });
+    // Check road connections with descriptive labels
+    tile.roadConnections.forEach((connection, index) => {
+      // Create a readable description of the road connection
+      const directions = connection
+        .filter((dir) => dir !== "center") // Remove "center" for cleaner display
+        .map((dir) => dir.charAt(0).toUpperCase() + dir.slice(1)) // Capitalize
+        .join("-");
+
+      // If no directions (only center), use the directions that have roads on edges
+      let label = directions;
+      if (!label) {
+        const roadEdges = ["north", "east", "south", "west"]
+          .filter((dir) => tile.edgeAt(dir as any) === "road")
+          .map((dir) => dir.charAt(0).toUpperCase() + dir.slice(1))
+          .join("-");
+        label = roadEdges || "Center";
+      }
+
+      claimable.push({
+        type: "road",
+        identifier: `road_${index}`,
+        displayName: label,
+      });
     });
 
-    // Check Costco zones
-    tile.costcoZones.forEach((_zone, index) => {
-      claimable.push({ type: "costco", identifier: `costco_${index}` });
+    // Check Costco zones with descriptive labels
+    tile.costcoZones.forEach((zone, index) => {
+      const directions = zone.segments
+        .filter((segment) => segment !== "center")
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join("-");
+
+      const label = directions || "Center";
+
+      claimable.push({
+        type: "costco",
+        identifier: `costco_${index}`,
+        displayName: label,
+      });
     });
 
     // Check McDonalds
@@ -237,6 +268,7 @@ export class Game {
   public getClaimableFeaturesForCurrentTurn(): Array<{
     type: TerrainType;
     identifier?: string;
+    displayName?: string;
   }> {
     if (this.state.phase !== GamePhase.CLAIM_FEATURE) {
       return [];
