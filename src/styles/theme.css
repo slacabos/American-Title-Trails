@@ -1,0 +1,100 @@
+/* Central theme variables and font-face
+   Moved from src/index.css to keep tokens in one place.
+   Keep this file as the single CSS source-of-truth for CSS variables. */
+
+:root {
+  color-scheme: dark;
+  font-family: "Press Start 2P", "VT323", "Courier New", monospace;
+  --radius: 0.625rem;
+  /* Colors kept in sync with src/theme/colors.ts */
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --primary: #f8fafc;
+  --primary-foreground: #0f172a;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #f8fafc;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #cbd5e1;
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ef4444;
+
+  /* Game specific colors (kept in sync with src/theme/colors.ts) */
+  --game-road: #8B4513;
+  --game-costco: #4169E1;
+  --game-mcdonalds: #FFD700;
+  --game-field: #90EE90;
+  /* UI gradients and accents */
+  --gradient-start-top: #43aa8b;
+  --gradient-start-bottom: #277da1;
+  --gradient-help-top: #457b9d;
+  --gradient-help-bottom: #1d3557;
+  --gradient-help-hover-top: #6c9bd1;
+  --gradient-help-hover-bottom: #2d4a6b;
+  --gradient-accent-top: #56c4a3;
+  --gradient-accent-bottom: #309fc9;
+  --tile-border: #457b9d;
+  --tile-bg: #1d3557;
+  --panel-bg: rgba(13, 27, 42, 0.85);
+  --panel-bg-strong: rgba(13, 27, 42, 0.9);
+  --muted-bg: rgba(29, 53, 87, 0.3);
+  --player-setup-bg: rgba(241, 250, 238, 0.1);
+  --input-overlay: rgba(13, 27, 42, 0.8);
+  --overlay-dark: rgba(13, 27, 42, 0.85);
+}
+
+@font-face {
+  font-family: "Press Start 2P";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Press Start 2P"),
+    url("https://fonts.gstatic.com/s/pressstart2p/v11/e3t4euO8T-267oIAQAu6jDQyK3nF43pq.woff2")
+      format("woff2");
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
