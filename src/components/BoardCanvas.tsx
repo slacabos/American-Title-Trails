@@ -26,8 +26,30 @@ const INITIAL_SCALE = 1;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 4;
 const GRID_COLOR = "#ddd";
-const VALID_PLACEMENT_COLOR = "rgba(0, 255, 0, 0.3)";
-const HOVER_COLOR = "rgba(0, 0, 255, 0.2)";
+// Helper to read CSS variable and return an rgba() string with given alpha
+const getCssVarRgba = (varName: string, alpha = 1) => {
+  if (typeof window === 'undefined') return `rgba(0,0,0,${alpha})`;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  if (!value) return `rgba(0,0,0,${alpha})`;
+  // If value is hex like #rrggbb
+  if (value.startsWith('#')) {
+    const hex = value.replace('#', '');
+    const bigint = parseInt(hex, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  // If already rgb/rgba, just inject alpha when possible
+  if (value.startsWith('rgb')) {
+    const nums = value.replace(/rgba?\(|\)/g, '').split(',').map(s => s.trim());
+    return `rgba(${nums[0]}, ${nums[1]}, ${nums[2]}, ${alpha})`;
+  }
+  return `rgba(0,0,0,${alpha})`;
+};
+
+const VALID_PLACEMENT_COLOR = getCssVarRgba('--game-costco', 0.25);
+const HOVER_COLOR = getCssVarRgba('--game-road', 0.2);
 
 export const BoardCanvas: React.FC<BoardCanvasProps> = ({
   board,
@@ -365,12 +387,12 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
           position: "absolute",
           top: 10,
           right: 10,
-          background: "rgba(13, 27, 42, 0.9)",
-          color: "#f1faee",
+          background: "var(--popover)",
+          color: "var(--foreground)",
           padding: "8px",
           borderRadius: "4px",
           fontSize: "12px",
-          border: "1px solid rgba(69, 123, 157, 0.5)",
+          border: `1px solid var(--tile-border)`,
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
         }}
       >

@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import theme from "@/theme/colors";
 import { Tile } from "../tile";
 import { renderTileToCanvas, TILE_SIZE } from "../lib/tileRendering";
 
@@ -44,7 +45,8 @@ export const TileRenderer: React.FC<TileRendererProps> = ({
 
     // Add preview overlay if needed
     if (showPreview) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+      const rgb = theme.hexToRgb(theme.UI.foreground);
+      ctx.fillStyle = `rgba(${rgb}, 0.3)`;
       ctx.fillRect(0, 0, size, size);
     }
 

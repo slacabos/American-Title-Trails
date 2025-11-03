@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import {
   Select,
+  SelectGroup,
   SelectTrigger,
   SelectContent,
   SelectItem,
@@ -25,10 +26,12 @@ export const Default: Story = {
         <SelectValue placeholder="Choose" />
       </SelectTrigger>
       <SelectContent>
-        <SelectLabel>Options</SelectLabel>
-        <SelectItem value="one">One</SelectItem>
-        <SelectSeparator />
-        <SelectItem value="two">Two</SelectItem>
+        <SelectGroup>
+          <SelectLabel>Options</SelectLabel>
+          <SelectItem value="one">One</SelectItem>
+          <SelectSeparator />
+          <SelectItem value="two">Two</SelectItem>
+        </SelectGroup>
       </SelectContent>
     </Select>
   ),

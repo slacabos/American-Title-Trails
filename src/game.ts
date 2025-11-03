@@ -74,8 +74,10 @@ export class Game {
   }
 
   private getDefaultColor(index: number): string {
-    const colors = ["#FF0000", "#0000FF", "#00FF00", "#FFFF00", "#FF00FF"];
-    return colors[index % colors.length];
+    // Use central palette for default player colors
+    // Import dynamically to avoid circular imports at module load time
+    const { PALETTE } = require("./theme/colors");
+    return PALETTE[index % PALETTE.length];
   }
 
   public setStateChangeListener(callback: (state: GameState) => void): void {

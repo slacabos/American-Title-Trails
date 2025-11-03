@@ -6,6 +6,7 @@
   color-scheme: dark;
   font-family: "Press Start 2P", "VT323", "Courier New", monospace;
   --radius: 0.625rem;
+  /* Colors kept in sync with src/theme/colors.ts */
   --background: #0f172a;
   --foreground: #f8fafc;
   --card: #0f172a;
@@ -30,6 +31,29 @@
   --chart-3: #f59e0b;
   --chart-4: #8b5cf6;
   --chart-5: #ef4444;
+
+  /* Game specific colors (kept in sync with src/theme/colors.ts) */
+  --game-road: #8B4513;
+  --game-costco: #4169E1;
+  --game-mcdonalds: #FFD700;
+  --game-field: #90EE90;
+  /* UI gradients and accents */
+  --gradient-start-top: #43aa8b;
+  --gradient-start-bottom: #277da1;
+  --gradient-help-top: #457b9d;
+  --gradient-help-bottom: #1d3557;
+  --gradient-help-hover-top: #6c9bd1;
+  --gradient-help-hover-bottom: #2d4a6b;
+  --gradient-accent-top: #56c4a3;
+  --gradient-accent-bottom: #309fc9;
+  --tile-border: #457b9d;
+  --tile-bg: #1d3557;
+  --panel-bg: rgba(13, 27, 42, 0.85);
+  --panel-bg-strong: rgba(13, 27, 42, 0.9);
+  --muted-bg: rgba(29, 53, 87, 0.3);
+  --player-setup-bg: rgba(241, 250, 238, 0.1);
+  --input-overlay: rgba(13, 27, 42, 0.8);
+  --overlay-dark: rgba(13, 27, 42, 0.85);
 }
 
 @font-face {
@@ -43,7 +67,7 @@
 
 body {
   margin: 0;
-  background: radial-gradient(circle at top, #1d3557 0%, #0b132b 70%);
+  background: radial-gradient(circle at top, var(--gradient-help-top) 0%, var(--gradient-bottom, #0b132b) 70%);
   color: #f1faee;
   display: flex;
   justify-content: center;
@@ -60,7 +84,7 @@ body {
 
 .board-panel {
   position: relative;
-  background: rgba(13, 27, 42, 0.85);
+  background: var(--panel-bg);
   border-radius: 16px;
   padding: 1rem;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
@@ -89,7 +113,7 @@ canvas {
 }
 
 .sidebar {
-  background: rgba(13, 27, 42, 0.85);
+  background: var(--panel-bg);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
@@ -147,7 +171,7 @@ canvas {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: rgba(241, 250, 238, 0.1);
+  background: var(--player-setup-bg);
   padding: 0.5rem;
   border-radius: 8px;
 }
@@ -160,7 +184,8 @@ canvas {
 .player-setup input[type="text"] {
   flex: 1;
   background: rgba(13, 27, 42, 0.8);
-  border: 1px solid #457b9d;
+  background: var(--input-overlay);
+  border: 1px solid var(--tile-border);
   border-radius: 4px;
   color: #f1faee;
   padding: 0.25rem 0.5rem;
@@ -170,7 +195,7 @@ canvas {
 
 .player-setup select {
   background: rgba(13, 27, 42, 0.8);
-  border: 1px solid #457b9d;
+  border: 1px solid var(--tile-border);
   border-radius: 4px;
   color: #f1faee;
   padding: 0.25rem;
@@ -182,12 +207,12 @@ canvas {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 2px solid #f1faee;
+  border: 2px solid var(--foreground);
   display: inline-block;
 }
 
 .start-button {
-  background: linear-gradient(135deg, #43aa8b 0%, #277da1 100%);
+  background: linear-gradient(135deg, var(--gradient-start-top) 0%, var(--gradient-start-bottom) 100%);
   border: none;
   border-radius: 8px;
   color: #f1faee;
@@ -210,7 +235,7 @@ canvas {
 }
 
 .help-button {
-  background: linear-gradient(135deg, #457b9d 0%, #1d3557 100%);
+  background: linear-gradient(135deg, var(--gradient-help-top) 0%, var(--gradient-help-bottom) 100%);
   border: none;
   border-radius: 8px;
   color: #f1faee;
@@ -224,7 +249,7 @@ canvas {
 }
 
 .help-button:hover {
-  background: linear-gradient(135deg, #6c9bd1 0%, #2d4a6b 100%);
+  background: linear-gradient(135deg, var(--gradient-help-hover-top) 0%, var(--gradient-help-hover-bottom) 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
@@ -244,9 +269,9 @@ canvas {
   gap: 0.75rem;
 }
 
-.tile-preview canvas {
-  border: 2px solid #457b9d;
-  background: #1d3557;
+tile-preview canvas {
+  border: 2px solid var(--tile-border);
+  background: var(--tile-bg);
 }
 
 .tile-details {
@@ -264,7 +289,7 @@ canvas {
 }
 
 .rotate-button {
-  background: linear-gradient(135deg, #43aa8b 0%, #277da1 100%);
+  background: linear-gradient(135deg, var(--gradient-start-top) 0%, var(--gradient-start-bottom) 100%);
   border: none;
   border-radius: 6px;
   color: #f1faee;
@@ -277,7 +302,7 @@ canvas {
 }
 
 .rotate-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #56c4a3 0%, #309fc9 100%);
+  background: linear-gradient(135deg, var(--gradient-accent-top) 0%, var(--gradient-accent-bottom) 100%);
   transform: translateY(-1px);
 }
 
@@ -315,7 +340,7 @@ canvas {
 }
 
 button {
-  background: linear-gradient(135deg, #457b9d 0%, #1d3557 100%);
+  background: linear-gradient(135deg, var(--gradient-help-top) 0%, var(--gradient-help-bottom) 100%);
   border: none;
   border-radius: 6px;
   color: #f1faee;
@@ -327,7 +352,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #6c9bd1 0%, #2d4a6b 100%);
+  background: linear-gradient(135deg, var(--gradient-help-hover-top) 0%, var(--gradient-help-hover-bottom) 100%);
   transform: translateY(-1px);
 }
 

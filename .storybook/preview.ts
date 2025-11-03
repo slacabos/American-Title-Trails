@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react-vite'
 import '../src/index.css'
+import theme from '../src/theme/colors'
 
 const preview: Preview = {
   parameters: {
@@ -38,27 +39,27 @@ const preview: Preview = {
     docs: {
       theme: {
         base: 'light',
-        colorPrimary: '#4169E1',
-        colorSecondary: '#8B4513',
-        
+        colorPrimary: theme.GAME.costco,
+        colorSecondary: theme.GAME.road,
+
         // UI
-        appBg: '#f9fafb',
-        appContentBg: '#ffffff',
-        appBorderColor: '#e5e7eb',
-        
+        appBg: theme.UI.foreground,
+        appContentBg: theme.UI.cardForeground,
+        appBorderColor: theme.UI.border,
+
         // Text colors
-        textColor: '#1f2937',
-        textInverseColor: '#ffffff',
-        
+        textColor: theme.UI.secondary,
+        textInverseColor: theme.UI.foreground,
+
         // Toolbar default and active colors
         barTextColor: '#6b7280',
-        barSelectedColor: '#4169E1',
-        barBg: '#ffffff',
-        
+        barSelectedColor: theme.GAME.costco,
+        barBg: theme.UI.cardForeground,
+
         // Form colors
-        inputBg: '#ffffff',
-        inputBorder: '#d1d5db',
-        inputTextColor: '#1f2937',
+        inputBg: theme.UI.cardForeground,
+        inputBorder: theme.UI.border,
+        inputTextColor: theme.UI.secondary,
       },
     },
   },

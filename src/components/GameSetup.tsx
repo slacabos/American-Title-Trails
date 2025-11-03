@@ -16,7 +16,8 @@ interface GameSetupProps {
   onStartGame: (players: PlayerDefinition[]) => void;
 }
 
-const palette = ["#ff595e", "#1982c4", "#ffca3a", "#6a4c93", "#43aa8b"];
+import theme from "@/theme/colors";
+const palette = theme.PALETTE;
 
 const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
   const [playerCount, setPlayerCount] = useState(3);

@@ -1,12 +1,13 @@
 import { Tile } from "../tile";
 import { CostcoSegment } from "../types";
+import theme from "@/theme/colors";
 
 // Tile rendering constants
 export const TILE_SIZE = 64; // Base tile size in pixels
-export const ROAD_COLOR = "#8B4513"; // Brown for roads
-export const COSTCO_COLOR = "#4169E1"; // Royal blue for Costco
-export const MCDONALDS_COLOR = "#FFD700"; // Gold for McDonalds
-export const FIELD_COLOR = "#90EE90"; // Light green for fields
+export const ROAD_COLOR = theme.GAME.road; // Brown for roads
+export const COSTCO_COLOR = theme.GAME.costco; // Royal blue for Costco
+export const MCDONALDS_COLOR = theme.GAME.mcdonalds; // Gold for McDonalds
+export const FIELD_COLOR = theme.GAME.field; // Light green for fields
 
 /**
  * Main function to render a tile to a canvas context
@@ -21,7 +22,7 @@ export const renderTileToCanvas = (
   ctx.fillRect(0, 0, size, size);
 
   // Add a subtle border
-  ctx.strokeStyle = "#333";
+  ctx.strokeStyle = theme.UI.stroke; // neutral dark border from theme
   ctx.lineWidth = 1;
   ctx.strokeRect(0, 0, size, size);
 
@@ -56,7 +57,7 @@ const drawRoad = (
   const center = size / 2;
 
   ctx.fillStyle = ROAD_COLOR;
-  ctx.strokeStyle = "#654321";
+  ctx.strokeStyle = theme.UI.roadOutline; // outline for road from theme
   ctx.lineWidth = 1;
 
   const getConnectionPoint = (direction: string) => {
@@ -169,7 +170,7 @@ const drawCostcoZone = (
   size: number
 ) => {
   ctx.fillStyle = COSTCO_COLOR;
-  ctx.strokeStyle = "#1E40AF";
+  ctx.strokeStyle = theme.UI.costcoOutline; // strong blue outline for Costco
   ctx.lineWidth = 1;
 
   // Draw based on zone shape and segments
@@ -351,8 +352,8 @@ const drawPennant = (
   }
 
   // Draw pennant as a small triangle flag
-  ctx.fillStyle = "#FFD700"; // Gold color for pennant
-  ctx.strokeStyle = "#FFA500";
+  ctx.fillStyle = theme.GAME.mcdonalds; // Gold color for pennant
+  ctx.strokeStyle = theme.UI.pennantStroke;
   ctx.lineWidth = 1;
 
   ctx.beginPath();
@@ -371,8 +372,8 @@ const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
   const center = size / 2;
   const radius = size * 0.15;
 
-  ctx.fillStyle = MCDONALDS_COLOR;
-  ctx.strokeStyle = "#DAA520";
+  ctx.fillStyle = theme.GAME.mcdonalds;
+  ctx.strokeStyle = theme.UI.mcdonaldsStroke;
   ctx.lineWidth = 2;
 
   // Draw McDonalds as a star/special symbol
@@ -382,7 +383,7 @@ const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
   ctx.stroke();
 
   // Add "M" text
-  ctx.fillStyle = "#B8860B";
+  ctx.fillStyle = theme.UI.mcdonaldsText;
   ctx.font = `bold ${size * 0.2}px Arial`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
