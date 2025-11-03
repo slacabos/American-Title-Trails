@@ -77,24 +77,84 @@ const drawRoad = (
   const start = getConnectionPoint(from);
   const end = getConnectionPoint(to);
 
-  // Determine if road is horizontal or vertical
+  // Determine if road is horizontal, vertical, or curved
   const isHorizontal = start.y === end.y;
+  const isVertical = start.x === end.x;
+  const isCurved = !isHorizontal && !isVertical;
   
-  // Draw road between connection points
-  ctx.beginPath();
-  if (isHorizontal) {
-    // Horizontal road: apply width in Y direction
-    ctx.moveTo(start.x, start.y - roadWidth / 2);
-    ctx.lineTo(end.x, end.y - roadWidth / 2);
-    ctx.lineTo(end.x, end.y + roadWidth / 2);
-    ctx.lineTo(start.x, start.y + roadWidth / 2);
+  if (isCurved) {
+    // Draw curved road using arc
+    drawCurvedRoad(ctx, from, to, roadWidth, size);
   } else {
-    // Vertical road: apply width in X direction
-    ctx.moveTo(start.x - roadWidth / 2, start.y);
-    ctx.lineTo(end.x - roadWidth / 2, end.y);
-    ctx.lineTo(end.x + roadWidth / 2, end.y);
-    ctx.lineTo(start.x + roadWidth / 2, start.y);
+    // Draw straight road
+    ctx.beginPath();
+    if (isHorizontal) {
+      // Horizontal road: apply width in Y direction
+      ctx.moveTo(start.x, start.y - roadWidth / 2);
+      ctx.lineTo(end.x, end.y - roadWidth / 2);
+      ctx.lineTo(end.x, end.y + roadWidth / 2);
+      ctx.lineTo(start.x, start.y + roadWidth / 2);
+    } else {
+      // Vertical road: apply width in X direction
+      ctx.moveTo(start.x - roadWidth / 2, start.y);
+      ctx.lineTo(end.x - roadWidth / 2, end.y);
+      ctx.lineTo(end.x + roadWidth / 2, end.y);
+      ctx.lineTo(start.x + roadWidth / 2, start.y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   }
+};
+
+/**
+ * Draw a curved road segment
+ */
+const drawCurvedRoad = (
+  ctx: CanvasRenderingContext2D,
+  from: string,
+  to: string,
+  roadWidth: number,
+  size: number
+) => {
+  // Determine curve corner and direction
+  let cornerX = 0;
+  let cornerY = 0;
+  let startAngle = 0;
+  let endAngle = 0;
+  
+  // Determine which corner the curve goes around
+  if ((from === 'north' && to === 'east') || (from === 'east' && to === 'north')) {
+    cornerX = size;
+    cornerY = 0;
+    startAngle = Math.PI; // 180°
+    endAngle = Math.PI / 2; // 90°
+  } else if ((from === 'north' && to === 'west') || (from === 'west' && to === 'north')) {
+    cornerX = 0;
+    cornerY = 0;
+    startAngle = 0; // 0°
+    endAngle = Math.PI / 2; // 90°
+  } else if ((from === 'south' && to === 'east') || (from === 'east' && to === 'south')) {
+    cornerX = size;
+    cornerY = size;
+    startAngle = Math.PI; // 180°
+    endAngle = 3 * Math.PI / 2; // 270°
+  } else if ((from === 'south' && to === 'west') || (from === 'west' && to === 'south')) {
+    cornerX = 0;
+    cornerY = size;
+    startAngle = 0; // 0°
+    endAngle = 3 * Math.PI / 2; // 270°
+  }
+  
+  // The radius should reach from corner to center of edge (where roads connect)
+  const center = size / 2;
+  const outerRadius = center + roadWidth / 2;
+  const innerRadius = center - roadWidth / 2;
+  
+  // Draw the curved road as an arc segment
+  ctx.beginPath();
+  ctx.arc(cornerX, cornerY, outerRadius, startAngle, endAngle, true);
+  ctx.arc(cornerX, cornerY, innerRadius, endAngle, startAngle, false);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
