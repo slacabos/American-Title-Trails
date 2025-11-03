@@ -278,7 +278,6 @@ describe('GameSetup Component', () => {
 
   describe('Edge Cases', () => {
     it('should handle rapid player count changes', async () => {
-      const user = userEvent.setup();
       render(<GameSetup onStartGame={onStartGame} />);
       
       // Initial player inputs

@@ -297,7 +297,8 @@ export class Game {
     // For now, we'll need to track this. In a more sophisticated implementation,
     // we'd maintain a history of moves.
     // This is a simplified approach - in practice you'd track the last placement
-    const boardTiles = Array.from(this.state.board.tiles.values());
+    const board = this.state.board as Board;
+    const boardTiles = Array.from(board.tiles.values());
     if (boardTiles.length > 0) {
       return boardTiles[boardTiles.length - 1].position;
     }
