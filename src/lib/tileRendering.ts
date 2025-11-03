@@ -77,12 +77,24 @@ const drawRoad = (
   const start = getConnectionPoint(from);
   const end = getConnectionPoint(to);
 
+  // Determine if road is horizontal or vertical
+  const isHorizontal = start.y === end.y;
+  
   // Draw road between connection points
   ctx.beginPath();
-  ctx.moveTo(start.x - roadWidth / 2, start.y);
-  ctx.lineTo(end.x - roadWidth / 2, end.y);
-  ctx.lineTo(end.x + roadWidth / 2, end.y);
-  ctx.lineTo(start.x + roadWidth / 2, start.y);
+  if (isHorizontal) {
+    // Horizontal road: apply width in Y direction
+    ctx.moveTo(start.x, start.y - roadWidth / 2);
+    ctx.lineTo(end.x, end.y - roadWidth / 2);
+    ctx.lineTo(end.x, end.y + roadWidth / 2);
+    ctx.lineTo(start.x, start.y + roadWidth / 2);
+  } else {
+    // Vertical road: apply width in X direction
+    ctx.moveTo(start.x - roadWidth / 2, start.y);
+    ctx.lineTo(end.x - roadWidth / 2, end.y);
+    ctx.lineTo(end.x + roadWidth / 2, end.y);
+    ctx.lineTo(start.x + roadWidth / 2, start.y);
+  }
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
