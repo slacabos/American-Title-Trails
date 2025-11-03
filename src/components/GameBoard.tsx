@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { PlayerDefinition, Position, TerrainType, GameState } from "../types";
+import { PlayerDefinition, Position, GameState, ClaimableFeature } from "../types";
 import { Game, GamePhase } from "../game";
 import BoardCanvas from "./BoardCanvas";
 import TileRenderer from "./TileRenderer";
@@ -16,9 +16,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
-  const [claimableFeatures, setClaimableFeatures] = useState<
-    Array<{ type: TerrainType; identifier?: string }>
-  >([]);
+  const [claimableFeatures, setClaimableFeatures] = useState<ClaimableFeature[]>([]);
 
   // Initialize game
   useEffect(() => {
@@ -66,30 +64,14 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     setLogs((prev) => [`${timestamp} — ${message}`, ...prev.slice(0, 19)]);
   }, []);
 
-  const updateClaimableFeatures = (_gameInstance: Game, state: GameState | null) => {
-    if (!state || state.phase !== GamePhase.CLAIM_FEATURE || !state.currentTile) {
+  const updateClaimableFeatures = (gameInstance: Game, state: GameState | null) => {
+    if (!state || state.phase !== GamePhase.CLAIM_FEATURE) {
       setClaimableFeatures([]);
       return;
     }
 
-    // Get features that can be claimed on the last placed tile
-    const features: Array<{ type: TerrainType; identifier?: string }> = [];
-
-    // Check road connections
-    state.currentTile.roadConnections.forEach((_: any, index: number) => {
-      features.push({ type: "road", identifier: `road_${index}` });
-    });
-
-    // Check Costco zones
-    state.currentTile.costcoZones.forEach((_: any, index: number) => {
-      features.push({ type: "costco", identifier: `costco_${index}` });
-    });
-
-    // Check McDonalds
-    if (state.currentTile.center === "mcdonalds") {
-      features.push({ type: "mcdonalds" });
-    }
-
+    // Use the game's method to get claimable features
+    const features = gameInstance.getClaimableFeatures();
     setClaimableFeatures(features);
   };
 
@@ -118,15 +100,16 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     }
   };
 
-  const handleClaimFeature = (type: TerrainType, identifier?: string) => {
+  const handleClaimFeature = (feature: ClaimableFeature) => {
     if (!game || !gameState) return;
 
-    const success = game.claimFeature(type, identifier);
+    const success = game.claimFeature(feature.type, feature.identifier);
     if (success) {
+      const featureName = feature.label || feature.type;
       addLog(
         `${
           gameState.players[gameState.currentPlayerIndex].name
-        } claimed ${type}${identifier ? ` (${identifier})` : ""}`
+        } claimed ${featureName}`
       );
     } else {
       addLog("Failed to claim feature");
@@ -182,27 +165,54 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
               {gameState.players[gameState.currentPlayerIndex]?.followers || 0}{" "}
               followers remaining.
             </p>
-            <div className="feature-buttons">
-              {claimableFeatures.map((feature, index) => (
+            {gameState.players[gameState.currentPlayerIndex]?.followers > 0 ? (
+              claimableFeatures.length > 0 ? (
+                <div className="feature-buttons">
+                  {claimableFeatures.map((feature, index) => (
+                    <Button
+                      key={index}
+                      onClick={() => handleClaimFeature(feature)}
+                      className={`feature-button feature-${feature.type} bg-blue-600 hover:bg-blue-700 text-white`}
+                    >
+                      {feature.label || `Claim ${feature.type}`}
+                    </Button>
+                  ))}
+                  <Button
+                    onClick={handleSkipClaim}
+                    variant="outline"
+                    className="skip-button"
+                  >
+                    Skip Claiming
+                  </Button>
+                </div>
+              ) : (
+                <div className="feature-buttons">
+                  <p className="no-features-message">
+                    No features available to claim on this tile.
+                  </p>
+                  <Button
+                    onClick={handleSkipClaim}
+                    variant="outline"
+                    className="skip-button"
+                  >
+                    Continue
+                  </Button>
+                </div>
+              )
+            ) : (
+              <div className="feature-buttons">
+                <p className="no-features-message">
+                  You have no followers left to place.
+                </p>
                 <Button
-                  key={index}
-                  onClick={() =>
-                    handleClaimFeature(feature.type, feature.identifier)
-                  }
-                  className={`feature-button feature-${feature.type} bg-blue-600 hover:bg-blue-700 text-white`}
+                  onClick={handleSkipClaim}
+                  variant="outline"
+                  className="skip-button"
                 >
-                  Claim {feature.type}
-                  {feature.identifier && ` (${feature.identifier})`}
+                  Continue
                 </Button>
-              ))}
-              <Button
-                onClick={handleSkipClaim}
-                variant="outline"
-                className="skip-button"
-              >
-                Skip Claiming
-              </Button>
-            </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -186,24 +186,68 @@ export class Game {
     }
   }
 
-  private getClaimableFeatures(
-    tile: Tile
-  ): Array<{ type: TerrainType; identifier?: string }> {
-    const claimable: Array<{ type: TerrainType; identifier?: string }> = [];
+  public getClaimableFeatures(
+    tile?: Tile
+  ): ClaimableFeature[] {
+    // Use provided tile, or current tile from state, or last placed tile
+    let targetTile = tile || this.state.currentTile;
+    
+    // If no tile is available but we're in CLAIM_FEATURE phase, get the last placed tile
+    if (!targetTile && this.state.phase === GamePhase.CLAIM_FEATURE) {
+      const lastPosition = this.getLastPlacedTilePosition();
+      if (lastPosition) {
+        const tileRecord = this.state.board.getTile(lastPosition);
+        if (tileRecord) {
+          targetTile = tileRecord.tile;
+        }
+      }
+    }
+    
+    if (!targetTile) {
+      return [];
+    }
+
+    const claimable: ClaimableFeature[] = [];
+
+    // Helper to format directions into a readable string
+    const formatDirections = (segments: string[]): string => {
+      // Filter out 'center' and format cardinal directions
+      const cardinals = segments
+        .filter(s => s !== 'center')
+        .map(s => s.charAt(0).toUpperCase()); // N, E, S, W
+      
+      if (cardinals.length === 0) {
+        return 'Center';
+      } else if (cardinals.length === 1) {
+        return cardinals[0];
+      } else {
+        return cardinals.join('-');
+      }
+    };
 
     // Check road connections
-    tile.roadConnections.forEach((_connection, index) => {
-      claimable.push({ type: "road", identifier: `road_${index}` });
+    targetTile.roadConnections.forEach((connection: string[], index: number) => {
+      const label = formatDirections(connection);
+      claimable.push({ 
+        type: "road", 
+        identifier: `road_${index}`,
+        label: `Road ${label}`,
+      });
     });
 
     // Check Costco zones
-    tile.costcoZones.forEach((_zone, index) => {
-      claimable.push({ type: "costco", identifier: `costco_${index}` });
+    targetTile.costcoZones.forEach((zone: any, index: number) => {
+      const label = formatDirections(zone.segments);
+      claimable.push({ 
+        type: "costco", 
+        identifier: `costco_${index}`,
+        label: `Costco ${label}`,
+      });
     });
 
     // Check McDonalds
-    if (tile.center === "mcdonalds") {
-      claimable.push({ type: "mcdonalds" });
+    if (targetTile.center === "mcdonalds") {
+      claimable.push({ type: "mcdonalds", label: "McDonalds" });
     }
 
     return claimable;

@@ -128,4 +128,5 @@ export interface TilePlacementResult {
 export interface ClaimableFeature {
   type: TerrainType;
   identifier?: string;
+  label?: string; // User-friendly label like "N-S" or "N-E"
 }
