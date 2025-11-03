@@ -95,3 +95,37 @@ export interface AIMove {
   rotation: number;
   follower?: FollowerPlacement | null;
 }
+
+// Game State Interfaces
+export interface PlayerState {
+  id: string;
+  name: string;
+  isAI: boolean;
+  score: number;
+  followers: number;
+  color: string;
+}
+
+export interface GameState {
+  board: any; // Board instance - will be typed properly in future refactor
+  players: PlayerState[];
+  currentPlayerIndex: number;
+  currentTile?: any; // Tile instance
+  tileDeck: any[]; // Tile[]
+  discardPile: any[]; // Tile[]
+  phase: string; // GamePhase enum
+  isGameOver: boolean;
+  winner?: string;
+  turnNumber: number;
+}
+
+export interface TilePlacementResult {
+  success: boolean;
+  completedFeatures: any[];
+  message?: string;
+}
+
+export interface ClaimableFeature {
+  type: TerrainType;
+  identifier?: string;
+}

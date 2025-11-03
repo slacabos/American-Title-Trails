@@ -1,7 +1,18 @@
 import { Board } from "./board";
 import { Tile } from "./tile";
 import { buildDeck, getStartTile } from "./tileLibrary";
-import { PlayerDefinition, GameOptions, Position, TerrainType } from "./types";
+import {
+  PlayerDefinition,
+  GameOptions,
+  Position,
+  TerrainType,
+  GameState,
+  PlayerState,
+  TilePlacementResult,
+  ClaimableFeature,
+} from "./types";
+import { ScoreManager } from "./managers/ScoreManager";
+import { TurnManager } from "./managers/TurnManager";
 
 export enum GamePhase {
   PLACE_TILE = "place_tile",
@@ -9,34 +20,6 @@ export enum GamePhase {
   SCORE_FEATURES = "score_features",
   END_TURN = "end_turn",
   GAME_OVER = "game_over",
-}
-
-interface PlayerState {
-  id: string;
-  name: string;
-  isAI: boolean;
-  score: number;
-  followers: number;
-  color: string;
-}
-
-interface GameState {
-  board: Board;
-  players: PlayerState[];
-  currentPlayerIndex: number;
-  currentTile?: Tile;
-  tileDeck: Tile[];
-  discardPile: Tile[];
-  phase: GamePhase;
-  isGameOver: boolean;
-  winner?: string;
-  turnNumber: number;
-}
-
-interface TilePlacementResult {
-  success: boolean;
-  completedFeatures: any[];
-  message?: string;
 }
 
 // Shuffle utility function
@@ -52,8 +35,14 @@ const shuffle = <T>(array: T[]): T[] => {
 export class Game {
   private state: GameState;
   private onStateChange?: (state: GameState) => void;
+  private scoreManager: ScoreManager;
+  private turnManager: TurnManager;
 
   constructor(playerConfigs: PlayerDefinition[], options: GameOptions = {}) {
+    // Initialize managers
+    this.scoreManager = new ScoreManager();
+    this.turnManager = new TurnManager();
+
     const players: PlayerState[] = playerConfigs.map((config, index) => ({
       id: config.id || `player_${index + 1}`,
       name: config.name,
@@ -108,12 +97,12 @@ export class Game {
   }
 
   private drawNextTile(): void {
-    if (this.state.tileDeck.length === 0) {
+    const nextTile = this.turnManager.drawNextTile(this.state.tileDeck);
+    if (!nextTile) {
       this.endGame();
       return;
     }
-
-    this.state.currentTile = this.state.tileDeck.pop();
+    this.state.currentTile = nextTile;
   }
 
   public placeTile(
@@ -159,8 +148,11 @@ export class Game {
       this.state.discardPile.push(this.state.currentTile);
       this.state.currentTile = undefined;
 
-      // Score completed features
-      this.scoreCompletedFeatures(result.completed);
+      // Score completed features using ScoreManager
+      this.scoreManager.scoreCompletedFeatures(
+        result.completed,
+        this.state.players
+      );
 
       // Return followers from completed features
       this.state.board.returnFollowersFromCompletedFeatures(result.completed);
@@ -168,12 +160,13 @@ export class Game {
       // Check if there are claimable features
       const claimableFeatures = this.getClaimableFeatures(rotatedTile);
 
-      if (
-        claimableFeatures.length > 0 &&
-        this.getCurrentPlayer().followers > 0
-      ) {
-        this.state.phase = GamePhase.CLAIM_FEATURE;
-      } else {
+      // Determine next phase using TurnManager
+      this.state.phase = this.turnManager.getPhaseAfterPlacement(
+        this.getCurrentPlayer(),
+        claimableFeatures.length > 0
+      );
+
+      if (this.state.phase === GamePhase.END_TURN) {
         this.endTurn();
       }
 
@@ -191,20 +184,6 @@ export class Game {
           error instanceof Error ? error.message : "Failed to place tile",
       };
     }
-  }
-
-  private scoreCompletedFeatures(completedFeatures: any[]): void {
-    completedFeatures.forEach((feature) => {
-      if (feature.claimedBy && feature.claimedBy.length > 0) {
-        // Award points to claiming players
-        feature.claimedBy.forEach((playerId: string) => {
-          const player = this.state.players.find((p) => p.id === playerId);
-          if (player) {
-            player.score += feature.points;
-          }
-        });
-      }
-    });
   }
 
   private getClaimableFeatures(
@@ -282,23 +261,10 @@ export class Game {
   }
 
   private endTurn(): void {
-    this.state.phase = GamePhase.END_TURN;
+    // Use TurnManager to handle turn progression
+    this.state.phase = this.turnManager.endTurn(this.state);
 
-    // Move to next player
-    this.state.currentPlayerIndex =
-      (this.state.currentPlayerIndex + 1) % this.state.players.length;
-
-    // If we're back to the first player, increment turn number
-    if (this.state.currentPlayerIndex === 0) {
-      this.state.turnNumber++;
-    }
-
-    // Draw next tile for new player
-    this.drawNextTile();
-
-    if (this.state.currentTile) {
-      this.state.phase = GamePhase.PLACE_TILE;
-    } else {
+    if (this.state.phase === GamePhase.GAME_OVER) {
       this.endGame();
     }
   }
@@ -307,41 +273,13 @@ export class Game {
     this.state.phase = GamePhase.GAME_OVER;
     this.state.isGameOver = true;
 
-    // Calculate final scores (field scoring, etc.)
-    this.calculateFinalScores();
+    // Calculate final scores using ScoreManager
+    this.scoreManager.calculateFinalScores(this.state.board, this.state.players);
 
-    // Determine winner
-    const maxScore = Math.max(...this.state.players.map((p) => p.score));
-    const winners = this.state.players.filter((p) => p.score === maxScore);
-
-    if (winners.length === 1) {
-      this.state.winner = winners[0].name;
-    } else {
-      this.state.winner = winners.map((w) => w.name).join(", ") + " (tie)";
-    }
+    // Determine winner using ScoreManager
+    this.state.winner = this.scoreManager.determineWinner(this.state.players);
 
     this.notifyStateChange();
-  }
-
-  private calculateFinalScores(): void {
-    // Score incomplete features
-    const claims = this.state.board.getFeatureClaims();
-
-    claims.forEach((claim) => {
-      const player = this.state.players.find((p) =>
-        claim.players.includes(p.id)
-      );
-      if (player) {
-        if (claim.type === "costco") {
-          // TODO: Implement proper incomplete Costco scoring with pennants
-          // For now, use simplified scoring: 1 point per tile + 1 point for pennant if present
-          player.score += 2; // Temporary simplified scoring
-        } else {
-          // Other features: simplified final scoring - 1 point per tile
-          player.score += 1;
-        }
-      }
-    });
   }
 
   public processAITurn(): void {
@@ -396,10 +334,9 @@ export class Game {
 
     return this.state.board
       .getPlacementCandidates()
-      .filter(
-        (position) =>
-          this.state.currentTile &&
-          this.state.board.canPlace(this.state.currentTile, position)
+      .filter((position: Position) =>
+        this.state.currentTile &&
+        this.state.board.canPlace(this.state.currentTile, position)
       );
   }
 
@@ -412,13 +349,10 @@ export class Game {
   }
 
   public getTileStats(): { remaining: number; placed: number; total: number } {
-    const total =
-      this.state.tileDeck.length +
-      this.state.discardPile.length +
-      (this.state.currentTile ? 1 : 0);
-    const remaining = this.state.tileDeck.length;
-    const placed = this.state.discardPile.length;
-
-    return { remaining, placed, total };
+    return this.turnManager.getTileStats(
+      this.state.tileDeck,
+      this.state.discardPile,
+      this.state.currentTile
+    );
   }
 }

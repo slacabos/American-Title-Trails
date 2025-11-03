@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { PlayerDefinition, Position, TerrainType } from "../types";
+import { PlayerDefinition, Position, TerrainType, GameState } from "../types";
 import { Game, GamePhase } from "../game";
 import BoardCanvas from "./BoardCanvas";
 import TileRenderer from "./TileRenderer";
@@ -13,7 +13,7 @@ interface GameBoardProps {
 
 const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const [game, setGame] = useState<Game | null>(null);
-  const [gameState, setGameState] = useState<any>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [claimableFeatures, setClaimableFeatures] = useState<
@@ -66,30 +66,31 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     setLogs((prev) => [`${timestamp} — ${message}`, ...prev.slice(0, 19)]);
   }, []);
 
-  const updateClaimableFeatures = (_gameInstance: Game, state: any) => {
-    if (state.phase === GamePhase.CLAIM_FEATURE && state.currentTile) {
-      // Get features that can be claimed on the last placed tile
-      const features: Array<{ type: TerrainType; identifier?: string }> = [];
-
-      // Check road connections
-      state.currentTile.roadConnections.forEach((_: any, index: number) => {
-        features.push({ type: "road", identifier: `road_${index}` });
-      });
-
-      // Check Costco zones
-      state.currentTile.costcoZones.forEach((_: any, index: number) => {
-        features.push({ type: "costco", identifier: `costco_${index}` });
-      });
-
-      // Check McDonalds
-      if (state.currentTile.center === "mcdonalds") {
-        features.push({ type: "mcdonalds" });
-      }
-
-      setClaimableFeatures(features);
-    } else {
+  const updateClaimableFeatures = (_gameInstance: Game, state: GameState | null) => {
+    if (!state || state.phase !== GamePhase.CLAIM_FEATURE || !state.currentTile) {
       setClaimableFeatures([]);
+      return;
     }
+
+    // Get features that can be claimed on the last placed tile
+    const features: Array<{ type: TerrainType; identifier?: string }> = [];
+
+    // Check road connections
+    state.currentTile.roadConnections.forEach((_: any, index: number) => {
+      features.push({ type: "road", identifier: `road_${index}` });
+    });
+
+    // Check Costco zones
+    state.currentTile.costcoZones.forEach((_: any, index: number) => {
+      features.push({ type: "costco", identifier: `costco_${index}` });
+    });
+
+    // Check McDonalds
+    if (state.currentTile.center === "mcdonalds") {
+      features.push({ type: "mcdonalds" });
+    }
+
+    setClaimableFeatures(features);
   };
 
   const handleTilePlace = (position: Position) => {
@@ -118,7 +119,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   };
 
   const handleClaimFeature = (type: TerrainType, identifier?: string) => {
-    if (!game) return;
+    if (!game || !gameState) return;
 
     const success = game.claimFeature(type, identifier);
     if (success) {
@@ -133,7 +134,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   };
 
   const handleSkipClaim = () => {
-    if (!game) return;
+    if (!game || !gameState) return;
 
     game.skipClaim();
     addLog(
@@ -163,7 +164,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const tileStats = game.getTileStats();
 
   return (
-    <>
+    <div className="layout">
       <div className="board-panel">
         <BoardCanvas
           board={gameState.board}
@@ -384,7 +385,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       </aside>
 
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
-    </>
+    </div>
   );
 };
 

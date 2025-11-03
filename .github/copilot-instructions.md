@@ -19,6 +19,12 @@ American Title Trails is a Carcassonne-inspired tile-placement board game built 
 - **Position-Based Board**: Uses string keys `"x,y"` for tile positions with helper functions `positionKey()` and `parsePositionKey()`
 - **Canvas Rendering**: All visual tile rendering happens in `BoardCanvas.tsx` using HTML5 Canvas for performance
 
+### Content Management System
+
+- **Help Content**: Markdown files in `src/content/help/` auto-sync to TypeScript modules via `npm run sync-help-content`
+- **Translation System**: JSON-based i18n in `src/content/translations/` with dot-notation keys (`"setup.gameSetup"`)
+- **Content Architecture**: Modular content system with auto-exported language bundles and type-safe hook access
+
 ### Data Flow Patterns
 
 1. **React → Game Classes**: UI events call game methods directly (`game.placeTile()`, `game.claimFeature()`)
@@ -30,10 +36,18 @@ American Title Trails is a Carcassonne-inspired tile-placement board game built 
 ### Essential Commands
 
 ```bash
-npm run dev        # Vite dev server on http://localhost:3000 (auto-opens browser)
-npm run build      # TypeScript compilation + Vite production build
-npx tsc --noEmit   # Type checking without building
+npm run dev                    # Vite dev server on http://localhost:3000 (auto-opens browser)
+npm run build                  # TypeScript compilation + Vite production build
+npx tsc --noEmit              # Type checking without building
+npm run sync-help-content     # Sync en.md → en.ts for help system (auto-run for 'en')
+npm run sync-help-content es  # Sync specific language help content
 ```
+
+### Content Development Workflow
+
+- **Help Content**: Edit `src/content/help/en.md`, run sync script to generate TypeScript modules
+- **Translations**: Add keys to `src/content/translations/en.json`, access via `useTranslations()` hook
+- **Markdown Integration**: `MarkdownRenderer` component with custom styling for help modals
 
 ### Project Structure Navigation
 
@@ -78,6 +92,22 @@ const ai = new SimpleAI({
   adjacencyWeight: 1, // Prefer connecting to existing tiles
   costcoWeight: 2, // Value Costco zones higher
 });
+```
+
+### Translation System Pattern
+
+```typescript
+// Access translations with dot notation and variable interpolation
+const { t } = useTranslations();
+return <h2>{t('setup.gameSetup')}</h2>;
+return <p>{t('messages.placedTile', { playerName, x, y })}</p>;
+```
+
+### Content Sync Pattern
+
+```bash
+# Help content workflow - edit markdown, sync to TypeScript
+npm run sync-help-content en  # Converts src/content/help/en.md → en.ts
 ```
 
 ### Canvas Interaction Pattern
