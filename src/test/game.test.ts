@@ -216,9 +216,9 @@ describe("Game", () => {
       ];
       const testGame = new Game(testPlayers);
 
-      // Force the deck to be empty by directly modifying the private state
+      // Force the deck to be empty by directly modifying the TileManager
       // This is a test-only approach to verify end game logic
-      (testGame as any).state.tileDeck = [];
+      (testGame as any).tileManager.tileDeck = [];
 
       // Now when we try to end a turn, it should trigger game over
       (testGame as any).endTurn();
