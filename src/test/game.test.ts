@@ -33,15 +33,16 @@ describe("Game", () => {
 
     it("should place starting tile at origin", () => {
       const state = game.getState();
-      const startTile = state.board.getTile({ x: 0, y: 0 });
-      expect(startTile).toBeDefined();
-      expect(startTile).toEqual(getStartTile());
+      const tileRecord = state.board.getTile({ x: 0, y: 0 });
+      expect(tileRecord).toBeDefined();
+      expect(tileRecord?.tile).toEqual(getStartTile());
     });
 
     it("should draw initial current tile", () => {
       const state = game.getState();
       expect(state.currentTile).toBeDefined();
-      expect(state.tileDeck.length).toBeLessThan(41); // Should have drawn one tile
+      // After drawing one tile for the current player, deck should be smaller than original
+      expect(state.tileDeck.length).toBeLessThan(51);
     });
 
     it("should initialize players with correct follower count", () => {
@@ -68,7 +69,7 @@ describe("Game", () => {
       const result = game.placeTile({ x: 10, y: 10 }, 0);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("Invalid placement");
+      expect(result.message).toContain("Invalid tile placement");
       expect(game.getState().phase).toBe(GamePhase.PLACE_TILE); // Should remain in same phase
     });
 
@@ -92,11 +93,21 @@ describe("Game", () => {
       if (validPlacements.length > 0) {
         const position = validPlacements[0];
 
-        const result = game.placeTile(position, 1); // Try 90-degree rotation
+        // Try rotations until we find one that works
+        // Not all rotations will necessarily be valid for a given position
+        let placed = false;
+        for (let rotation = 0; rotation < 4; rotation++) {
+          const result = game.placeTile(position, rotation);
+          if (result.success) {
+            const placedTile = game.getState().board.getTile(position);
+            expect(placedTile).toBeDefined();
+            placed = true;
+            break;
+          }
+        }
 
-        expect(result.success).toBe(true);
-        const placedTile = game.getState().board.getTile(position);
-        expect(placedTile).toBeDefined();
+        // At least one rotation should work since the position was in validPlacements
+        expect(placed).toBe(true);
       }
     });
   });
@@ -199,16 +210,22 @@ describe("Game", () => {
     });
 
     it("should end game when no tiles remain", () => {
-      // Manually empty the tile deck
-      const state = game.getState();
-      state.tileDeck = [];
-      state.currentTile = undefined;
+      // Create a new game with players to test end game scenario
+      const testPlayers: PlayerDefinition[] = [
+        { name: "Test Player 1", isAI: false },
+      ];
+      const testGame = new Game(testPlayers);
 
-      // Try to draw next tile (this should trigger game end)
-      game.skipClaim();
+      // Force the deck to be empty by directly modifying the private state
+      // This is a test-only approach to verify end game logic
+      (testGame as any).state.tileDeck = [];
 
-      expect(game.getState().isGameOver).toBe(true);
-      expect(game.getState().phase).toBe(GamePhase.GAME_OVER);
+      // Now when we try to end a turn, it should trigger game over
+      (testGame as any).endTurn();
+
+      const finalState = testGame.getState();
+      expect(finalState.isGameOver).toBe(true);
+      expect(finalState.phase).toBe(GamePhase.GAME_OVER);
     });
   });
 

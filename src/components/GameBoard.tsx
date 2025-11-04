@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { PlayerDefinition, Position, TerrainType } from "../types";
+import {
+  PlayerDefinition,
+  Position,
+  TerrainType,
+  GameState,
+  ClaimableFeature,
+} from "../types";
 import { Game, GamePhase } from "../game";
 import BoardCanvas from "./BoardCanvas";
 import TileRenderer from "./TileRenderer";
@@ -13,12 +19,11 @@ interface GameBoardProps {
 
 const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const [game, setGame] = useState<Game | null>(null);
-  // TODO: Replace 'any' with proper GameState interface from src/types.ts
-  const [gameState, setGameState] = useState<any>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [claimableFeatures, setClaimableFeatures] = useState<
-    Array<{ type: TerrainType; identifier?: string; displayName?: string }>
+    ClaimableFeature[]
   >([]);
 
   // Initialize game
@@ -67,7 +72,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     setLogs((prev) => [`${timestamp} — ${message}`, ...prev.slice(0, 19)]);
   }, []);
 
-  const updateClaimableFeatures = (gameInstance: Game, state: any) => {
+  const updateClaimableFeatures = (gameInstance: Game, state: GameState) => {
     if (state.phase === GamePhase.CLAIM_FEATURE) {
       // Use the game's method to get claimable features for the current turn
       const features = gameInstance.getClaimableFeaturesForCurrentTurn();
@@ -110,7 +115,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   };
 
   const handleClaimFeature = (type: TerrainType, identifier?: string) => {
-    if (!game) return;
+    if (!game || !gameState) return;
 
     const success = game.claimFeature(type, identifier);
     if (success) {
@@ -125,7 +130,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   };
 
   const handleSkipClaim = () => {
-    if (!game) return;
+    if (!game || !gameState) return;
 
     game.skipClaim();
     addLog(
@@ -333,7 +338,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
             Players & Scores
           </h2>
           <ul className="list-none m-0 p-0 flex flex-col gap-2">
-            {gameState.players.map((player: any, index: number) => (
+            {gameState.players.map((player, index: number) => (
               <li
                 key={player.id}
                 className="flex items-center gap-2 p-2 rounded-md border-l-2"

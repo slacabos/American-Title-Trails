@@ -1,44 +1,24 @@
 import { Board } from "./board";
 import { Tile } from "./tile";
 import { buildDeck, getStartTile } from "./tileLibrary";
-import { PlayerDefinition, GameOptions, Position, TerrainType } from "./types";
+import {
+  PlayerDefinition,
+  GameOptions,
+  Position,
+  TerrainType,
+  PlayerState,
+  GameState,
+  GamePhase,
+  TilePlacementResult,
+  ClaimableFeature,
+  CompletedFeature,
+} from "./types";
+import { ScoreManager } from "./managers/ScoreManager";
+import { TurnManager } from "./managers/TurnManager";
 
-export enum GamePhase {
-  PLACE_TILE = "place_tile",
-  CLAIM_FEATURE = "claim_feature",
-  SCORE_FEATURES = "score_features",
-  END_TURN = "end_turn",
-  GAME_OVER = "game_over",
-}
-
-interface PlayerState {
-  id: string;
-  name: string;
-  isAI: boolean;
-  score: number;
-  followers: number;
-  color: string;
-}
-
-interface GameState {
-  board: Board;
-  players: PlayerState[];
-  currentPlayerIndex: number;
-  currentTile?: Tile;
-  tileDeck: Tile[];
-  discardPile: Tile[];
-  phase: GamePhase;
-  isGameOver: boolean;
-  winner?: string;
-  turnNumber: number;
-  lastPlacedPosition?: Position;
-}
-
-interface TilePlacementResult {
-  success: boolean;
-  completedFeatures: any[];
-  message?: string;
-}
+// Re-export types for backward compatibility
+export { GamePhase } from "./types";
+export type { GameState, PlayerState, TilePlacementResult } from "./types";
 
 // Shuffle utility function
 const shuffle = <T>(array: T[]): T[] => {
@@ -53,8 +33,14 @@ const shuffle = <T>(array: T[]): T[] => {
 export class Game {
   private state: GameState;
   private onStateChange?: (state: GameState) => void;
+  private readonly scoreManager: ScoreManager;
+  private readonly turnManager: TurnManager;
 
   constructor(playerConfigs: PlayerDefinition[], options: GameOptions = {}) {
+    // Initialize managers
+    this.scoreManager = new ScoreManager();
+    this.turnManager = new TurnManager(options.startingPlayer || 0);
+
     const players: PlayerState[] = playerConfigs.map((config, index) => ({
       id: config.id || `player_${index + 1}`,
       name: config.name,
@@ -70,12 +56,12 @@ export class Game {
     this.state = {
       board: new Board(),
       players,
-      currentPlayerIndex: options.startingPlayer || 0,
+      currentPlayerIndex: this.turnManager.getCurrentPlayerIndex(),
       tileDeck,
       discardPile: [],
-      phase: GamePhase.PLACE_TILE,
+      phase: this.turnManager.getPhase(),
       isGameOver: false,
-      turnNumber: 1,
+      turnNumber: this.turnManager.getTurnNumber(),
     };
 
     // Place the starting tile
@@ -108,13 +94,13 @@ export class Game {
     return this.state.players[this.state.currentPlayerIndex];
   }
 
-  private drawNextTile(): void {
+  private drawNextTile(): boolean {
     if (this.state.tileDeck.length === 0) {
-      this.endGame();
-      return;
+      return false; // No more tiles
     }
 
     this.state.currentTile = this.state.tileDeck.pop();
+    return true;
   }
 
   public placeTile(
@@ -157,6 +143,7 @@ export class Game {
       const result = this.state.board.placeTile(rotatedTile, position);
 
       // Track the position where this tile was placed
+      this.turnManager.setLastPlacedPosition(position);
       this.state.lastPlacedPosition = position;
 
       // Add tile to discard pile
@@ -176,7 +163,8 @@ export class Game {
         claimableFeatures.length > 0 &&
         this.getCurrentPlayer().followers > 0
       ) {
-        this.state.phase = GamePhase.CLAIM_FEATURE;
+        this.turnManager.enterClaimPhase();
+        this.state.phase = this.turnManager.getPhase();
       } else {
         this.endTurn();
       }
@@ -197,28 +185,15 @@ export class Game {
     }
   }
 
-  private scoreCompletedFeatures(completedFeatures: any[]): void {
-    completedFeatures.forEach((feature) => {
-      if (feature.claimedBy && feature.claimedBy.length > 0) {
-        // Award points to claiming players
-        feature.claimedBy.forEach((playerId: string) => {
-          const player = this.state.players.find((p) => p.id === playerId);
-          if (player) {
-            player.score += feature.points;
-          }
-        });
-      }
-    });
+  private scoreCompletedFeatures(completedFeatures: CompletedFeature[]): void {
+    this.scoreManager.scoreCompletedFeatures(
+      completedFeatures,
+      this.state.players
+    );
   }
 
-  private getClaimableFeatures(
-    tile: Tile
-  ): Array<{ type: TerrainType; identifier?: string; displayName?: string }> {
-    const claimable: Array<{
-      type: TerrainType;
-      identifier?: string;
-      displayName?: string;
-    }> = [];
+  private getClaimableFeatures(tile: Tile): ClaimableFeature[] {
+    const claimable: ClaimableFeature[] = [];
 
     // Check road connections with descriptive labels
     tile.roadConnections.forEach((connection, index) => {
@@ -269,11 +244,7 @@ export class Game {
     return claimable;
   }
 
-  public getClaimableFeaturesForCurrentTurn(): Array<{
-    type: TerrainType;
-    identifier?: string;
-    displayName?: string;
-  }> {
+  public getClaimableFeaturesForCurrentTurn(): ClaimableFeature[] {
     if (this.state.phase !== GamePhase.CLAIM_FEATURE) {
       return [];
     }
@@ -332,40 +303,40 @@ export class Game {
   }
 
   private getLastPlacedTilePosition(): Position | undefined {
-    return this.state.lastPlacedPosition;
+    return this.turnManager.getLastPlacedPosition();
   }
 
   private endTurn(): void {
-    this.state.phase = GamePhase.END_TURN;
+    // Draw next tile first
+    const hasNextTile = this.drawNextTile();
 
-    // Clear the last placed position for the new turn
-    this.state.lastPlacedPosition = undefined;
+    // Use TurnManager to handle turn completion
+    this.turnManager.completeTurn(
+      this.state.currentTile,
+      this.state.players.length
+    );
 
-    // Move to next player
-    this.state.currentPlayerIndex =
-      (this.state.currentPlayerIndex + 1) % this.state.players.length;
+    // Sync state with TurnManager
+    this.state.phase = this.turnManager.getPhase();
+    this.state.currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
+    this.state.turnNumber = this.turnManager.getTurnNumber();
+    this.state.lastPlacedPosition = this.turnManager.getLastPlacedPosition();
 
-    // If we're back to the first player, increment turn number
-    if (this.state.currentPlayerIndex === 0) {
-      this.state.turnNumber++;
-    }
-
-    // Draw next tile for new player
-    this.drawNextTile();
-
-    if (this.state.currentTile) {
-      this.state.phase = GamePhase.PLACE_TILE;
-    } else {
+    if (!hasNextTile) {
       this.endGame();
     }
   }
 
   private endGame(): void {
-    this.state.phase = GamePhase.GAME_OVER;
+    this.turnManager.endGame();
+    this.state.phase = this.turnManager.getPhase();
     this.state.isGameOver = true;
 
-    // Calculate final scores (field scoring, etc.)
-    this.calculateFinalScores();
+    // Calculate final scores using ScoreManager
+    this.scoreManager.calculateFinalScores(
+      this.state.players,
+      this.state.board
+    );
 
     // Determine winner
     const maxScore = Math.max(...this.state.players.map((p) => p.score));
@@ -378,106 +349,6 @@ export class Game {
     }
 
     this.notifyStateChange();
-  }
-
-  private calculateFinalScores(): void {
-    // Score incomplete features by finding all incomplete Costco features
-    this.scoreIncompleteCostcoFeatures();
-
-    // Score other incomplete features using simplified scoring
-    const claims = this.state.board.getFeatureClaims();
-    claims.forEach((claim) => {
-      const player = this.state.players.find((p) =>
-        claim.players.includes(p.id)
-      );
-      if (player && claim.type !== "costco") {
-        // Other features: simplified final scoring - 1 point per tile
-        player.score += 1;
-      }
-    });
-  }
-
-  private scoreIncompleteCostcoFeatures(): void {
-    // Find all incomplete Costco features across the board
-    const allIncompleteFeatures = this.findAllIncompleteCostcoFeatures();
-
-    allIncompleteFeatures.forEach((feature) => {
-      // Create proper feature object for claimant lookup
-      const featureForClaimants = {
-        type: "costco" as const,
-        tiles: feature.tiles,
-        edges: feature.edges,
-        isComplete: false,
-        pennants: feature.pennants,
-      };
-
-      const claimants = (this.state.board as any).getFeatureClaimants(
-        featureForClaimants
-      );
-      if (claimants.length > 0) {
-        // Incomplete Costco scoring: 1 point per tile + 1 point per pennant
-        const tilePoints = feature.tiles.size;
-        const pennantPoints = feature.pennants;
-        const totalPoints = tilePoints + pennantPoints;
-
-        claimants.forEach((playerId: string) => {
-          const player = this.state.players.find((p) => p.id === playerId);
-          if (player) {
-            player.score += totalPoints;
-          }
-        });
-      }
-    });
-  }
-
-  private findAllIncompleteCostcoFeatures(): Array<{
-    tiles: Set<string>;
-    pennants: number;
-    edges: Set<string>;
-  }> {
-    const allFeatures: Array<{
-      tiles: Set<string>;
-      pennants: number;
-      edges: Set<string>;
-    }> = [];
-    const processedTiles = new Set<string>();
-
-    // Iterate through all tiles to find Costco features
-    (this.state.board as any).tiles.forEach(
-      (tileRecord: any, positionKey: string) => {
-        if (processedTiles.has(positionKey)) return;
-
-        const position = this.parsePositionKey(positionKey);
-        tileRecord.tile.costcoZones.forEach((zone: any) => {
-          const visited = new Set<string>();
-          const feature = (this.state.board as any).traceCostcoFeature(
-            position,
-            zone,
-            visited
-          );
-
-          // Only include if feature is incomplete
-          if (!(this.state.board as any).isCostcoComplete(feature)) {
-            // Mark all tiles in this feature as processed
-            feature.tiles.forEach((tileKey: string) =>
-              processedTiles.add(tileKey)
-            );
-            allFeatures.push({
-              tiles: feature.tiles,
-              pennants: feature.pennants || 0,
-              edges: feature.edges,
-            });
-          }
-        });
-      }
-    );
-
-    return allFeatures;
-  }
-
-  private parsePositionKey(key: string): { x: number; y: number } {
-    const [x, y] = key.split(",").map(Number);
-    return { x, y };
   }
 
   public processAITurn(): void {
@@ -541,7 +412,7 @@ export class Game {
     return this.state.board
       .getPlacementCandidates()
       .filter(
-        (position) =>
+        (position: Position) =>
           this.state.currentTile &&
           this.state.board.canPlace(this.state.currentTile, position)
       );

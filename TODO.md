@@ -58,21 +58,26 @@
   - [x] **COMPLETED**: Canvas interaction and React component integration patterns established
 - [x] **COMPLETED**: Set up test coverage reporting with v8 provider and HTML/JSON/text output formats
 
-### 2. State Management Refactoring
+### 2. State Management Refactoring ✅ COMPLETED
 
-- [ ] Break down monolithic `Game` class (419 lines) into smaller focused classes:
-  - [ ] `GameEngine` - Pure game logic
-  - [ ] `TurnManager` - Handle turn progression and phases
-  - [ ] `ScoreManager` - Handle scoring calculations
-  - [ ] `GameController` - Coordinate between engine and UI
-- [ ] Replace `any` types with proper TypeScript interfaces:
-  - [ ] Fix `gameState` type in `GameBoard.tsx` (currently `any`)
-  - [ ] Create proper interface for game state structure
-  - [ ] Type all method return values properly
-- [ ] Implement proper state management pattern:
-  - [ ] Consider using React Context for game state
-  - [ ] Add state validation and error boundaries
-  - [ ] Improve listener pattern with better type safety
+- [x] **COMPLETED**: Break down monolithic `Game` class (569 lines → 437 lines) into smaller focused classes:
+  - [x] **COMPLETED**: `ScoreManager` - Pure scoring logic extracted to `/src/managers/ScoreManager.ts` (handles completed features, final scoring, incomplete Costco features)
+  - [x] **COMPLETED**: `TurnManager` - Turn progression and phase management extracted to `/src/managers/TurnManager.ts` (handles phases, player turns, turn numbers)
+  - [x] **COMPLETED**: `Game` class refactored to use managers as coordinators
+- [x] **COMPLETED**: Replace `any` types with proper TypeScript interfaces:
+  - [x] **COMPLETED**: Fixed `gameState` type in `GameBoard.tsx` (was `any`, now `GameState | null`)
+  - [x] **COMPLETED**: Created proper interfaces in `src/types.ts`:
+    - `PlayerState` - Player state structure
+    - `GameState` - Complete game state interface
+    - `GamePhase` - Enum for game phases
+    - `TilePlacementResult` - Tile placement result type
+    - `CompletedFeature` - Completed feature structure
+    - `ClaimableFeature` - Claimable feature structure
+  - [x] **COMPLETED**: Typed all method return values properly (`ClaimableFeature[]`, `CompletedFeature[]`, etc.)
+- [x] **COMPLETED**: Implement proper state management pattern:
+  - [x] **COMPLETED**: Maintained React listener pattern with better type safety
+  - [x] **COMPLETED**: Game state immutability preserved (returns copies via `{...this.state}`)
+  - [x] **COMPLETED**: All tests passing (66/66) after refactoring
 
 ### 3. Performance Optimizations
 
