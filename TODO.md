@@ -79,7 +79,29 @@
   - [x] **COMPLETED**: Game state immutability preserved (returns copies via `{...this.state}`)
   - [x] **COMPLETED**: All tests passing (66/66) after refactoring
 
-### 3. Performance Optimizations
+### 3. Further Game Class Simplification
+
+- [ ] Create `TileManager` class (~150 lines reduction):
+  - [ ] Extract tile deck management (`drawNextTile`, `tileDeck`, `discardPile`, `currentTile`)
+  - [ ] Extract rotation operations (`rotateTile`, `rotateTileClockwise`, `rotateTileCounterClockwise`, `canRotateTile`)
+  - [ ] Extract placement helpers (`getValidPlacements`, `previewTilePlacement`, `getTileStats`)
+- [ ] Create `FeatureClaimManager` class (~100 lines reduction):
+  - [ ] Extract feature discovery (`getClaimableFeatures` with label generation)
+  - [ ] Extract claim operations (`getClaimableFeaturesForCurrentTurn`, `claimFeature`, `skipClaim`)
+  - [ ] Simplify feature label generation logic
+- [ ] Create `PlayerManager` class:
+  - [ ] Extract player initialization and default color assignment
+  - [ ] Extract `getCurrentPlayer()` logic
+  - [ ] Centralize follower management
+- [ ] Extract utility functions:
+  - [ ] Move `shuffle()` to `src/utils/` directory
+  - [ ] Create feature label formatter utility
+- [ ] Refactor `Game` class to coordinator pattern:
+  - [ ] Reduce from 440 lines to ~150-200 lines
+  - [ ] Make Game class primarily coordinate between managers
+  - [ ] Update all tests to work with new structure
+
+### 4. Performance Optimizations
 
 - [ ] Canvas rendering improvements:
   - [ ] Implement `requestAnimationFrame` loop for smooth rendering
