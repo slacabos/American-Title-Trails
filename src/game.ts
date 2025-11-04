@@ -1,93 +1,71 @@
 import { Board } from "./board";
-import { Tile } from "./tile";
 import { buildDeck, getStartTile } from "./tileLibrary";
-import { PlayerDefinition, GameOptions, Position, TerrainType } from "./types";
+import {
+  PlayerDefinition,
+  GameOptions,
+  Position,
+  TerrainType,
+  PlayerState,
+  GameState,
+  GamePhase,
+  TilePlacementResult,
+  ClaimableFeature,
+  CompletedFeature,
+} from "./types";
+import { ScoreManager } from "./managers/ScoreManager";
+import { TurnManager } from "./managers/TurnManager";
+import { TileManager } from "./managers/TileManager";
+import { FeatureClaimManager } from "./managers/FeatureClaimManager";
+import { PlayerManager } from "./managers/PlayerManager";
+import { shuffle } from "./utils/arrayUtils";
 
-export enum GamePhase {
-  PLACE_TILE = "place_tile",
-  CLAIM_FEATURE = "claim_feature",
-  SCORE_FEATURES = "score_features",
-  END_TURN = "end_turn",
-  GAME_OVER = "game_over",
-}
-
-interface PlayerState {
-  id: string;
-  name: string;
-  isAI: boolean;
-  score: number;
-  followers: number;
-  color: string;
-}
-
-interface GameState {
-  board: Board;
-  players: PlayerState[];
-  currentPlayerIndex: number;
-  currentTile?: Tile;
-  tileDeck: Tile[];
-  discardPile: Tile[];
-  phase: GamePhase;
-  isGameOver: boolean;
-  winner?: string;
-  turnNumber: number;
-  lastPlacedPosition?: Position;
-}
-
-interface TilePlacementResult {
-  success: boolean;
-  completedFeatures: any[];
-  message?: string;
-}
-
-// Shuffle utility function
-const shuffle = <T>(array: T[]): T[] => {
-  const result = [...array];
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-};
+// Re-export types for backward compatibility
+export { GamePhase } from "./types";
+export type { GameState, PlayerState, TilePlacementResult } from "./types";
 
 export class Game {
   private state: GameState;
   private onStateChange?: (state: GameState) => void;
+  private readonly scoreManager: ScoreManager;
+  private readonly turnManager: TurnManager;
+  private readonly tileManager: TileManager;
+  private readonly featureClaimManager: FeatureClaimManager;
+  private readonly playerManager: PlayerManager;
 
   constructor(playerConfigs: PlayerDefinition[], options: GameOptions = {}) {
-    const players: PlayerState[] = playerConfigs.map((config, index) => ({
-      id: config.id || `player_${index + 1}`,
-      name: config.name,
-      isAI: config.isAI || false,
-      score: 0,
-      followers: config.followers || 7,
-      color: config.color || this.getDefaultColor(index),
-    }));
-
-    // Create and shuffle tile deck
-    const tileDeck = shuffle(buildDeck());
+    // Initialize managers
+    this.scoreManager = new ScoreManager();
+    this.turnManager = new TurnManager(options.startingPlayer || 0);
+    this.tileManager = new TileManager(shuffle(buildDeck()));
+    this.featureClaimManager = new FeatureClaimManager();
+    this.playerManager = new PlayerManager(playerConfigs);
 
     this.state = {
       board: new Board(),
-      players,
-      currentPlayerIndex: options.startingPlayer || 0,
-      tileDeck,
-      discardPile: [],
-      phase: GamePhase.PLACE_TILE,
+      players: this.playerManager.getPlayers(),
+      currentPlayerIndex: this.turnManager.getCurrentPlayerIndex(),
+      tileDeck: this.tileManager.getTileDeck(),
+      discardPile: this.tileManager.getDiscardPile(),
+      phase: this.turnManager.getPhase(),
       isGameOver: false,
-      turnNumber: 1,
+      turnNumber: this.turnManager.getTurnNumber(),
     };
 
     // Place the starting tile
     const startTile = getStartTile();
     this.state.board.placeTile(startTile, { x: 0, y: 0 });
 
-    this.drawNextTile();
+    this.tileManager.drawNextTile();
+    this.state.currentTile = this.tileManager.getCurrentTile();
   }
 
-  private getDefaultColor(index: number): string {
-    const colors = ["#FF0000", "#0000FF", "#00FF00", "#FFFF00", "#FF00FF"];
-    return colors[index % colors.length];
+  /**
+   * Sync tile-related state from TileManager to game state
+   */
+  private syncTileState(): void {
+    this.state.currentTile = this.tileManager.getCurrentTile();
+    this.state.tileDeck = this.tileManager.getTileDeck();
+    this.state.discardPile = this.tileManager.getDiscardPile();
   }
 
   public setStateChangeListener(callback: (state: GameState) => void): void {
@@ -105,16 +83,7 @@ export class Game {
   }
 
   public getCurrentPlayer(): PlayerState {
-    return this.state.players[this.state.currentPlayerIndex];
-  }
-
-  private drawNextTile(): void {
-    if (this.state.tileDeck.length === 0) {
-      this.endGame();
-      return;
-    }
-
-    this.state.currentTile = this.state.tileDeck.pop();
+    return this.playerManager.getCurrentPlayer(this.state.currentPlayerIndex);
   }
 
   public placeTile(
@@ -129,7 +98,8 @@ export class Game {
       };
     }
 
-    if (!this.state.currentTile) {
+    const currentTile = this.tileManager.getCurrentTile();
+    if (!currentTile) {
       return {
         success: false,
         completedFeatures: [],
@@ -137,10 +107,14 @@ export class Game {
       };
     }
 
-    // Apply rotation
-    let rotatedTile = this.state.currentTile.clone();
-    for (let i = 0; i < rotation; i++) {
-      rotatedTile = rotatedTile.rotate();
+    // Apply rotation using TileManager
+    const rotatedTile = this.tileManager.getRotatedCurrentTile(rotation);
+    if (!rotatedTile) {
+      return {
+        success: false,
+        completedFeatures: [],
+        message: "Failed to rotate tile",
+      };
     }
 
     // Check if placement is valid
@@ -157,11 +131,12 @@ export class Game {
       const result = this.state.board.placeTile(rotatedTile, position);
 
       // Track the position where this tile was placed
+      this.turnManager.setLastPlacedPosition(position);
       this.state.lastPlacedPosition = position;
 
-      // Add tile to discard pile
-      this.state.discardPile.push(this.state.currentTile);
-      this.state.currentTile = undefined;
+      // Discard the current tile
+      this.tileManager.discardCurrentTile();
+      this.syncTileState();
 
       // Score completed features
       this.scoreCompletedFeatures(result.completed);
@@ -170,13 +145,15 @@ export class Game {
       this.state.board.returnFollowersFromCompletedFeatures(result.completed);
 
       // Check if there are claimable features
-      const claimableFeatures = this.getClaimableFeatures(rotatedTile);
+      const claimableFeatures =
+        this.featureClaimManager.getClaimableFeatures(rotatedTile);
 
       if (
         claimableFeatures.length > 0 &&
         this.getCurrentPlayer().followers > 0
       ) {
-        this.state.phase = GamePhase.CLAIM_FEATURE;
+        this.turnManager.enterClaimPhase();
+        this.state.phase = this.turnManager.getPhase();
       } else {
         this.endTurn();
       }
@@ -197,83 +174,14 @@ export class Game {
     }
   }
 
-  private scoreCompletedFeatures(completedFeatures: any[]): void {
-    completedFeatures.forEach((feature) => {
-      if (feature.claimedBy && feature.claimedBy.length > 0) {
-        // Award points to claiming players
-        feature.claimedBy.forEach((playerId: string) => {
-          const player = this.state.players.find((p) => p.id === playerId);
-          if (player) {
-            player.score += feature.points;
-          }
-        });
-      }
-    });
+  private scoreCompletedFeatures(completedFeatures: CompletedFeature[]): void {
+    this.scoreManager.scoreCompletedFeatures(
+      completedFeatures,
+      this.state.players
+    );
   }
 
-  private getClaimableFeatures(
-    tile: Tile
-  ): Array<{ type: TerrainType; identifier?: string; displayName?: string }> {
-    const claimable: Array<{
-      type: TerrainType;
-      identifier?: string;
-      displayName?: string;
-    }> = [];
-
-    // Check road connections with descriptive labels
-    tile.roadConnections.forEach((connection, index) => {
-      // Create a readable description of the road connection
-      const directions = connection
-        .filter((dir) => dir !== "center") // Remove "center" for cleaner display
-        .map((dir) => dir.charAt(0).toUpperCase() + dir.slice(1)) // Capitalize
-        .join("-");
-
-      // If no directions (only center), use the directions that have roads on edges
-      let label = directions;
-      if (!label) {
-        const roadEdges = ["north", "east", "south", "west"]
-          .filter((dir) => tile.edgeAt(dir as any) === "road")
-          .map((dir) => dir.charAt(0).toUpperCase() + dir.slice(1))
-          .join("-");
-        label = roadEdges || "Center";
-      }
-
-      claimable.push({
-        type: "road",
-        identifier: `road_${index}`,
-        displayName: label,
-      });
-    });
-
-    // Check Costco zones with descriptive labels
-    tile.costcoZones.forEach((zone, index) => {
-      const directions = zone.segments
-        .filter((segment) => segment !== "center")
-        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join("-");
-
-      const label = directions || "Center";
-
-      claimable.push({
-        type: "costco",
-        identifier: `costco_${index}`,
-        displayName: label,
-      });
-    });
-
-    // Check McDonalds
-    if (tile.center === "mcdonalds") {
-      claimable.push({ type: "mcdonalds" });
-    }
-
-    return claimable;
-  }
-
-  public getClaimableFeaturesForCurrentTurn(): Array<{
-    type: TerrainType;
-    identifier?: string;
-    displayName?: string;
-  }> {
+  public getClaimableFeaturesForCurrentTurn(): ClaimableFeature[] {
     if (this.state.phase !== GamePhase.CLAIM_FEATURE) {
       return [];
     }
@@ -288,7 +196,7 @@ export class Game {
       return [];
     }
 
-    return this.getClaimableFeatures(tileRecord.tile);
+    return this.featureClaimManager.getClaimableFeatures(tileRecord.tile);
   }
 
   public claimFeature(type: TerrainType, identifier?: string): boolean {
@@ -307,13 +215,14 @@ export class Game {
     }
 
     try {
-      this.state.board.claimFeature(
+      this.featureClaimManager.claimFeature(
+        this.state.board,
         type,
         lastPlacedPosition,
         identifier,
         currentPlayer.id
       );
-      currentPlayer.followers--;
+      this.playerManager.decreaseFollowerCount(currentPlayer.id);
 
       this.endTurn();
       this.notifyStateChange();
@@ -332,40 +241,41 @@ export class Game {
   }
 
   private getLastPlacedTilePosition(): Position | undefined {
-    return this.state.lastPlacedPosition;
+    return this.turnManager.getLastPlacedPosition();
   }
 
   private endTurn(): void {
-    this.state.phase = GamePhase.END_TURN;
+    // Draw next tile using TileManager
+    const hasNextTile = this.tileManager.drawNextTile();
+    this.syncTileState();
 
-    // Clear the last placed position for the new turn
-    this.state.lastPlacedPosition = undefined;
+    // Use TurnManager to handle turn completion
+    this.turnManager.completeTurn(
+      this.tileManager.getCurrentTile(),
+      this.state.players.length
+    );
 
-    // Move to next player
-    this.state.currentPlayerIndex =
-      (this.state.currentPlayerIndex + 1) % this.state.players.length;
+    // Sync state with TurnManager
+    this.state.phase = this.turnManager.getPhase();
+    this.state.currentPlayerIndex = this.turnManager.getCurrentPlayerIndex();
+    this.state.turnNumber = this.turnManager.getTurnNumber();
+    this.state.lastPlacedPosition = this.turnManager.getLastPlacedPosition();
 
-    // If we're back to the first player, increment turn number
-    if (this.state.currentPlayerIndex === 0) {
-      this.state.turnNumber++;
-    }
-
-    // Draw next tile for new player
-    this.drawNextTile();
-
-    if (this.state.currentTile) {
-      this.state.phase = GamePhase.PLACE_TILE;
-    } else {
+    if (!hasNextTile) {
       this.endGame();
     }
   }
 
   private endGame(): void {
-    this.state.phase = GamePhase.GAME_OVER;
+    this.turnManager.endGame();
+    this.state.phase = this.turnManager.getPhase();
     this.state.isGameOver = true;
 
-    // Calculate final scores (field scoring, etc.)
-    this.calculateFinalScores();
+    // Calculate final scores using ScoreManager
+    this.scoreManager.calculateFinalScores(
+      this.state.players,
+      this.state.board
+    );
 
     // Determine winner
     const maxScore = Math.max(...this.state.players.map((p) => p.score));
@@ -380,109 +290,10 @@ export class Game {
     this.notifyStateChange();
   }
 
-  private calculateFinalScores(): void {
-    // Score incomplete features by finding all incomplete Costco features
-    this.scoreIncompleteCostcoFeatures();
-
-    // Score other incomplete features using simplified scoring
-    const claims = this.state.board.getFeatureClaims();
-    claims.forEach((claim) => {
-      const player = this.state.players.find((p) =>
-        claim.players.includes(p.id)
-      );
-      if (player && claim.type !== "costco") {
-        // Other features: simplified final scoring - 1 point per tile
-        player.score += 1;
-      }
-    });
-  }
-
-  private scoreIncompleteCostcoFeatures(): void {
-    // Find all incomplete Costco features across the board
-    const allIncompleteFeatures = this.findAllIncompleteCostcoFeatures();
-
-    allIncompleteFeatures.forEach((feature) => {
-      // Create proper feature object for claimant lookup
-      const featureForClaimants = {
-        type: "costco" as const,
-        tiles: feature.tiles,
-        edges: feature.edges,
-        isComplete: false,
-        pennants: feature.pennants,
-      };
-
-      const claimants = (this.state.board as any).getFeatureClaimants(
-        featureForClaimants
-      );
-      if (claimants.length > 0) {
-        // Incomplete Costco scoring: 1 point per tile + 1 point per pennant
-        const tilePoints = feature.tiles.size;
-        const pennantPoints = feature.pennants;
-        const totalPoints = tilePoints + pennantPoints;
-
-        claimants.forEach((playerId: string) => {
-          const player = this.state.players.find((p) => p.id === playerId);
-          if (player) {
-            player.score += totalPoints;
-          }
-        });
-      }
-    });
-  }
-
-  private findAllIncompleteCostcoFeatures(): Array<{
-    tiles: Set<string>;
-    pennants: number;
-    edges: Set<string>;
-  }> {
-    const allFeatures: Array<{
-      tiles: Set<string>;
-      pennants: number;
-      edges: Set<string>;
-    }> = [];
-    const processedTiles = new Set<string>();
-
-    // Iterate through all tiles to find Costco features
-    (this.state.board as any).tiles.forEach(
-      (tileRecord: any, positionKey: string) => {
-        if (processedTiles.has(positionKey)) return;
-
-        const position = this.parsePositionKey(positionKey);
-        tileRecord.tile.costcoZones.forEach((zone: any) => {
-          const visited = new Set<string>();
-          const feature = (this.state.board as any).traceCostcoFeature(
-            position,
-            zone,
-            visited
-          );
-
-          // Only include if feature is incomplete
-          if (!(this.state.board as any).isCostcoComplete(feature)) {
-            // Mark all tiles in this feature as processed
-            feature.tiles.forEach((tileKey: string) =>
-              processedTiles.add(tileKey)
-            );
-            allFeatures.push({
-              tiles: feature.tiles,
-              pennants: feature.pennants || 0,
-              edges: feature.edges,
-            });
-          }
-        });
-      }
-    );
-
-    return allFeatures;
-  }
-
-  private parsePositionKey(key: string): { x: number; y: number } {
-    const [x, y] = key.split(",").map(Number);
-    return { x, y };
-  }
-
   public processAITurn(): void {
     const currentPlayer = this.getCurrentPlayer();
-    if (!currentPlayer.isAI || !this.state.currentTile) {
+    const currentTile = this.tileManager.getCurrentTile();
+    if (!currentPlayer.isAI || !currentTile) {
       return;
     }
 
@@ -500,7 +311,8 @@ export class Game {
         if (lastPosition) {
           const placedTile = this.state.board.getTile(lastPosition)?.tile;
           if (placedTile) {
-            const claimable = this.getClaimableFeatures(placedTile);
+            const claimable =
+              this.featureClaimManager.getClaimableFeatures(placedTile);
             if (claimable.length > 0) {
               this.claimFeature(claimable[0].type, claimable[0].identifier);
               return;
@@ -514,13 +326,15 @@ export class Game {
 
   public canRotateTile(): boolean {
     return (
-      this.state.phase === GamePhase.PLACE_TILE && !!this.state.currentTile
+      this.state.phase === GamePhase.PLACE_TILE &&
+      this.tileManager.canRotateTile()
     );
   }
 
   public rotateTile(times: number = 1): void {
-    if (this.canRotateTile() && this.state.currentTile) {
-      this.state.currentTile = this.state.currentTile.rotate(times);
+    if (this.canRotateTile()) {
+      this.tileManager.rotateTile(times);
+      this.syncTileState();
       this.notifyStateChange();
     }
   }
@@ -534,35 +348,14 @@ export class Game {
   }
 
   public getValidPlacements(): Position[] {
-    if (!this.state.currentTile) {
-      return [];
-    }
-
-    return this.state.board
-      .getPlacementCandidates()
-      .filter(
-        (position) =>
-          this.state.currentTile &&
-          this.state.board.canPlace(this.state.currentTile, position)
-      );
+    return this.tileManager.getValidPlacements(this.state.board);
   }
 
   public previewTilePlacement(position: Position): any {
-    if (!this.state.currentTile) {
-      return null;
-    }
-
-    return this.state.board.previewPlacement(this.state.currentTile, position);
+    return this.tileManager.previewTilePlacement(this.state.board, position);
   }
 
   public getTileStats(): { remaining: number; placed: number; total: number } {
-    const total =
-      this.state.tileDeck.length +
-      this.state.discardPile.length +
-      (this.state.currentTile ? 1 : 0);
-    const remaining = this.state.tileDeck.length;
-    const placed = this.state.discardPile.length;
-
-    return { remaining, placed, total };
+    return this.tileManager.getTileStats();
   }
 }

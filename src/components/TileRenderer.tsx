@@ -52,9 +52,9 @@ export const TileRenderer: React.FC<TileRendererProps> = ({
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.translate(-size / 2, -size / 2);
 
-    // Clear canvas and render tile using shared utility with fill style for legacy compatibility
+    // Clear canvas and render tile using shared utility with curved roads
     ctx.clearRect(0, 0, size, size);
-    renderTileToCanvas(ctx, tile, size, { roadStyle: "fill" });
+    renderTileToCanvas(ctx, tile, size);
 
     // Add preview overlay if needed
     if (showPreview) {
