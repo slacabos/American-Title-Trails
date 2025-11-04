@@ -187,7 +187,10 @@ describe("Game", () => {
         if (validPlacements.length > 0) {
           const position = validPlacements[0];
           game.placeTile(position, 0);
-          game.skipClaim();
+          // skipClaim only needed if phase is CLAIM_FEATURE
+          if (game.getState().phase === GamePhase.CLAIM_FEATURE) {
+            game.skipClaim();
+          }
         }
       }
 
