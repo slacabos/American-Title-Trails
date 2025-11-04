@@ -2,106 +2,7 @@
 
 ## 🎯 High Priority
 
-### 1. Costco Tile System Redesign (Critical) ✅ COMPLETED
-
-- [x] **COMPLETED**: Redesigned Costco tiles to follow proper Carcassonne city mechanics instead of road-like connections:
-  - [x] **Updated tile definitions** to use complex city-like segments rather than simple edge-to-edge connections
-  - [x] **Added multiple separate Costco areas** on single tiles (like cities can have multiple segments)
-  - [x] **Implemented curved boundaries** that don't follow straight edge patterns
-  - [x] **Added pennant system** for bonus scoring (e.g., "Gas Station" markers)
-  - [x] **Created diverse tile varieties** matching original Carcassonne city tile complexity
-  - [x] **Detailed Costco/City Area Behavior Requirements**:
-    - [x] **Enclosure Rules**: Costco areas must form completely enclosed shopping districts (no open edges to fields)
-    - [x] **Connection Logic**: Adjacent Costco edges automatically connect into larger shopping complexes
-    - [x] **Separation Handling**: Multiple Costco segments on same tile remain separate unless explicitly connected
-    - [x] **Curved Segments**: Costco areas can curve around tile corners (not limited to straight edge connections)
-    - [x] **Peninsula Support**: Allow Costco segments that jut into field areas without connecting to edges
-    - [x] **Bridge Connections**: Support Costco areas that span across field areas (like city bridges)
-    - [x] **Size Validation**: Completed Costco areas must contain at least 2 tiles (prevent single-tile completion)
-    - [x] **Edge Matching**: Costco edge segments must align properly with adjacent tiles' Costco segments
-    - [x] **Field Boundaries**: Clear distinction between Costco commercial areas and surrounding field regions
-    - [x] **Completion Detection**: Efficient algorithm to detect when Costco shopping districts are fully enclosed
-    - [x] **Scoring Mechanics**:
-      - Complete Costco: 2 points per tile + 2 points per pennant
-      - Incomplete Costco: 1 point per tile + 1 point per pennant (end game)
-      - Shared ownership: Points divided among players with most followers in area
-- [x] Updated `costcoZones` data structure to support:
-  - [x] Multiple separate Costco areas per tile
-  - [x] Complex segment shapes and curves
-  - [x] Pennant markers for bonus points
-- [x] Redesigned visual rendering in `BoardCanvas.tsx`:
-  - [x] Draw curved Costco boundaries instead of rectangular zones
-  - [x] Add visual pennant indicators
-  - [x] Support multiple separate Costco areas per tile
-- [x] Updated completion logic in `board.ts`:
-  - [x] Handle complex enclosed Costco areas properly
-  - [x] Implement pennant bonus scoring
-  - [x] Support multiple separate completable areas per tile
-- [x] **Replaced starter tile** with proper CRFR-style starting tile:
-  - [x] Current starter tile is 4-way road crossroads (not standard Carcassonne)
-  - [x] Create new starter tile with: single Costco edge, straight road parallel to that edge, field occupying remainder
-  - [x] Follow tile notation describing features clockwise from north (e.g., C-R-F-R pattern)
-  - [x] Update game initialization to use proper starter tile
-
-### 2. Testing Infrastructure (Critical) ✅ COMPLETED
-
-- [x] **COMPLETED**: Install testing framework: `npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event`
-- [x] **COMPLETED**: Create `vitest.config.ts` configuration file with proper React testing setup
-- [x] **COMPLETED**: Add test scripts to `package.json` (`test`, `test:ui`, `test:coverage`)
-- [x] **COMPLETED**: Write unit tests for core game logic:
-  - [x] **COMPLETED**: `Game` class methods (`placeTile`, `claimFeature`, `endTurn`) - 19 comprehensive tests covering initialization, tile placement, feature claiming, turn management, and state changes
-  - [x] **COMPLETED**: `Board` class placement validation and feature detection - 15 tests covering tile placement, candidate positions, bounds calculation, and feature claiming
-  - [x] **COMPLETED**: `Tile` rotation and cloning functionality - 25 tests covering constructor, edge access, rotation mechanics (90°, 180°, 270°, negative rotations), cloning behavior, and immutability
-  - [x] **COMPLETED**: `SimpleAI` move planning logic - 12 tests covering AI initialization, move planning, feature completion preferences, adjacency preferences, and integration scenarios
-- [x] **COMPLETED**: Write integration tests for React components:
-  - [x] **COMPLETED**: `GameSetup` player configuration component tests with user interaction simulation
-  - [x] **COMPLETED**: Canvas interaction and React component integration patterns established
-- [x] **COMPLETED**: Set up test coverage reporting with v8 provider and HTML/JSON/text output formats
-
-### 2. State Management Refactoring ✅ COMPLETED
-
-- [x] **COMPLETED**: Break down monolithic `Game` class (569 lines → 437 lines) into smaller focused classes:
-  - [x] **COMPLETED**: `ScoreManager` - Pure scoring logic extracted to `/src/managers/ScoreManager.ts` (handles completed features, final scoring, incomplete Costco features)
-  - [x] **COMPLETED**: `TurnManager` - Turn progression and phase management extracted to `/src/managers/TurnManager.ts` (handles phases, player turns, turn numbers)
-  - [x] **COMPLETED**: `Game` class refactored to use managers as coordinators
-- [x] **COMPLETED**: Replace `any` types with proper TypeScript interfaces:
-  - [x] **COMPLETED**: Fixed `gameState` type in `GameBoard.tsx` (was `any`, now `GameState | null`)
-  - [x] **COMPLETED**: Created proper interfaces in `src/types.ts`:
-    - `PlayerState` - Player state structure
-    - `GameState` - Complete game state interface
-    - `GamePhase` - Enum for game phases
-    - `TilePlacementResult` - Tile placement result type
-    - `CompletedFeature` - Completed feature structure
-    - `ClaimableFeature` - Claimable feature structure
-  - [x] **COMPLETED**: Typed all method return values properly (`ClaimableFeature[]`, `CompletedFeature[]`, etc.)
-- [x] **COMPLETED**: Implement proper state management pattern:
-  - [x] **COMPLETED**: Maintained React listener pattern with better type safety
-  - [x] **COMPLETED**: Game state immutability preserved (returns copies via `{...this.state}`)
-  - [x] **COMPLETED**: All tests passing (66/66) after refactoring
-
-### 3. Further Game Class Simplification ✅ COMPLETED
-
-- [x] **COMPLETED**: Create `TileManager` class (~153 lines):
-  - [x] **COMPLETED**: Extract tile deck management (`drawNextTile`, `tileDeck`, `discardPile`, `currentTile`)
-  - [x] **COMPLETED**: Extract rotation operations (`rotateTile`, `rotateTileClockwise`, `rotateTileCounterClockwise`, `canRotateTile`)
-  - [x] **COMPLETED**: Extract placement helpers (`getValidPlacements`, `previewTilePlacement`, `getTileStats`)
-- [x] **COMPLETED**: Create `FeatureClaimManager` class (~100 lines):
-  - [x] **COMPLETED**: Extract feature discovery (`getClaimableFeatures` with label generation)
-  - [x] **COMPLETED**: Extract claim operations (`claimFeature`)
-  - [x] **COMPLETED**: Simplify feature label generation logic (separate methods for roads, Costco, formatting)
-- [x] **COMPLETED**: Create `PlayerManager` class (~80 lines):
-  - [x] **COMPLETED**: Extract player initialization and default color assignment
-  - [x] **COMPLETED**: Extract `getCurrentPlayer()` logic
-  - [x] **COMPLETED**: Centralize follower management (`decreaseFollowerCount`, `increaseFollowerCount`)
-- [x] **COMPLETED**: Extract utility functions:
-  - [x] **COMPLETED**: Moved `shuffle()` to `src/utils/arrayUtils.ts`
-- [x] **COMPLETED**: Refactor `Game` class to coordinator pattern:
-  - [x] **COMPLETED**: Reduced from 440 lines to 361 lines (18% reduction)
-  - [x] **COMPLETED**: Game class now primarily coordinates between 5 managers (Score, Turn, Tile, FeatureClaim, Player)
-  - [x] **COMPLETED**: All 66 tests passing after refactoring
-  - [x] **COMPLETED**: Zero TypeScript compilation errors
-
-### 4. Performance Optimizations
+### 1. Performance Optimizations
 
 - [ ] Canvas rendering improvements:
   - [ ] Implement `requestAnimationFrame` loop for smooth rendering
@@ -117,7 +18,167 @@
 
 ## 🔧 Medium Priority
 
-### 4. Error Handling & Validation
+### 2. Carcassonne Core Mechanics Improvements
+
+**See `CARCASSONNE_IMPROVEMENTS.md` for detailed analysis and implementation guide.**
+
+**TERMINOLOGY MAPPING (Carcassonne → American Title Trails):**
+
+- **City** = **Costco** (your implementation already has this)
+- **Road** = **Road** (your implementation already has this)
+- **Monastery** = **McDonald's** (your implementation already has this)
+- **Field** = **Field** (exists as terrain type but NO SCORING currently implemented)
+- **Meeple** = **Follower** (your implementation already has this)
+- **Farmer** = **Follower placed on a field** (NOT YET IMPLEMENTED)
+
+**WHAT ARE FIELDS IN YOUR GAME?**
+
+- Fields are the green/grass terrain areas between roads and Costco shopping areas
+- Currently in your code: `TerrainType = "road" | "field" | "costco" | "mcdonalds"`
+- Fields appear on tile edges (e.g., `edges: { north: "field", east: "costco", ... }`)
+- Fields also appear in tile centers (e.g., `center: "field"`)
+- **PROBLEM**: Fields currently have ZERO gameplay impact - they're just filler terrain
+- **SOLUTION**: Add farmer scoring system (see Phase 2 below)
+
+**HOW FIELDS ARE DIVIDED:**
+
+- A single tile can have MULTIPLE separate field areas
+- Fields are separated by roads and Costco areas
+- Example: A straight road tile has 2 separate fields (one on each side of the road)
+- Example: A T-junction tile has 3 separate fields (one in each corner)
+- Fields connect across tile edges when both edges are "field" terrain
+
+#### Phase 1: Critical Fixes (1-2 days) - HIGH PRIORITY
+
+- [ ] **Fix Majority Rule Calculation** (Currently Missing):
+
+  - [ ] Update `getFeatureClaimants()` in `board.ts` to count followers per player
+  - [ ] Only award points to player(s) with MOST followers on completed features
+  - [ ] Handle ties: all tied players get FULL points
+  - [ ] **Example**: Road completes with Player A having 2 followers and Player B having 1 follower → Only Player A scores
+  - [ ] **Example**: Costco completes with Player A having 2 followers and Player B having 2 followers → Both score full points
+  - [ ] Strategic implication: enables "hostile takeover" gameplay (connect your tile with more followers to steal points)
+  - [ ] Add tests for majority rule scenarios (single winner, ties)
+
+- [ ] **Remove 2-Tile Minimum for Cities** (Bug Fix):
+
+  - [ ] Fix `isCostcoComplete()` in `board.ts` line 451
+  - [ ] Remove `return feature.tiles.size >= 2;` requirement
+  - [ ] **Explanation**: A single-tile Costco CAN be complete if all its edges connect to non-Costco terrain (field or road)
+  - [ ] **Example**: Tile with Costco on North edge only, all other edges are fields → This is a complete 1-tile Costco worth 2 points
+  - [ ] **Example**: Tile with Costco on North and East edges (corner) → If both connect to field/road, it's complete worth 2 points
+  - [ ] Currently this incorrectly requires 2+ tiles to complete, blocking valid 1-tile completions
+  - [ ] Add test for single-tile Costco completion
+
+- [ ] **Add Feature Claim Validation** (Prevent Illegal Moves):
+  - [ ] Create `canClaimFeature()` validation method
+  - [ ] Prevent placing follower on already-claimed features
+  - [ ] Exception: allow merging separate claimed/unclaimed features
+  - [ ] Update UI to only show valid claimable features
+  - [ ] Add tests for claim validation edge cases
+
+#### Phase 2: Field/Farmer Mechanics (3-5 days) - MAJOR FEATURE
+
+**WHAT THIS ADDS**: Currently fields are just empty grass with no gameplay purpose. This makes them strategically important!
+
+**FARMER CONCEPT**:
+
+- A farmer is just a follower placed on a FIELD (instead of on a road/Costco/McDonald's)
+- Farmers are placed "lying down" = they stay on the field PERMANENTLY until game end
+- Regular followers on roads/Costcos return when those features complete
+- Farmers NEVER return during the game (only at game end)
+- At game end, farmers score based on how many COMPLETED Costcos touch their field
+
+**SCORING EXAMPLE**:
+
+- Player places farmer on field
+- During game, 3 Costco shopping areas get completed adjacent to that field
+- At game end: Farmer scores 3 Costcos × 3 points = 9 points
+- This is often the highest-scoring strategy in Carcassonne!
+
+- [ ] **Design Field System**:
+
+  - [ ] Add `farmer` to `FollowerType` enum (currently only has road/costco/mcdonalds)
+  - [ ] Create `FieldSegment` interface with boundaries and separators
+  - [ ] Add `fieldSegments` property to `TileDefinition`
+  - [ ] **Key concept**: Fields are the grass areas BETWEEN roads and Costcos
+  - [ ] **Key concept**: Roads and Costcos ACT AS WALLS that separate different fields
+
+- [ ] **Implement Field Detection**:
+
+  - [ ] Create `FieldFeature` interface tracking segments and adjacent Costcos
+  - [ ] Implement field boundary detection algorithm
+  - [ ] Track which Costcos touch each field (this determines scoring!)
+  - [ ] Handle field separation across tile placements
+  - [ ] **Example detection**:
+    - Straight road tile has 2 fields (left side and right side of road)
+    - Road acts as separator between the two fields
+    - If Costco touches left field, only farmers on LEFT field score for it
+    - If Costco touches right field, only farmers on RIGHT field score for it
+
+- [ ] **Add Farmer Placement**:
+
+  - [ ] Farmers are placed "lying down" (permanent until game end)
+  - [ ] Cannot be returned when features complete
+  - [ ] Allow multiple farmers in same field (majority rule applies)
+  - [ ] Update UI to show farmer placement option
+
+- [ ] **Implement Field Scoring**:
+
+  - [ ] At game end, score 3 points per COMPLETED Costco adjacent to field
+  - [ ] **Important**: Only COMPLETED Costcos count (incomplete Costcos score 0 for farmers)
+  - [ ] Apply majority rule for farmers in same field (same as roads/Costcos)
+  - [ ] Update `ScoreManager.calculateFinalScores()` to include field scoring
+  - [ ] **Example calculation**:
+    - Field has 2 completed Costcos touching it
+    - Player A has 2 farmers on this field, Player B has 1 farmer
+    - Player A wins majority → Player A scores 2 Costcos × 3 points = 6 points
+    - Player B scores nothing (didn't have majority)
+  - [ ] Add comprehensive field scoring tests
+
+- [ ] **Update Tile Library**:
+  - [ ] Add field segment definitions to all 41 tiles in `tileLibrary.ts`
+  - [ ] Define field boundaries for each tile type:
+    - **Straight road**: 2 separate fields (left and right of road)
+    - **Curved road**: 2 separate fields (inside curve and outside curve)
+    - **T-junction**: 3 separate fields (one in each corner that doesn't have road)
+    - **4-way crossroad**: 4 separate fields (one in each corner)
+    - **Road with Costco**: Fields are in corners not occupied by road or Costco
+    - **Costco-only tiles**: Field segments around the Costco edges
+    - **McDonald's tiles**: Usually 1 large field surrounding the monastery
+  - [ ] Document field separation patterns (what blocks field connection)
+  - [ ] Document which Costco edges touch which field segments
+
+#### Phase 3: Polish & Testing (1-2 days)
+
+- [ ] **Update AI for New Mechanics**:
+
+  - [ ] Add farmer placement strategy to `SimpleAI`
+  - [ ] Consider field value in AI move planning
+  - [ ] Implement hostile takeover strategy (placing more followers)
+  - [ ] Late-game farmer placement logic
+
+- [ ] **Comprehensive Testing**:
+
+  - [ ] Add test cases for majority rule (single winner, ties)
+  - [ ] Add test cases for field scoring:
+    - Farmer scoring for adjacent completed Costcos
+    - Field separation by roads and Costcos
+    - Multiple farmers in same field (majority rule)
+    - Fields that touch multiple Costcos
+  - [ ] Add test cases for single-tile Costco completion
+  - [ ] Add test cases for claim validation (illegal claims, merging)
+  - [ ] Add edge case tests (road loops, complex field boundaries, Costco peninsulas)
+
+- [ ] **Documentation Updates**:
+  - [ ] Update help content with field/farmer mechanics explanation
+  - [ ] Explain: "Farmers are followers placed on fields (grass areas between roads and Costcos)"
+  - [ ] Explain: "Farmers stay on the field until game end, then score 3 points per completed Costco touching that field"
+  - [ ] Document majority rule in game rules with examples
+  - [ ] Add visual examples of field boundaries and separation
+  - [ ] Update translation files with new terminology (farmer, field scoring, etc.)
+
+### 3. Error Handling & Validation
 
 - [ ] Create custom error types:
   ```typescript
@@ -134,7 +195,7 @@
   - [ ] Better error messaging for users
   - [ ] Error logging and reporting
 
-### 5. Code Quality & Documentation
+### 4. Code Quality & Documentation
 
 - [ ] Add JSDoc comments to all public methods
 - [ ] Improve TypeScript strict mode compliance:
@@ -150,7 +211,7 @@
   - [ ] Add TypeScript-specific rules
   - [ ] Set up Prettier for code formatting
 
-### 6. Accessibility Improvements
+### 5. Accessibility Improvements
 
 - [ ] Canvas accessibility:
   - [ ] Add ARIA labels for interactive canvas elements
@@ -167,7 +228,7 @@
 
 ## 🎮 Low Priority
 
-### 7. AI Enhancement
+### 6. AI Enhancement
 
 - [ ] Advanced AI algorithms:
   - [ ] Implement minimax algorithm for better decision making
@@ -178,11 +239,12 @@
   - [ ] Medium: Improved heuristics with lookahead
   - [ ] Hard: Advanced algorithms with deep analysis
 - [ ] AI improvements:
-  - [ ] Better follower placement strategy
+  - [ ] Better follower placement strategy (beyond just monasteries)
   - [ ] Long-term planning capabilities
   - [ ] Adaptive difficulty based on player performance
+  - [ ] **NOTE**: Major AI strategy updates needed after Phase 2 (farmer mechanics) completed
 
-### 8. Developer Experience
+### 7. Developer Experience
 
 - [ ] Development tools:
   - [ ] Add debug mode with detailed game state logging
@@ -197,7 +259,7 @@
   - [ ] Add development vs production environment configs
   - [ ] Implement proper source maps for debugging
 
-### 9. Feature Enhancements
+### 8. Feature Enhancements
 
 - [ ] Game features:
   - [ ] Add game save/load functionality
@@ -235,12 +297,22 @@
 
 ## Priority Implementation Order
 
-1. **Week 1**: Testing infrastructure setup + Quick wins
-2. **Week 2**: State management refactoring
-3. **Week 3**: Performance optimizations
-4. **Week 4**: Error handling and validation
-5. **Month 2**: Code quality improvements and accessibility
-6. **Month 3+**: Advanced features and AI enhancements
+1. **Immediate Priority**: Carcassonne core mechanics fixes (Phase 1: Critical Fixes - 1-2 days)
+   - Majority rule calculation
+   - Remove 2-tile city minimum
+   - Feature claim validation
+2. **Week 1-2**: Carcassonne field/farmer mechanics (Phase 2 - 3-5 days)
+   - Field system design and implementation
+   - Farmer placement and scoring
+   - Tile library updates
+3. **Week 2**: Polish and testing (Phase 3 - 1-2 days)
+   - Update AI for new mechanics
+   - Comprehensive test coverage
+   - Documentation updates
+4. **Week 3**: Performance optimizations
+5. **Week 4**: Error handling and validation
+6. **Month 2**: Code quality improvements and accessibility
+7. **Month 3+**: Advanced features and AI enhancements
 
 ## Notes
 
