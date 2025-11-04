@@ -217,7 +217,7 @@ export const drawStraightCostcoZone = (
 };
 
 /**
- * Draws curved Costco zones
+ * Draws curved Costco zones with thick stroked curves (like roads but wider)
  */
 export const drawCurvedCostcoZone = (
   ctx: CanvasRenderingContext2D,
@@ -225,28 +225,40 @@ export const drawCurvedCostcoZone = (
   size: number
 ) => {
   const center = size / 2;
+  const costcoWidth = size * 0.5; // Thick band (50% of tile width)
   const directions = zone.segments;
 
+  ctx.strokeStyle = COSTCO_COLOR;
+  ctx.fillStyle = COSTCO_COLOR;
+  ctx.lineWidth = costcoWidth;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // Draw curved Costco band (like road curves but thicker)
   if (directions.includes("north") && directions.includes("east")) {
+    // Northeast corner - quadratic curve from north to east
+    ctx.beginPath();
     ctx.moveTo(center, 0);
     ctx.quadraticCurveTo(size, 0, size, center);
-    ctx.lineTo(center, center);
-    ctx.closePath();
+    ctx.stroke();
   } else if (directions.includes("north") && directions.includes("west")) {
+    // Northwest corner - quadratic curve from west to north
+    ctx.beginPath();
     ctx.moveTo(0, center);
     ctx.quadraticCurveTo(0, 0, center, 0);
-    ctx.lineTo(center, center);
-    ctx.closePath();
+    ctx.stroke();
   } else if (directions.includes("south") && directions.includes("east")) {
+    // Southeast corner - quadratic curve from east to south
+    ctx.beginPath();
     ctx.moveTo(size, center);
     ctx.quadraticCurveTo(size, size, center, size);
-    ctx.lineTo(center, center);
-    ctx.closePath();
+    ctx.stroke();
   } else if (directions.includes("south") && directions.includes("west")) {
+    // Southwest corner - quadratic curve from south to west
+    ctx.beginPath();
     ctx.moveTo(center, size);
     ctx.quadraticCurveTo(0, size, 0, center);
-    ctx.lineTo(center, center);
-    ctx.closePath();
+    ctx.stroke();
   }
 };
 

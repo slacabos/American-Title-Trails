@@ -112,7 +112,6 @@
   - [ ] Implement `useCallback` for event handlers
   - [ ] Add `React.memo` for pure components
 - [ ] Memory management:
-  - [ ] Limit activity log to last 100 entries (currently grows indefinitely)
   - [ ] Implement proper cleanup for event listeners
   - [ ] Add cleanup for AI timeouts on component unmount
 
