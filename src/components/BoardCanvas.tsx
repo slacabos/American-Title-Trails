@@ -292,10 +292,8 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
         const tileCtx = tileCanvas.getContext("2d");
 
         if (tileCtx) {
-          // Render the actual tile with its features using stroke style for modern look
-          renderTileToCanvas(tileCtx, record.tile, tileSize, {
-            roadStyle: "stroke",
-          });
+          // Render the actual tile with its features using curved roads
+          renderTileToCanvas(tileCtx, record.tile, tileSize);
 
           // Draw the tile to main canvas
           ctx.drawImage(tileCanvas, x, y, scaledTileSize, scaledTileSize);

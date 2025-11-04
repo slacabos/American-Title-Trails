@@ -13,21 +13,13 @@ const PENNANT_ORANGE_COLOR = TILE_COLORS.pennantOrange;
 const QUARTER_POSITION = 0.25;
 const THREE_QUARTER_POSITION = 0.75;
 
-export interface RoadRenderOptions {
-  style: "stroke" | "fill";
-  width: number;
-  lineCap?: CanvasLineCap;
-  lineJoin?: CanvasLineJoin;
-}
-
 /**
  * Renders a complete tile to a canvas context
  */
 export const renderTileToCanvas = (
   ctx: CanvasRenderingContext2D,
   tile: Tile,
-  size: number,
-  options: { roadStyle?: "stroke" | "fill" } = {}
+  size: number
 ) => {
   // Clear and draw background
   drawTileBackground(ctx, size);
@@ -37,34 +29,16 @@ export const renderTileToCanvas = (
   ctx.lineWidth = 1;
   ctx.strokeRect(0, 0, size, size);
 
-  // Draw roads with specified style
-  const roadStyle = options.roadStyle || "stroke";
+  // Draw roads with curved rendering
   tile.roadConnections.forEach((connection) => {
     for (let i = 0; i < connection.length - 1; i++) {
-      drawRoad(ctx, connection[i], connection[i + 1], size, {
-        style: roadStyle,
-        width: size * 0.2,
-        lineCap: "round",
-        lineJoin: "round",
-      });
+      drawRoad(ctx, connection[i], connection[i + 1], size, size * 0.2);
     }
   });
 
   // Draw center road if present (before other center features)
   if (tile.center === "road") {
     drawCenterRoad(ctx, size);
-
-    // For cloverleaf tiles, redraw road connections on top for visibility
-    if (roadStyle === "fill") {
-      tile.roadConnections.forEach((connection) => {
-        for (let i = 0; i < connection.length - 1; i++) {
-          drawRoad(ctx, connection[i], connection[i + 1], size, {
-            style: roadStyle,
-            width: size * 0.2,
-          });
-        }
-      });
-    }
   }
 
   // Draw Costco zones
@@ -90,28 +64,21 @@ export const drawTileBackground = (
 };
 
 /**
- * Draws a road segment between two points with configurable style
+ * Draws a road segment between two points with curved rendering for corners
  */
 export const drawRoad = (
   ctx: CanvasRenderingContext2D,
   from: string,
   to: string,
   size: number,
-  options: RoadRenderOptions
+  width: number
 ) => {
-  const { style, width, lineCap = "round", lineJoin = "round" } = options;
   const center = size / 2;
 
-  ctx.fillStyle = ROAD_COLOR;
   ctx.strokeStyle = ROAD_COLOR;
-
-  if (style === "stroke") {
-    ctx.lineWidth = width;
-    ctx.lineCap = lineCap;
-    ctx.lineJoin = lineJoin;
-  } else {
-    ctx.lineWidth = 1;
-  }
+  ctx.lineWidth = width;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
   const getConnectionPoint = (direction: string) => {
     switch (direction) {
@@ -131,84 +98,35 @@ export const drawRoad = (
   const start = getConnectionPoint(from);
   const end = getConnectionPoint(to);
 
-  if (style === "stroke") {
-    // Modern stroke-based rendering for curved roads
-    const isCornerConnection =
-      (from === "north" && to === "east") ||
-      (from === "east" && to === "north") ||
-      (from === "north" && to === "west") ||
-      (from === "west" && to === "north") ||
-      (from === "south" && to === "east") ||
-      (from === "east" && to === "south") ||
-      (from === "south" && to === "west") ||
-      (from === "west" && to === "south");
+  // Check if this is a corner connection for curved rendering
+  const isCornerConnection =
+    (from === "north" && to === "east") ||
+    (from === "east" && to === "north") ||
+    (from === "north" && to === "west") ||
+    (from === "west" && to === "north") ||
+    (from === "south" && to === "east") ||
+    (from === "east" && to === "south") ||
+    (from === "south" && to === "west") ||
+    (from === "west" && to === "south");
 
-    ctx.beginPath();
+  ctx.beginPath();
 
-    if (isCornerConnection) {
-      // Draw curved road for corner connections
-      const controlX =
-        from.includes("north") || from.includes("south") ? start.x : end.x;
-      const controlY =
-        from.includes("east") || from.includes("west") ? start.y : end.y;
+  if (isCornerConnection) {
+    // Draw curved road for corner connections using quadratic curve
+    const controlX =
+      from.includes("north") || from.includes("south") ? start.x : end.x;
+    const controlY =
+      from.includes("east") || from.includes("west") ? start.y : end.y;
 
-      ctx.moveTo(start.x, start.y);
-      ctx.quadraticCurveTo(controlX, controlY, end.x, end.y);
-    } else {
-      // Draw straight road for opposite or center connections
-      ctx.moveTo(start.x, start.y);
-      ctx.lineTo(end.x, end.y);
-    }
-
-    ctx.stroke();
+    ctx.moveTo(start.x, start.y);
+    ctx.quadraticCurveTo(controlX, controlY, end.x, end.y);
   } else {
-    // Legacy fill-based rendering for TileRenderer compatibility
-    ctx.beginPath();
-
-    if (from === "center" || to === "center") {
-      // Road to/from center - properly handle horizontal and vertical roads
-      const isHorizontal = start.y === end.y;
-      const isVertical = start.x === end.x;
-
-      if (isHorizontal) {
-        ctx.moveTo(start.x, start.y - width / 2);
-        ctx.lineTo(end.x, end.y - width / 2);
-        ctx.lineTo(end.x, end.y + width / 2);
-        ctx.lineTo(start.x, start.y + width / 2);
-      } else if (isVertical) {
-        ctx.moveTo(start.x - width / 2, start.y);
-        ctx.lineTo(end.x - width / 2, end.y);
-        ctx.lineTo(end.x + width / 2, end.y);
-        ctx.lineTo(start.x + width / 2, start.y);
-      } else {
-        // Diagonal road
-        const angle = Math.atan2(end.y - start.y, end.x - start.x);
-        const perpAngle = angle + Math.PI / 2;
-        const dx = (Math.cos(perpAngle) * width) / 2;
-        const dy = (Math.sin(perpAngle) * width) / 2;
-
-        ctx.moveTo(start.x + dx, start.y + dy);
-        ctx.lineTo(end.x + dx, end.y + dy);
-        ctx.lineTo(end.x - dx, end.y - dy);
-        ctx.lineTo(start.x - dx, start.y - dy);
-      }
-    } else {
-      // Direct road connection
-      const angle = Math.atan2(end.y - start.y, end.x - start.x);
-      const perpAngle = angle + Math.PI / 2;
-      const dx = (Math.cos(perpAngle) * width) / 2;
-      const dy = (Math.sin(perpAngle) * width) / 2;
-
-      ctx.moveTo(start.x + dx, start.y + dy);
-      ctx.lineTo(end.x + dx, end.y + dy);
-      ctx.lineTo(end.x - dx, end.y - dy);
-      ctx.lineTo(start.x - dx, start.y - dy);
-    }
-
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    // Draw straight road for opposite or center connections
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
   }
+
+  ctx.stroke();
 };
 
 /**
