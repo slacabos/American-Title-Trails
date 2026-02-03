@@ -14,7 +14,9 @@
     "build-storybook": "storybook build",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
   },
   "keywords": [
     "board-game",
@@ -79,10 +81,5 @@
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
     "vitest": "^3.2.4"
-  },
-  "eslintConfig": {
-    "extends": [
-      "plugin:storybook/recommended"
-    ]
   }
 }

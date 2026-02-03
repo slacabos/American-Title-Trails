@@ -18,6 +18,7 @@ import { TileManager } from "./managers/TileManager";
 import { FeatureClaimManager } from "./managers/FeatureClaimManager";
 import { PlayerManager } from "./managers/PlayerManager";
 import { shuffle } from "./utils/arrayUtils";
+import { GAME_RULES } from "./constants/gameRules";
 
 // Re-export types for backward compatibility
 export { GamePhase } from "./types";
@@ -305,7 +306,7 @@ export class Game {
       }
     } else if (this.state.phase === GamePhase.CLAIM_FEATURE) {
       // AI decides whether to claim a feature (simplified logic)
-      if (currentPlayer.followers > 2) {
+      if (currentPlayer.followers > GAME_RULES.AI_CLAIM_THRESHOLD) {
         // Try to claim the first available feature
         const lastPosition = this.getLastPlacedTilePosition();
         if (lastPosition) {

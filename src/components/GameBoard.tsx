@@ -11,6 +11,7 @@ import BoardCanvas from "./BoardCanvas";
 import TileRenderer from "./TileRenderer";
 import HelpModal from "./HelpModal";
 import { Button } from "@/components/ui/button";
+import { GAME_RULES } from "../constants/gameRules";
 
 interface GameBoardProps {
   players: PlayerDefinition[];
@@ -58,7 +59,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     ) {
       const timer = setTimeout(() => {
         game.processAITurn();
-      }, 1000); // 1 second delay for AI moves
+      }, GAME_RULES.AI_MOVE_DELAY_MS);
 
       return () => clearTimeout(timer);
     }

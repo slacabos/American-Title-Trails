@@ -1,4 +1,5 @@
 import { DIRECTIONS, DELTAS, OPPOSITE } from "./directions";
+import { GAME_RULES } from "./constants/gameRules";
 import {
   Position,
   Bounds,
@@ -160,7 +161,7 @@ export class Board implements IBoard {
           ...feature,
           isComplete: true,
           claimedBy,
-          points: feature.tiles.size,
+          points: feature.tiles.size * GAME_RULES.ROAD_POINTS_PER_TILE,
         });
       }
     });
@@ -174,8 +175,8 @@ export class Board implements IBoard {
       if (this.isCostcoComplete(feature)) {
         const claimedBy = this.getFeatureClaimants(feature);
         // Complete Costco: 2 points per tile + 2 points per pennant
-        const basePoints = feature.tiles.size * 2;
-        const pennantPoints = (feature.pennants || 0) * 2;
+        const basePoints = feature.tiles.size * GAME_RULES.COSTCO_POINTS_PER_TILE_COMPLETE;
+        const pennantPoints = (feature.pennants || 0) * GAME_RULES.COSTCO_PENNANT_BONUS_COMPLETE;
         completed.push({
           ...feature,
           isComplete: true,
@@ -200,7 +201,7 @@ export class Board implements IBoard {
           edges: new Set([positionKey(placedPosition)]),
           isComplete: true,
           claimedBy,
-          points: 9,
+          points: GAME_RULES.MCDONALDS_MAX_SCORE,
         });
       }
     }
@@ -434,7 +435,7 @@ export class Board implements IBoard {
     }
 
     // Additional requirement: Costco areas must contain at least 2 tiles
-    return feature.tiles.size >= 2;
+    return feature.tiles.size >= GAME_RULES.COSTCO_MIN_TILES;
   }
 
   private isMcDonaldsComplete(position: Position): boolean {

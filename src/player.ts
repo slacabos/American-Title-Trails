@@ -1,4 +1,5 @@
 import { PlayerOptions } from "./types";
+import { GAME_RULES } from "./constants/gameRules";
 
 export class Player {
   public readonly id: string;
@@ -11,7 +12,7 @@ export class Player {
   constructor(name: string, options: PlayerOptions = {}) {
     this.id = options.id ?? name.toLowerCase().replace(/\s+/g, "-");
     this.name = name;
-    this.followers = options.followers ?? 7;
+    this.followers = options.followers ?? GAME_RULES.FOLLOWERS_PER_PLAYER;
     this.score = 0;
     this.isAI = options.isAI ?? false;
     this.color = options.color ?? null;

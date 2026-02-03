@@ -1,5 +1,6 @@
 import { PlayerState, CompletedFeature } from "../types";
 import type { IBoard } from "../interfaces/IBoard";
+import { GAME_RULES } from "../constants/gameRules";
 
 /**
  * ScoreManager handles all scoring calculations for the game.
@@ -69,7 +70,7 @@ export class ScoreManager {
       const player = players.find((p) => claim.players.includes(p.id));
       if (player && claim.type !== "costco") {
         // Other features: simplified final scoring - 1 point per tile
-        player.score += 1;
+        player.score += GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE;
       }
     });
   }

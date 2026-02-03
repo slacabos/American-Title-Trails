@@ -1,4 +1,5 @@
 import { PlayerDefinition, PlayerState } from "../types";
+import { GAME_RULES } from "../constants/gameRules";
 
 /**
  * PlayerManager handles player-related operations.
@@ -30,7 +31,7 @@ export class PlayerManager {
       name: config.name,
       isAI: config.isAI || false,
       score: 0,
-      followers: config.followers || 7,
+      followers: config.followers || GAME_RULES.FOLLOWERS_PER_PLAYER,
       color: config.color || this.getDefaultColor(index),
     }));
   }
