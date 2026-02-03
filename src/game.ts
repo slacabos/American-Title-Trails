@@ -197,7 +197,17 @@ export class Game {
       return [];
     }
 
-    return this.featureClaimManager.getClaimableFeatures(tileRecord.tile);
+    const allClaimable =
+      this.featureClaimManager.getClaimableFeatures(tileRecord.tile);
+
+    // Filter out features that already have followers
+    return allClaimable.filter((feature) =>
+      this.state.board.canClaimFeature(
+        feature.type,
+        lastPlacedPosition,
+        feature.identifier
+      )
+    );
   }
 
   public claimFeature(type: TerrainType, identifier?: string): boolean {
@@ -212,6 +222,11 @@ export class Game {
 
     const lastPlacedPosition = this.getLastPlacedTilePosition();
     if (!lastPlacedPosition) {
+      return false;
+    }
+
+    // Check if feature is already claimed
+    if (!this.state.board.canClaimFeature(type, lastPlacedPosition, identifier)) {
       return false;
     }
 

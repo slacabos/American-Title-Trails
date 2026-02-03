@@ -20,7 +20,6 @@ export const GAME_RULES = {
   // Costco (City) scoring - incomplete features
   COSTCO_POINTS_PER_TILE_INCOMPLETE: 1,
   COSTCO_PENNANT_BONUS_INCOMPLETE: 1,
-  COSTCO_MIN_TILES: 2,
 
   // Road scoring
   ROAD_POINTS_PER_TILE: 1,

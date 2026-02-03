@@ -232,7 +232,7 @@ export class Board implements IBoard {
     return features;
   }
 
-  private traceRoadFeature(
+  public traceRoadFeature(
     startPosition: Position,
     connection: string[],
     visited: Set<string>
@@ -434,8 +434,7 @@ export class Board implements IBoard {
       }
     }
 
-    // Additional requirement: Costco areas must contain at least 2 tiles
-    return feature.tiles.size >= GAME_RULES.COSTCO_MIN_TILES;
+    return true;
   }
 
   private isMcDonaldsComplete(position: Position): boolean {
@@ -467,29 +466,95 @@ export class Board implements IBoard {
     return claimants;
   }
 
+  canClaimFeature(
+    type: TerrainType,
+    position: Position,
+    identifier: string | undefined
+  ): boolean {
+    const tileRecord = this.getTile(position);
+    if (!tileRecord) return false;
+
+    let feature: Feature | null = null;
+
+    if (type === "road") {
+      const connectionIndex = identifier
+        ? parseInt(identifier.replace("road_", ""))
+        : 0;
+      const connection = tileRecord.tile.roadConnections[connectionIndex];
+      if (connection) {
+        feature = this.traceRoadFeature(position, connection, new Set());
+      }
+    } else if (type === "costco") {
+      const zoneIndex = identifier
+        ? parseInt(identifier.replace("costco_", ""))
+        : 0;
+      const zone = tileRecord.tile.costcoZones[zoneIndex];
+      if (zone) {
+        feature = this.traceCostcoFeature(position, zone, new Set());
+      }
+    } else if (type === "mcdonalds") {
+      const edge = positionKey(position);
+      const existingClaim = this.featureClaims.get(edge);
+      return !existingClaim || existingClaim.players.length === 0;
+    }
+
+    if (!feature) return false;
+
+    for (const edge of feature.edges) {
+      const existingClaim = this.featureClaims.get(edge);
+      if (existingClaim && existingClaim.players.length > 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   claimFeature(
     type: TerrainType,
     position: Position,
     identifier: string | undefined,
     playerId: string
-  ): any {
-    const edge = identifier
-      ? `${positionKey(position)}:${identifier}`
-      : positionKey(position);
-
-    const existingClaim = this.featureClaims.get(edge);
-    if (existingClaim) {
-      existingClaim.players.push(playerId);
-      return { edge, type, players: existingClaim.players };
-    } else {
-      const newClaim = {
-        edge,
-        type,
-        players: [playerId],
-      };
-      this.featureClaims.set(edge, newClaim);
-      return { edge, type, players: [playerId] };
+  ): FeatureClaim {
+    if (!this.canClaimFeature(type, position, identifier)) {
+      throw new Error("Cannot claim feature: already has a follower");
     }
+
+    const tileRecord = this.getTile(position);
+    const posKey = positionKey(position);
+
+    // For roads and costcos, we need to store the claim using the same edge format
+    // as the traced features (e.g., "0,0:north" instead of "0,0:road_0")
+    if (type === "road" && tileRecord) {
+      const connectionIndex = identifier
+        ? parseInt(identifier.replace("road_", ""))
+        : 0;
+      const connection = tileRecord.tile.roadConnections[connectionIndex];
+      if (connection && connection.length > 0) {
+        // Store claim using the first segment of the connection
+        const edge = `${posKey}:${connection[0]}`;
+        const newClaim = { edge, type, players: [playerId] };
+        this.featureClaims.set(edge, newClaim);
+        return { edge, type, players: [playerId] };
+      }
+    } else if (type === "costco" && tileRecord) {
+      const zoneIndex = identifier
+        ? parseInt(identifier.replace("costco_", ""))
+        : 0;
+      const zone = tileRecord.tile.costcoZones[zoneIndex];
+      if (zone && zone.segments.length > 0) {
+        // Store claim using the first segment of the zone
+        const edge = `${posKey}:${zone.segments[0]}`;
+        const newClaim = { edge, type, players: [playerId] };
+        this.featureClaims.set(edge, newClaim);
+        return { edge, type, players: [playerId] };
+      }
+    }
+
+    // For mcdonalds or fallback, use position key
+    const edge = posKey;
+    const newClaim = { edge, type, players: [playerId] };
+    this.featureClaims.set(edge, newClaim);
+    return { edge, type, players: [playerId] };
   }
 
   getFeatureClaims(): FeatureClaim[] {

@@ -154,7 +154,7 @@ describe("Board", () => {
       const result = board.claimFeature(
         "road",
         { x: 0, y: 1 },
-        "north",
+        "road_0",
         "player1"
       );
       expect(result).toBeDefined();
@@ -183,21 +183,171 @@ describe("Board", () => {
       const result1 = board.claimFeature(
         "road",
         { x: 0, y: 1 },
-        "north",
+        "road_0",
         "player1"
       );
       expect(result1).toBeDefined();
 
-      // Second claim should also succeed (multiple players can claim)
-      const result2 = board.claimFeature(
-        "road",
-        { x: 0, y: 1 },
-        "north",
-        "player2"
+      // Second claim should throw an error
+      expect(() => {
+        board.claimFeature("road", { x: 0, y: 1 }, "road_0", "player2");
+      }).toThrow("Cannot claim feature: already has a follower");
+    });
+  });
+
+  describe("canClaimFeature", () => {
+    it("should return true for unclaimed features", () => {
+      const roadTile = new Tile({
+        id: "test-road",
+        name: "Test Road",
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco",
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [["north"]],
+        costcoZones: [],
+      } as TileDefinition);
+
+      board.placeTile(roadTile, { x: 0, y: 1 });
+
+      const canClaim = board.canClaimFeature("road", { x: 0, y: 1 }, "road_0");
+      expect(canClaim).toBe(true);
+    });
+
+    it("should return false for claimed features", () => {
+      const roadTile = new Tile({
+        id: "test-road",
+        name: "Test Road",
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco",
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [["north"]],
+        costcoZones: [],
+      } as TileDefinition);
+
+      board.placeTile(roadTile, { x: 0, y: 1 });
+      board.claimFeature("road", { x: 0, y: 1 }, "road_0", "player1");
+
+      const canClaim = board.canClaimFeature("road", { x: 0, y: 1 }, "road_0");
+      expect(canClaim).toBe(false);
+    });
+
+    it("should return false for connected features when any part is claimed", () => {
+      // Create tiles that form a connected road feature
+      // Start tile has road on east edge
+      // Place a tile to the east that also has a road, forming a connected feature
+
+      const roadTile1 = new Tile({
+        id: "road-tile-1",
+        name: "Road Tile 1",
+        edges: {
+          north: "costco",
+          east: "road",
+          south: "field",
+          west: "road",
+        },
+        center: "road",
+        roadConnections: [["west", "east"]],
+        costcoZones: [],
+      } as TileDefinition);
+
+      const roadTile2 = new Tile({
+        id: "road-tile-2",
+        name: "Road Tile 2",
+        edges: {
+          north: "field",
+          east: "field",
+          south: "field",
+          west: "road",
+        },
+        center: "field",
+        roadConnections: [["west", "center"]],
+        costcoZones: [],
+      } as TileDefinition);
+
+      board.placeTile(roadTile1, { x: 1, y: 0 });
+      board.placeTile(roadTile2, { x: 2, y: 0 });
+
+      // Claim the road on the first tile
+      board.claimFeature("road", { x: 1, y: 0 }, "road_0", "player1");
+
+      // The connected road on the second tile should not be claimable
+      const canClaim = board.canClaimFeature("road", { x: 2, y: 0 }, "road_0");
+      expect(canClaim).toBe(false);
+    });
+
+    it("should allow claiming different features on the same tile independently", () => {
+      // Create a tile with both a road and a Costco zone
+      const mixedTile = new Tile({
+        id: "mixed-tile",
+        name: "Mixed Tile",
+        edges: {
+          north: "costco",
+          east: "road",
+          south: "costco",
+          west: "road",
+        },
+        center: "road",
+        roadConnections: [["east", "west"]],
+        costcoZones: [
+          {
+            id: "costco1",
+            segments: ["north"],
+            hasPennant: false,
+          },
+        ],
+      } as TileDefinition);
+
+      board.placeTile(mixedTile, { x: 1, y: 0 });
+
+      // Claim the road
+      board.claimFeature("road", { x: 1, y: 0 }, "road_0", "player1");
+
+      // Costco should still be claimable
+      const canClaimCostco = board.canClaimFeature(
+        "costco",
+        { x: 1, y: 0 },
+        "costco_0"
       );
-      expect(result2).toBeDefined();
-      expect(result2.players).toContain("player1");
-      expect(result2.players).toContain("player2");
+      expect(canClaimCostco).toBe(true);
+    });
+
+    it("should handle McDonalds claims correctly", () => {
+      const mcdonaldsTile = new Tile({
+        id: "mcdonalds-tile",
+        name: "McDonalds Tile",
+        edges: {
+          north: "field",
+          east: "road",
+          south: "field",
+          west: "road",
+        },
+        center: "mcdonalds",
+        roadConnections: [["east", "west"]],
+        costcoZones: [],
+      } as TileDefinition);
+
+      board.placeTile(mcdonaldsTile, { x: 1, y: 0 });
+
+      // Should be claimable initially
+      expect(board.canClaimFeature("mcdonalds", { x: 1, y: 0 }, undefined)).toBe(
+        true
+      );
+
+      // Claim it
+      board.claimFeature("mcdonalds", { x: 1, y: 0 }, undefined, "player1");
+
+      // Should not be claimable after
+      expect(board.canClaimFeature("mcdonalds", { x: 1, y: 0 }, undefined)).toBe(
+        false
+      );
     });
   });
 
@@ -241,6 +391,353 @@ describe("Board", () => {
 
       const result = board.placeTile(costcoTile, { x: 1, y: 0 });
       expect(result.completed).toBeDefined();
+    });
+  });
+
+  describe("single-tile Costco completion", () => {
+    it("should complete an enclosed Costco (multi-tile)", () => {
+      // Create a fresh board for this test
+      // Coordinate system: north = y-1, south = y+1, east = x+1, west = x-1
+      const testBoard = new Board();
+
+      // Start with a center tile that has all costco edges
+      const centerTile = new Tile({
+        id: "center",
+        name: "Center",
+        edges: {
+          north: "costco",
+          east: "costco",
+          south: "costco",
+          west: "costco",
+        },
+        center: "costco",
+        roadConnections: [],
+        costcoZones: [
+          {
+            id: "costco1",
+            segments: ["north", "east", "south", "west", "center"],
+            hasPennant: false,
+          },
+        ],
+      } as TileDefinition);
+
+      testBoard.placeTile(centerTile, { x: 0, y: 0 });
+
+      // North tile at (0, -1) - has costco on south to connect to center's north
+      // Also has costco on east/west to connect to corner tiles
+      const northTile = new Tile({
+        id: "north",
+        name: "North",
+        edges: {
+          north: "field",
+          east: "costco",
+          south: "costco", // connects to center
+          west: "costco",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          { id: "c1", segments: ["south", "east", "west"], hasPennant: false },
+        ],
+      } as TileDefinition);
+
+      // South tile at (0, 1) - has costco on north to connect to center's south
+      const southTile = new Tile({
+        id: "south",
+        name: "South",
+        edges: {
+          north: "costco", // connects to center
+          east: "costco",
+          south: "field",
+          west: "costco",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          { id: "c1", segments: ["north", "east", "west"], hasPennant: false },
+        ],
+      } as TileDefinition);
+
+      // East tile at (1, 0) - has costco on west to connect to center's east
+      const eastTile = new Tile({
+        id: "east",
+        name: "East",
+        edges: {
+          north: "costco",
+          east: "field",
+          south: "costco",
+          west: "costco", // connects to center
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          { id: "c1", segments: ["west", "north", "south"], hasPennant: false },
+        ],
+      } as TileDefinition);
+
+      // West tile at (-1, 0) - has costco on east to connect to center's west
+      const westTile = new Tile({
+        id: "west",
+        name: "West",
+        edges: {
+          north: "costco",
+          east: "costco", // connects to center
+          south: "costco",
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          { id: "c1", segments: ["east", "north", "south"], hasPennant: false },
+        ],
+      } as TileDefinition);
+
+      // Corner tiles to close the costco completely
+      // NW corner at (-1, -1)
+      const nwCorner = new Tile({
+        id: "nw",
+        name: "NW Corner",
+        edges: {
+          north: "field",
+          east: "costco", // connects to north tile's west
+          south: "costco", // connects to west tile's north
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          { id: "c1", segments: ["east", "south"], hasPennant: false },
+        ],
+      } as TileDefinition);
+
+      // NE corner at (1, -1)
+      const neCorner = new Tile({
+        id: "ne",
+        name: "NE Corner",
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco", // connects to east tile's north
+          west: "costco", // connects to north tile's east
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          { id: "c1", segments: ["west", "south"], hasPennant: false },
+        ],
+      } as TileDefinition);
+
+      // SW corner at (-1, 1)
+      const swCorner = new Tile({
+        id: "sw",
+        name: "SW Corner",
+        edges: {
+          north: "costco", // connects to west tile's south
+          east: "costco", // connects to south tile's west
+          south: "field",
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          { id: "c1", segments: ["north", "east"], hasPennant: false },
+        ],
+      } as TileDefinition);
+
+      // SE corner at (1, 1)
+      const seCorner = new Tile({
+        id: "se",
+        name: "SE Corner",
+        edges: {
+          north: "costco", // connects to east tile's south
+          east: "field",
+          south: "field",
+          west: "costco", // connects to south tile's east
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          { id: "c1", segments: ["north", "west"], hasPennant: false },
+        ],
+      } as TileDefinition);
+
+      // Place tiles in order, need to be careful about placement validation
+      testBoard.placeTile(northTile, { x: 0, y: -1 });
+      testBoard.placeTile(southTile, { x: 0, y: 1 });
+      testBoard.placeTile(eastTile, { x: 1, y: 0 });
+      testBoard.placeTile(westTile, { x: -1, y: 0 });
+      testBoard.placeTile(nwCorner, { x: -1, y: -1 });
+      testBoard.placeTile(neCorner, { x: 1, y: -1 });
+      testBoard.placeTile(swCorner, { x: -1, y: 1 });
+
+      // The last tile should complete the Costco
+      const result = testBoard.placeTile(seCorner, { x: 1, y: 1 });
+
+      // The Costco should be complete
+      const costcoCompleted = result.completed.filter(
+        (f) => f.type === "costco"
+      );
+      expect(costcoCompleted.length).toBe(1);
+      // The feature spans 9 tiles now (center + 4 sides + 4 corners)
+      expect(costcoCompleted[0].tiles.size).toBe(9);
+    });
+
+    it("should not complete a single-tile Costco with open edges", () => {
+      const testBoard = new Board();
+
+      // Start with a tile that has Costco on all edges
+      const costcoTile = new Tile({
+        id: "costco-center",
+        name: "Costco Center",
+        edges: {
+          north: "costco",
+          east: "costco",
+          south: "costco",
+          west: "costco",
+        },
+        center: "costco",
+        roadConnections: [],
+        costcoZones: [
+          {
+            id: "costco1",
+            segments: ["north", "east", "south", "west", "center"],
+            hasPennant: false,
+          },
+        ],
+      } as TileDefinition);
+
+      const result = testBoard.placeTile(costcoTile, { x: 0, y: 0 });
+
+      // Should not be complete since it has open edges
+      const costcoCompleted = result.completed.filter(
+        (f) => f.type === "costco"
+      );
+      expect(costcoCompleted.length).toBe(0);
+    });
+
+    it("should complete a two-tile Costco that shares one edge", () => {
+      const testBoard = new Board();
+
+      // Create a tile with Costco only on the south edge
+      // Note: north is y-1, south is y+1 in this coordinate system
+      const bottomTile = new Tile({
+        id: "bottom-tile",
+        name: "Bottom Tile",
+        edges: {
+          north: "costco", // connects to north neighbor
+          east: "field",
+          south: "field",
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          {
+            id: "costco1",
+            segments: ["north"],
+            hasPennant: false,
+          },
+        ],
+      } as TileDefinition);
+
+      testBoard.placeTile(bottomTile, { x: 0, y: 0 });
+
+      // Place a tile to the north (y - 1 = -1) that closes the Costco
+      const topTile = new Tile({
+        id: "top-tile",
+        name: "Top Tile",
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco", // connects to south neighbor
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          {
+            id: "costco1",
+            segments: ["south"],
+            hasPennant: false,
+          },
+        ],
+      } as TileDefinition);
+
+      const result = testBoard.placeTile(topTile, { x: 0, y: -1 });
+
+      // The Costco should now be complete (2 tiles)
+      const costcoCompleted = result.completed.filter(
+        (f) => f.type === "costco"
+      );
+      expect(costcoCompleted.length).toBe(1);
+      expect(costcoCompleted[0].tiles.size).toBe(2);
+    });
+
+    it("should verify isCostcoComplete directly", () => {
+      const testBoard = new Board();
+
+      // Create a tile with Costco only on the north edge
+      const bottomTile = new Tile({
+        id: "bottom-tile",
+        name: "Bottom Tile",
+        edges: {
+          north: "costco",
+          east: "field",
+          south: "field",
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          {
+            id: "costco1",
+            segments: ["north"],
+            hasPennant: false,
+          },
+        ],
+      } as TileDefinition);
+
+      testBoard.placeTile(bottomTile, { x: 0, y: 0 });
+
+      // Place a tile to the north (y-1) that closes the Costco
+      const topTile = new Tile({
+        id: "top-tile",
+        name: "Top Tile",
+        edges: {
+          north: "field",
+          east: "field",
+          south: "costco",
+          west: "field",
+        },
+        center: "field",
+        roadConnections: [],
+        costcoZones: [
+          {
+            id: "costco1",
+            segments: ["south"],
+            hasPennant: false,
+          },
+        ],
+      } as TileDefinition);
+
+      testBoard.placeTile(topTile, { x: 0, y: -1 });
+
+      // Manually trace and check from the top tile
+      const tileRecord = testBoard.getTile({ x: 0, y: -1 });
+      expect(tileRecord).toBeDefined();
+
+      const feature = testBoard.traceCostcoFeature(
+        { x: 0, y: -1 },
+        tileRecord!.tile.costcoZones[0],
+        new Set()
+      );
+
+      expect(feature.tiles.size).toBe(2);
+      expect(feature.edges.has("0,-1:south")).toBe(true);
+      expect(feature.edges.has("0,0:north")).toBe(true);
+
+      const isComplete = testBoard.isCostcoComplete(feature);
+      expect(isComplete).toBe(true);
     });
   });
 });

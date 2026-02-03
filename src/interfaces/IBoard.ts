@@ -7,6 +7,8 @@ import {
   CostcoFeature,
   BoardBounds,
   CompletedFeature,
+  Feature,
+  TerrainType,
 } from "../types";
 import { ITile } from "./ITile";
 
@@ -150,6 +152,34 @@ export interface IBoard {
    * @returns True if the Costco is complete
    */
   isCostcoComplete(feature: CostcoFeature): boolean;
+
+  /**
+   * Check if a feature can be claimed (no existing followers on connected feature).
+   *
+   * @param type - The terrain type being checked
+   * @param position - The position of the tile
+   * @param identifier - Optional identifier for the specific feature
+   * @returns True if the feature can be claimed
+   */
+  canClaimFeature(
+    type: TerrainType,
+    position: Position,
+    identifier: string | undefined
+  ): boolean;
+
+  /**
+   * Trace a complete road feature starting from a position and connection.
+   *
+   * @param position - Starting position
+   * @param connection - The road connection segments to trace from
+   * @param visited - Set of already visited feature keys
+   * @returns The complete road feature
+   */
+  traceRoadFeature(
+    position: Position,
+    connection: string[],
+    visited: Set<string>
+  ): Feature;
 
   /**
    * Get all tiles on the board.
