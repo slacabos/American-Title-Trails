@@ -183,15 +183,27 @@ describe("Game", () => {
 
       // Complete turns for all players to cycle back to player 0
       for (let i = 0; i < playerConfigs.length; i++) {
-        const validPlacements = game.getValidPlacements();
-        if (validPlacements.length > 0) {
-          const position = validPlacements[0];
-          game.placeTile(position, 0);
-          // skipClaim only needed if phase is CLAIM_FEATURE
-          if (game.getState().phase === GamePhase.CLAIM_FEATURE) {
-            game.skipClaim();
+        let placed = false;
+
+        // Try all 4 rotations to find a valid placement
+        for (let rotation = 0; rotation < 4 && !placed; rotation++) {
+          const validPlacements = game.getValidPlacements();
+          if (validPlacements.length > 0) {
+            const result = game.placeTile(validPlacements[0], 0);
+            if (result.success) {
+              placed = true;
+              if (game.getState().phase === GamePhase.CLAIM_FEATURE) {
+                game.skipClaim();
+              }
+            }
+          }
+          if (!placed) {
+            game.rotateTile(1);
           }
         }
+
+        // Fail test early if placement impossible (shouldn't happen with valid tile deck)
+        expect(placed).toBe(true);
       }
 
       expect(game.getState().turnNumber).toBe(initialTurnNumber + 1);
