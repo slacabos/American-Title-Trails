@@ -24,6 +24,9 @@ export const GAME_RULES = {
   // Road scoring
   ROAD_POINTS_PER_TILE: 1,
 
+  // Farmer scoring
+  FARMER_POINTS_PER_COSTCO: 3,
+
   // AI configuration
   AI_MOVE_DELAY_MS: 1000,
   AI_CLAIM_THRESHOLD: 2,

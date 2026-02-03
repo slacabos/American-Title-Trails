@@ -68,11 +68,15 @@ export class ScoreManager {
     const claims = board.getFeatureClaims();
     claims.forEach((claim) => {
       const player = players.find((p) => claim.players.includes(p.id));
-      if (player && claim.type !== "costco") {
+      // Skip field claims - farmers are scored separately
+      if (player && claim.type !== "costco" && claim.type !== "field") {
         // Other features: simplified final scoring - 1 point per tile
         player.score += GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE;
       }
     });
+
+    // Score farmer features (fields with farmers get points for adjacent completed Costcos)
+    this.scoreFarmerFeatures(players, board);
   }
 
   /**
@@ -167,5 +171,71 @@ export class ScoreManager {
   private parsePositionKey(key: string): { x: number; y: number } {
     const [x, y] = key.split(",").map(Number);
     return { x, y };
+  }
+
+  /**
+   * Score farmer features at game end
+   * Farmers score 3 points per adjacent completed Costco
+   */
+  private scoreFarmerFeatures(players: PlayerState[], board: IBoard): void {
+    const processedFields = new Set<string>();
+
+    // Find all field claims (farmers)
+    const claims = board.getFeatureClaims();
+    const farmerClaims = claims.filter(
+      (claim) => claim.type === "field" && claim.followerType === "farmer"
+    );
+
+    farmerClaims.forEach((claim) => {
+      // Parse the claim edge to get position and corner
+      const [posKey, corner] = claim.edge.split(":");
+      const position = this.parsePositionKey(posKey);
+
+      // Get the tile at this position
+      const tileRecord = board.getTile(position);
+      if (!tileRecord) return;
+
+      // Find the field segment that contains this corner
+      const fieldSegment = tileRecord.tile.fieldSegments.find((fs) =>
+        fs.corners.includes(corner as any)
+      );
+      if (!fieldSegment) return;
+
+      // Trace the full field feature
+      const fieldFeature = board.traceFieldFeature(
+        position,
+        fieldSegment,
+        new Set()
+      );
+
+      // Create a unique key for this field feature
+      const fieldKey = Array.from(fieldFeature.tiles).sort().join("|");
+      if (processedFields.has(fieldKey)) return;
+      processedFields.add(fieldKey);
+
+      // Find all adjacent completed Costcos
+      const adjacentCostcos = board.findAdjacentCostcos(fieldFeature);
+
+      // Calculate points: 3 per completed adjacent Costco
+      const points = adjacentCostcos.size * GAME_RULES.FARMER_POINTS_PER_COSTCO;
+
+      if (points > 0) {
+        // Get all claimants (farmers) on this field
+        const claimants = board.getFeatureClaimants(fieldFeature);
+
+        if (claimants.length > 0) {
+          // Apply majority rule
+          const followerCounts = this.countFollowersPerPlayer(claimants);
+          const majorityHolders = this.findMajorityHolders(followerCounts);
+
+          majorityHolders.forEach((playerId) => {
+            const player = players.find((p) => p.id === playerId);
+            if (player) {
+              player.score += points;
+            }
+          });
+        }
+      }
+    });
   }
 }

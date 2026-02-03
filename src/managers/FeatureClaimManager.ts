@@ -1,5 +1,5 @@
 import type { ITile, IBoard } from "../interfaces";
-import { Position, TerrainType, ClaimableFeature, Direction } from "../types";
+import { Position, TerrainType, ClaimableFeature, Direction, FieldCorner } from "../types";
 
 /**
  * FeatureClaimManager handles feature claiming logic.
@@ -39,6 +39,16 @@ export class FeatureClaimManager {
     if (tile.center === "mcdonalds") {
       claimable.push({ type: "mcdonalds" });
     }
+
+    // Check field segments
+    tile.fieldSegments.forEach((field, index) => {
+      const label = this.generateFieldLabel(field.corners);
+      claimable.push({
+        type: "field",
+        identifier: `field_${index}`,
+        displayName: label,
+      });
+    });
 
     return claimable;
   }
@@ -82,6 +92,24 @@ export class FeatureClaimManager {
    */
   private capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  /**
+   * Generate a descriptive label for a field segment based on its corners
+   */
+  private generateFieldLabel(corners: FieldCorner[]): string {
+    const cornerNames: Record<FieldCorner, string> = {
+      nw: "NW",
+      ne: "NE",
+      sw: "SW",
+      se: "SE",
+    };
+
+    if (corners.length === 4) {
+      return "Full Field";
+    }
+
+    return corners.map((corner) => cornerNames[corner]).join("-");
   }
 
   /**

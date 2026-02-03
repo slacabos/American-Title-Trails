@@ -9,6 +9,7 @@ import {
   CompletedFeature,
   Feature,
   TerrainType,
+  FieldSegment,
 } from "../types";
 import { ITile } from "./ITile";
 
@@ -188,4 +189,28 @@ export interface IBoard {
    * @returns Map of position keys to tile records
    */
   getAllTiles(): Map<string, TileRecord>;
+
+  /**
+   * Trace a complete field feature starting from a position and field segment.
+   * This method is used for farmer placement and scoring.
+   *
+   * @param position - Starting position
+   * @param fieldSegment - The field segment to trace from
+   * @param visited - Set of already visited feature keys
+   * @returns The complete field feature
+   */
+  traceFieldFeature(
+    position: Position,
+    fieldSegment: FieldSegment,
+    visited: Set<string>
+  ): Feature;
+
+  /**
+   * Find all completed Costco features adjacent to a field feature.
+   * This method is used for farmer scoring at game end.
+   *
+   * @param fieldFeature - The field feature to check adjacency for
+   * @returns Set of unique Costco feature identifiers
+   */
+  findAdjacentCostcos(fieldFeature: Feature): Set<string>;
 }

@@ -1,4 +1,4 @@
-import { Direction, TerrainType, CostcoSegment } from "../types";
+import { Direction, TerrainType, CostcoSegment, FieldSegment } from "../types";
 
 /**
  * ITile interface defines the contract for tile objects in American Tile Trails.
@@ -35,6 +35,12 @@ export interface ITile {
    * Each zone represents a distinct Costco area on the tile.
    */
   readonly costcoZones: CostcoSegment[];
+
+  /**
+   * Field segment definitions with corner assignments.
+   * Each segment represents a distinct grass area on the tile.
+   */
+  readonly fieldSegments: FieldSegment[];
 
   /**
    * Whether this tile has a McDonald's restaurant at its center.

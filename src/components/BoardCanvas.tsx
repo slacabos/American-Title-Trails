@@ -32,19 +32,32 @@ const renderFollowerDots = (
     // Determine dot position based on feature type and identifier
     const dotPosition = getFollowerDotPosition(claim, scaledTileSize, record);
 
-    // Draw the follower dot
+    // Draw the follower
     ctx.fillStyle = player.color;
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 1;
 
-    const dotRadius = Math.max(3, scaledTileSize * 0.08);
     const dotX = x + dotPosition.x;
     const dotY = y + dotPosition.y;
 
-    ctx.beginPath();
-    ctx.arc(dotX, dotY, dotRadius, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.stroke();
+    // Farmers (field claims) are rendered as rectangles (lying down)
+    // Standard followers are rendered as circles
+    if (claim.followerType === "farmer") {
+      const rectWidth = Math.max(8, scaledTileSize * 0.12);
+      const rectHeight = Math.max(4, scaledTileSize * 0.06);
+
+      ctx.beginPath();
+      ctx.rect(dotX - rectWidth / 2, dotY - rectHeight / 2, rectWidth, rectHeight);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      const dotRadius = Math.max(3, scaledTileSize * 0.08);
+
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, dotRadius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+    }
   });
 };
 
@@ -61,6 +74,14 @@ const getFollowerDotPosition = (
     south: { x: tileSize / 2, y: tileSize * 0.85 }, // Bottom edge
     west: { x: tileSize * 0.15, y: tileSize / 2 }, // Left edge
     center: { x: tileSize / 2, y: tileSize / 2 }, // Center
+  };
+
+  // Define corner positions for field segments
+  const cornerPositions: { [key: string]: { x: number; y: number } } = {
+    nw: { x: tileSize * 0.15, y: tileSize * 0.15 }, // Top-left corner
+    ne: { x: tileSize * 0.85, y: tileSize * 0.15 }, // Top-right corner
+    sw: { x: tileSize * 0.15, y: tileSize * 0.85 }, // Bottom-left corner
+    se: { x: tileSize * 0.85, y: tileSize * 0.85 }, // Bottom-right corner
   };
 
   // Extract identifier from edge (format: "x,y:identifier" or just "x,y")
@@ -125,6 +146,43 @@ const getFollowerDotPosition = (
     }
 
     // Fallback: use center position
+    return segmentPositions["center"];
+  } else if (claim.type === "field") {
+    // For fields, the identifier is a corner (nw, ne, sw, se)
+    // Find the field segment that contains this corner
+    if (tile.fieldSegments) {
+      const fieldSegment = tile.fieldSegments.find((fs: any) =>
+        fs.corners.includes(identifier)
+      );
+
+      if (fieldSegment) {
+        // Calculate centroid of all corners in this field segment
+        let totalX = 0;
+        let totalY = 0;
+        let validCorners = 0;
+
+        fieldSegment.corners.forEach((corner: string) => {
+          if (cornerPositions[corner]) {
+            totalX += cornerPositions[corner].x;
+            totalY += cornerPositions[corner].y;
+            validCorners++;
+          }
+        });
+
+        if (validCorners > 0) {
+          return {
+            x: totalX / validCorners,
+            y: totalY / validCorners,
+          };
+        }
+      }
+    }
+
+    // Fallback: use the corner position directly
+    if (cornerPositions[identifier]) {
+      return cornerPositions[identifier];
+    }
+
     return segmentPositions["center"];
   } else if (claim.type === "mcdonalds") {
     // McDonald's is always at center

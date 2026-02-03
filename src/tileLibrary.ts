@@ -17,6 +17,7 @@ const TILE_LIBRARY: TileDefinition[] = [
         shape: "straight",
       },
     ],
+    fieldSegments: [{ id: "field-0", corners: ["sw", "se"] }],
   },
   {
     id: "straight-road",
@@ -25,6 +26,10 @@ const TILE_LIBRARY: TileDefinition[] = [
     center: "field",
     roadConnections: [["north", "south"]],
     costcoZones: [],
+    fieldSegments: [
+      { id: "field-0", corners: ["nw", "sw"] },
+      { id: "field-1", corners: ["ne", "se"] },
+    ],
   },
   {
     id: "curve-road",
@@ -33,6 +38,10 @@ const TILE_LIBRARY: TileDefinition[] = [
     center: "field",
     roadConnections: [["north", "east"]],
     costcoZones: [],
+    fieldSegments: [
+      { id: "field-0", corners: ["ne"] },
+      { id: "field-1", corners: ["nw", "sw", "se"] },
+    ],
   },
   {
     id: "road-end",
@@ -41,6 +50,7 @@ const TILE_LIBRARY: TileDefinition[] = [
     center: "field",
     roadConnections: [["north", "center"]],
     costcoZones: [],
+    fieldSegments: [{ id: "field-0", corners: ["nw", "ne", "sw", "se"] }],
   },
   {
     id: "three-way-road",
@@ -53,6 +63,11 @@ const TILE_LIBRARY: TileDefinition[] = [
       ["west", "center"],
     ],
     costcoZones: [],
+    fieldSegments: [
+      { id: "field-0", corners: ["nw"] },
+      { id: "field-1", corners: ["ne"] },
+      { id: "field-2", corners: ["sw", "se"] },
+    ],
   },
   {
     id: "costco-straight",
@@ -67,6 +82,10 @@ const TILE_LIBRARY: TileDefinition[] = [
         hasPennant: false,
         shape: "straight",
       },
+    ],
+    fieldSegments: [
+      { id: "field-0", corners: ["nw", "sw"] },
+      { id: "field-1", corners: ["ne", "se"] },
     ],
   },
   {
@@ -83,6 +102,10 @@ const TILE_LIBRARY: TileDefinition[] = [
         shape: "curved",
       },
     ],
+    fieldSegments: [
+      { id: "field-0", corners: ["sw", "se"] },
+      { id: "field-1", corners: ["nw"] },
+    ],
   },
   {
     id: "costco-road",
@@ -98,6 +121,7 @@ const TILE_LIBRARY: TileDefinition[] = [
         shape: "curved",
       },
     ],
+    fieldSegments: [{ id: "field-0", corners: ["sw"] }],
   },
   {
     id: "costco-cap",
@@ -113,6 +137,7 @@ const TILE_LIBRARY: TileDefinition[] = [
         shape: "straight",
       },
     ],
+    fieldSegments: [{ id: "field-0", corners: ["nw", "ne", "sw", "se"] }],
   },
   {
     id: "mcdonalds-abbey",
@@ -121,6 +146,7 @@ const TILE_LIBRARY: TileDefinition[] = [
     center: "mcdonalds",
     roadConnections: [],
     costcoZones: [],
+    fieldSegments: [{ id: "field-0", corners: ["nw", "ne", "sw", "se"] }],
   },
   {
     id: "road-costco-split",
@@ -142,6 +168,7 @@ const TILE_LIBRARY: TileDefinition[] = [
         shape: "straight",
       },
     ],
+    fieldSegments: [{ id: "field-0", corners: ["se"] }],
   },
   {
     id: "costco-complex-l",
@@ -157,6 +184,7 @@ const TILE_LIBRARY: TileDefinition[] = [
         shape: "complex",
       },
     ],
+    fieldSegments: [{ id: "field-0", corners: ["nw", "sw"] }],
   },
   {
     id: "costco-peninsula",
@@ -171,6 +199,10 @@ const TILE_LIBRARY: TileDefinition[] = [
         hasPennant: false,
         shape: "straight",
       },
+    ],
+    fieldSegments: [
+      { id: "field-0", corners: ["nw", "sw"] },
+      { id: "field-1", corners: ["ne", "se"] },
     ],
   },
   {
@@ -193,6 +225,10 @@ const TILE_LIBRARY: TileDefinition[] = [
         shape: "straight",
       },
     ],
+    fieldSegments: [
+      { id: "field-0", corners: ["nw", "ne"] },
+      { id: "field-1", corners: ["sw", "se"] },
+    ],
   },
   {
     id: "costco-mega-complex",
@@ -208,6 +244,7 @@ const TILE_LIBRARY: TileDefinition[] = [
         shape: "complex",
       },
     ],
+    fieldSegments: [],
   },
   {
     id: "costco-bridge",
@@ -222,6 +259,10 @@ const TILE_LIBRARY: TileDefinition[] = [
         hasPennant: false,
         shape: "complex",
       },
+    ],
+    fieldSegments: [
+      { id: "field-0", corners: ["nw", "ne"] },
+      { id: "field-1", corners: ["sw", "se"] },
     ],
   },
 ];

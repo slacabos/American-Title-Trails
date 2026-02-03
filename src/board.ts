@@ -9,6 +9,9 @@ import {
   TerrainType,
   CostcoSegment,
   Feature,
+  FieldSegment,
+  FieldCorner,
+  FollowerType,
 } from "./types";
 import type { ITile } from "./interfaces";
 import type { IBoard } from "./interfaces/IBoard";
@@ -374,6 +377,137 @@ export class Board implements IBoard {
     return feature;
   }
 
+  // Corner adjacency: which directions a corner touches
+  private static readonly CORNER_ADJACENCIES: Record<FieldCorner, Direction[]> = {
+    nw: ["north", "west"],
+    ne: ["north", "east"],
+    sw: ["south", "west"],
+    se: ["south", "east"],
+  };
+
+  // When crossing a tile boundary from a corner in a direction, which corner does it connect to
+  private static readonly OPPOSITE_CORNER: Record<FieldCorner, Partial<Record<Direction, FieldCorner>>> = {
+    nw: { north: "sw", west: "ne" },
+    ne: { north: "se", east: "nw" },
+    sw: { south: "nw", west: "se" },
+    se: { south: "ne", east: "sw" },
+  };
+
+  public traceFieldFeature(
+    startPosition: Position,
+    fieldSegment: FieldSegment,
+    visited: Set<string>
+  ): Feature {
+    const feature: Feature = {
+      type: "field",
+      tiles: new Set(),
+      edges: new Set(),
+      isComplete: false,
+    };
+
+    // Queue contains position and field segment
+    const queue: Array<{ position: Position; segment: FieldSegment }> = [
+      { position: startPosition, segment: fieldSegment },
+    ];
+
+    while (queue.length > 0) {
+      const { position, segment } = queue.shift()!;
+      const posKey = positionKey(position);
+
+      // Create a unique key for this field segment on this tile
+      const segmentKey = `${posKey}:${segment.id}`;
+      if (visited.has(segmentKey)) continue;
+      visited.add(segmentKey);
+
+      feature.tiles.add(posKey);
+
+      const tile = this.getTile(position)?.tile;
+      if (!tile) continue;
+
+      // Add corners as edges for claim tracking
+      segment.corners.forEach((corner) => {
+        feature.edges.add(`${posKey}:${corner}`);
+      });
+
+      // For each corner in this segment, check if it connects to neighboring tiles
+      segment.corners.forEach((corner) => {
+        const adjacentDirections = Board.CORNER_ADJACENCIES[corner];
+
+        adjacentDirections.forEach((direction) => {
+          const neighborPos = addDelta(position, direction);
+          const neighbor = this.getTile(neighborPos);
+          if (!neighbor) return;
+
+          // Find the opposite corner in the neighboring tile
+          const oppositeCorner = Board.OPPOSITE_CORNER[corner][direction];
+          if (!oppositeCorner) return;
+
+          // Find which field segment in the neighbor contains this corner
+          const neighborSegment = neighbor.tile.fieldSegments.find(
+            (fs) => fs.corners.includes(oppositeCorner)
+          );
+
+          if (neighborSegment) {
+            const neighborKey = `${positionKey(neighborPos)}:${neighborSegment.id}`;
+            if (!visited.has(neighborKey)) {
+              queue.push({ position: neighborPos, segment: neighborSegment });
+            }
+          }
+        });
+      });
+    }
+
+    return feature;
+  }
+
+  public findAdjacentCostcos(fieldFeature: Feature): Set<string> {
+    const adjacentCostcos = new Set<string>();
+
+    // For each tile in the field feature, check for adjacent Costco tiles
+    fieldFeature.tiles.forEach((tileKey) => {
+      const position = parsePositionKey(tileKey);
+      const tileRecord = this.getTile(position);
+      if (!tileRecord) return;
+
+      // Check all neighboring tiles for Costco zones
+      DIRECTIONS.forEach((direction) => {
+        const neighborPos = addDelta(position, direction);
+        const neighbor = this.getTile(neighborPos);
+        if (!neighbor) return;
+
+        // Check if neighbor has Costco zones
+        neighbor.tile.costcoZones.forEach((zone) => {
+          // Only count if the Costco zone touches this edge
+          const oppositeDir = OPPOSITE[direction];
+          if (zone.segments.includes(oppositeDir)) {
+            // Trace the full Costco feature to get a unique identifier
+            const costcoFeature = this.traceCostcoFeature(neighborPos, zone, new Set());
+
+            // Only count completed Costcos
+            if (this.isCostcoComplete(costcoFeature)) {
+              // Use sorted tile keys as unique identifier
+              const costcoId = Array.from(costcoFeature.tiles).sort().join("|");
+              adjacentCostcos.add(costcoId);
+            }
+          }
+        });
+      });
+
+      // Also check if the current tile has Costco zones that are adjacent to the field
+      tileRecord.tile.costcoZones.forEach((zone) => {
+        // A Costco is adjacent to a field on the same tile if they share edge proximity
+        // For simplicity, we consider any Costco on the same tile as potentially adjacent
+        const costcoFeature = this.traceCostcoFeature(position, zone, new Set());
+        if (this.isCostcoComplete(costcoFeature)) {
+          const costcoId = Array.from(costcoFeature.tiles).sort().join("|");
+          adjacentCostcos.add(costcoId);
+        }
+      });
+    });
+
+    return adjacentCostcos;
+  }
+
   private isRoadComplete(feature: Feature): boolean {
     // A road is complete if all its endpoints are connected or terminate at road ends
     const openEnds = new Set<string>();
@@ -492,6 +626,14 @@ export class Board implements IBoard {
       if (zone) {
         feature = this.traceCostcoFeature(position, zone, new Set());
       }
+    } else if (type === "field") {
+      const fieldIndex = identifier
+        ? parseInt(identifier.replace("field_", ""))
+        : 0;
+      const fieldSegment = tileRecord.tile.fieldSegments[fieldIndex];
+      if (fieldSegment) {
+        feature = this.traceFieldFeature(position, fieldSegment, new Set());
+      }
     } else if (type === "mcdonalds") {
       const edge = positionKey(position);
       const existingClaim = this.featureClaims.get(edge);
@@ -522,6 +664,9 @@ export class Board implements IBoard {
     const tileRecord = this.getTile(position);
     const posKey = positionKey(position);
 
+    // Determine follower type - farmers for fields, standard for everything else
+    const followerType: FollowerType = type === "field" ? "farmer" : "standard";
+
     // For roads and costcos, we need to store the claim using the same edge format
     // as the traced features (e.g., "0,0:north" instead of "0,0:road_0")
     if (type === "road" && tileRecord) {
@@ -532,9 +677,9 @@ export class Board implements IBoard {
       if (connection && connection.length > 0) {
         // Store claim using the first segment of the connection
         const edge = `${posKey}:${connection[0]}`;
-        const newClaim = { edge, type, players: [playerId] };
+        const newClaim: FeatureClaim = { edge, type, players: [playerId], followerType };
         this.featureClaims.set(edge, newClaim);
-        return { edge, type, players: [playerId] };
+        return newClaim;
       }
     } else if (type === "costco" && tileRecord) {
       const zoneIndex = identifier
@@ -544,17 +689,29 @@ export class Board implements IBoard {
       if (zone && zone.segments.length > 0) {
         // Store claim using the first segment of the zone
         const edge = `${posKey}:${zone.segments[0]}`;
-        const newClaim = { edge, type, players: [playerId] };
+        const newClaim: FeatureClaim = { edge, type, players: [playerId], followerType };
         this.featureClaims.set(edge, newClaim);
-        return { edge, type, players: [playerId] };
+        return newClaim;
+      }
+    } else if (type === "field" && tileRecord) {
+      const fieldIndex = identifier
+        ? parseInt(identifier.replace("field_", ""))
+        : 0;
+      const fieldSegment = tileRecord.tile.fieldSegments[fieldIndex];
+      if (fieldSegment && fieldSegment.corners.length > 0) {
+        // Store claim using the first corner of the field segment
+        const edge = `${posKey}:${fieldSegment.corners[0]}`;
+        const newClaim: FeatureClaim = { edge, type, players: [playerId], followerType };
+        this.featureClaims.set(edge, newClaim);
+        return newClaim;
       }
     }
 
     // For mcdonalds or fallback, use position key
     const edge = posKey;
-    const newClaim = { edge, type, players: [playerId] };
+    const newClaim: FeatureClaim = { edge, type, players: [playerId], followerType };
     this.featureClaims.set(edge, newClaim);
-    return { edge, type, players: [playerId] };
+    return newClaim;
   }
 
   getFeatureClaims(): FeatureClaim[] {
@@ -593,6 +750,11 @@ export class Board implements IBoard {
   returnFollowersFromCompletedFeatures(completed: CompletedFeature[]): void {
     completed.forEach((feature) => {
       feature.edges.forEach((edge) => {
+        // Check if this is a farmer claim - farmers are never returned
+        const claim = this.featureClaims.get(edge);
+        if (claim && claim.followerType === "farmer") {
+          return; // Skip removing farmers
+        }
         this.removeFollower(edge);
       });
     });

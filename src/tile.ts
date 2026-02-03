@@ -5,8 +5,12 @@ import {
   TileEdges,
   TerrainType,
   CostcoSegment,
+  FieldSegment,
+  FieldCorner,
 } from "./types";
 import { ITile } from "./interfaces/ITile";
+
+const CORNER_ROTATION: FieldCorner[] = ["nw", "ne", "se", "sw"];
 
 const directionIndex = (direction: Direction): number =>
   DIRECTIONS.indexOf(direction);
@@ -17,6 +21,7 @@ export class Tile implements ITile {
   public readonly center: TerrainType;
   public readonly roadConnections: string[][];
   public readonly costcoZones: CostcoSegment[];
+  public readonly fieldSegments: FieldSegment[];
   public readonly isStart: boolean;
   public readonly orientation: number;
   private readonly edges: TerrainType[];
@@ -35,6 +40,7 @@ export class Tile implements ITile {
     center = "field" as TerrainType,
     roadConnections = [],
     costcoZones = [],
+    fieldSegments = [],
     isStart = false,
   }: TileDefinition) {
     this.id = id;
@@ -46,6 +52,10 @@ export class Tile implements ITile {
       segments: [...zone.segments],
       hasPennant: zone.hasPennant,
       shape: zone.shape,
+    }));
+    this.fieldSegments = fieldSegments.map((field) => ({
+      id: field.id,
+      corners: [...field.corners],
     }));
     this.isStart = isStart;
     this.orientation = 0;
@@ -79,6 +89,15 @@ export class Tile implements ITile {
         shape: zone.shape,
       }));
 
+    const rotateFieldSegments = (segments: FieldSegment[]): FieldSegment[] =>
+      segments.map((field) => ({
+        id: field.id,
+        corners: field.corners.map((corner) => {
+          const index = CORNER_ROTATION.indexOf(corner);
+          return CORNER_ROTATION[(index + normalized) % 4];
+        }),
+      }));
+
     const rotated = new Tile({
       id: this.id,
       name: this.name,
@@ -91,6 +110,7 @@ export class Tile implements ITile {
       center: this.center,
       roadConnections: rotateCollection(this.roadConnections),
       costcoZones: rotateCostcoZones(this.costcoZones),
+      fieldSegments: rotateFieldSegments(this.fieldSegments),
       isStart: this.isStart,
     });
 
@@ -111,6 +131,7 @@ export class Tile implements ITile {
       center: this.center,
       roadConnections: this.roadConnections,
       costcoZones: this.costcoZones,
+      fieldSegments: this.fieldSegments,
       isStart: this.isStart,
     });
     (clone as any).orientation = this.orientation;

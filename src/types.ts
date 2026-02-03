@@ -4,6 +4,15 @@ export type Direction = "north" | "east" | "south" | "west";
 
 export type TerrainType = "road" | "field" | "costco" | "mcdonalds" | "mixed";
 
+export type FollowerType = "standard" | "farmer";
+
+export type FieldCorner = "nw" | "ne" | "sw" | "se";
+
+export interface FieldSegment {
+  id: string;
+  corners: FieldCorner[];
+}
+
 export interface Position {
   x: number;
   y: number;
@@ -30,6 +39,7 @@ export interface TileDefinition {
   center: TerrainType;
   roadConnections: string[][];
   costcoZones: CostcoSegment[]; // Changed from string[][] to support complex areas
+  fieldSegments?: FieldSegment[];
   isStart?: boolean;
 }
 
@@ -89,6 +99,7 @@ export interface FeatureClaim {
   edge: string;
   type: string;
   players: string[];
+  followerType?: FollowerType;
 }
 
 export interface AIMove {

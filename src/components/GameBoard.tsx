@@ -190,7 +190,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
                   }
                   className="bg-btn-secondary hover:bg-btn-secondary-hover text-game-text font-game text-xxs"
                 >
-                  Claim {feature.type}
+                  {feature.type === "field" ? "Place Farmer" : "Claim"} {feature.type}
                   {feature.displayName && ` (${feature.displayName})`}
                 </Button>
               ))}
