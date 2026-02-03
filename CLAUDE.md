@@ -322,22 +322,6 @@ AI moves have a 1-second delay for human observation (see `GameBoard.tsx` useEff
 
 ---
 
-## Known Issues & TODOs
-
-See `TODO.md` for detailed development roadmap. Key items:
-
-### Critical Fixes Needed
-- Majority rule calculation (currently awards to all claimants, not just majority)
-- Remove 2-tile minimum for Costco completion
-- Add feature claim validation (prevent illegal claims)
-
-### Missing Features
-- Field/farmer mechanics (farmers on fields scoring for adjacent Costcos)
-- Performance optimizations (requestAnimationFrame, memoization)
-- Strict null checks disabled in tsconfig
-
----
-
 ## Common Tasks
 
 ### Adding a New Tile Type
