@@ -1,4 +1,4 @@
-import type { ITile } from "./interfaces";
+import type { ITile, IBoard } from "./interfaces";
 
 export type Direction = "north" | "east" | "south" | "west";
 
@@ -116,7 +116,7 @@ export enum GamePhase {
 }
 
 export interface GameState {
-  board: any; // Board type - will be IBoard in TASK-002
+  board: IBoard;
   players: PlayerState[];
   currentPlayerIndex: number;
   currentTile?: ITile;
@@ -150,3 +150,16 @@ export interface ClaimableFeature {
   identifier?: string;
   displayName?: string;
 }
+
+export interface Feature {
+  type: TerrainType;
+  tiles: Set<string>;
+  edges: Set<string>;
+  isComplete: boolean;
+  pennants?: number;
+}
+
+// Type aliases for semantic clarity
+export type FeatureForClaimants = Feature;
+export type CostcoFeature = Feature;
+export type BoardBounds = Bounds;

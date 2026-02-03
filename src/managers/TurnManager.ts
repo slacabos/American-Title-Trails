@@ -1,5 +1,5 @@
 import { GamePhase, Position } from "../types";
-import { Tile } from "../tile";
+import type { ITile } from "../interfaces";
 
 /**
  * TurnManager handles turn progression and game phase management.
@@ -101,7 +101,7 @@ export class TurnManager {
    * Returns true if there's a next tile, false if game should end
    */
   public completeTurn(
-    nextTile: Tile | undefined,
+    nextTile: ITile | undefined,
     totalPlayers: number
   ): boolean {
     this.phase = GamePhase.END_TURN;

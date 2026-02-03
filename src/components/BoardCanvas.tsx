@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { Board } from "../board";
-import type { ITile } from "../interfaces";
+import type { ITile, IBoard } from "../interfaces";
 import { Position } from "../types";
 import { UI_COLORS } from "../constants/colors";
 import { renderTileToCanvas } from "../utils/tileRendering";
@@ -13,7 +12,7 @@ const renderFollowerDots = (
   y: number,
   scaledTileSize: number,
   gameState: any,
-  board: Board
+  board: IBoard
 ) => {
   const featureClaims = board.getFeatureClaims();
   const positionKey = `${record.position.x},${record.position.y}`;
@@ -137,7 +136,7 @@ const getFollowerDotPosition = (
 };
 
 interface BoardCanvasProps {
-  board: Board;
+  board: IBoard;
   currentTile?: ITile;
   onTilePlace?: (position: Position) => void;
   tileSize?: number;
@@ -275,7 +274,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     }
 
     // Draw placed tiles
-    board.tiles.forEach((record) => {
+    board.getAllTiles().forEach((record) => {
       const { x, y } = boardToScreen(record.position.x, record.position.y);
 
       // Only render if tile is visible
@@ -523,7 +522,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
         }}
       >
         <div>Zoom: {Math.round(canvasState.scale * 100)}%</div>
-        <div>Tiles: {board.tiles.size}</div>
+        <div>Tiles: {board.getAllTiles().size}</div>
         {currentTile && <div>Valid placements: {validPlacements.length}</div>}
       </div>
     </div>

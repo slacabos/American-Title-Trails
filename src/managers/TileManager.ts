@@ -1,6 +1,5 @@
-import { Tile } from "../tile";
+import type { ITile, IBoard } from "../interfaces";
 import { Position } from "../types";
-import { Board } from "../board";
 
 /**
  * TileManager handles all tile-related operations.
@@ -10,11 +9,11 @@ import { Board } from "../board";
  * - Provide tile placement helpers
  */
 export class TileManager {
-  private tileDeck: Tile[];
-  private discardPile: Tile[];
-  private currentTile?: Tile;
+  private tileDeck: ITile[];
+  private discardPile: ITile[];
+  private currentTile?: ITile;
 
-  constructor(initialDeck: Tile[]) {
+  constructor(initialDeck: ITile[]) {
     this.tileDeck = initialDeck;
     this.discardPile = [];
     this.currentTile = undefined;
@@ -37,21 +36,21 @@ export class TileManager {
   /**
    * Get the current tile
    */
-  public getCurrentTile(): Tile | undefined {
+  public getCurrentTile(): ITile | undefined {
     return this.currentTile;
   }
 
   /**
    * Get the tile deck
    */
-  public getTileDeck(): Tile[] {
+  public getTileDeck(): ITile[] {
     return this.tileDeck;
   }
 
   /**
    * Get the discard pile
    */
-  public getDiscardPile(): Tile[] {
+  public getDiscardPile(): ITile[] {
     return this.discardPile;
   }
 
@@ -99,7 +98,7 @@ export class TileManager {
   /**
    * Get valid placement positions for the current tile
    */
-  public getValidPlacements(board: Board): Position[] {
+  public getValidPlacements(board: IBoard): Position[] {
     if (!this.currentTile) {
       return [];
     }
@@ -115,7 +114,7 @@ export class TileManager {
   /**
    * Preview what would happen if the current tile were placed at a position
    */
-  public previewTilePlacement(board: Board, position: Position): any {
+  public previewTilePlacement(board: IBoard, position: Position): any {
     if (!this.currentTile) {
       return null;
     }
@@ -140,14 +139,14 @@ export class TileManager {
   /**
    * Apply rotation to the current tile and return the rotated version
    */
-  public getRotatedCurrentTile(rotation: number): Tile | undefined {
+  public getRotatedCurrentTile(rotation: number): ITile | undefined {
     if (!this.currentTile) {
       return undefined;
     }
 
     let rotatedTile = this.currentTile.clone();
     for (let i = 0; i < rotation; i++) {
-      rotatedTile = rotatedTile.rotate();
+      rotatedTile = rotatedTile.rotate(1);
     }
     return rotatedTile;
   }

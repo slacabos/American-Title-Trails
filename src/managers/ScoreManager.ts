@@ -1,5 +1,5 @@
 import { PlayerState, CompletedFeature } from "../types";
-import { Board } from "../board";
+import type { IBoard } from "../interfaces/IBoard";
 
 /**
  * ScoreManager handles all scoring calculations for the game.
@@ -32,7 +32,7 @@ export class ScoreManager {
   /**
    * Calculate final scores for all incomplete features at game end
    */
-  public calculateFinalScores(players: PlayerState[], board: Board): void {
+  public calculateFinalScores(players: PlayerState[], board: IBoard): void {
     // Score incomplete Costco features
     this.scoreIncompleteCostcoFeatures(players, board);
 
@@ -53,7 +53,7 @@ export class ScoreManager {
    */
   private scoreIncompleteCostcoFeatures(
     players: PlayerState[],
-    board: Board
+    board: IBoard
   ): void {
     const allIncompleteFeatures = this.findAllIncompleteCostcoFeatures(board);
 
@@ -67,7 +67,7 @@ export class ScoreManager {
         pennants: feature.pennants,
       };
 
-      const claimants = (board as any).getFeatureClaimants(featureForClaimants);
+      const claimants = board.getFeatureClaimants(featureForClaimants);
       if (claimants.length > 0) {
         // Incomplete Costco scoring: 1 point per tile + 1 point per pennant
         const tilePoints = feature.tiles.size;
@@ -87,7 +87,7 @@ export class ScoreManager {
   /**
    * Find all incomplete Costco features across the board
    */
-  private findAllIncompleteCostcoFeatures(board: Board): Array<{
+  private findAllIncompleteCostcoFeatures(board: IBoard): Array<{
     tiles: Set<string>;
     pennants: number;
     edges: Set<string>;
@@ -100,20 +100,20 @@ export class ScoreManager {
     const processedTiles = new Set<string>();
 
     // Iterate through all tiles to find Costco features
-    (board as any).tiles.forEach((tileRecord: any, positionKey: string) => {
+    board.getAllTiles().forEach((tileRecord: any, positionKey: string) => {
       if (processedTiles.has(positionKey)) return;
 
       const position = this.parsePositionKey(positionKey);
       tileRecord.tile.costcoZones.forEach((zone: any) => {
         const visited = new Set<string>();
-        const feature = (board as any).traceCostcoFeature(
+        const feature = board.traceCostcoFeature(
           position,
           zone,
           visited
         );
 
         // Only include if feature is incomplete
-        if (!(board as any).isCostcoComplete(feature)) {
+        if (!board.isCostcoComplete(feature)) {
           // Mark all tiles in this feature as processed
           feature.tiles.forEach((tileKey: string) =>
             processedTiles.add(tileKey)

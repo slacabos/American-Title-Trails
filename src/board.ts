@@ -7,8 +7,10 @@ import {
   Direction,
   TerrainType,
   CostcoSegment,
+  Feature,
 } from "./types";
 import type { ITile } from "./interfaces";
+import type { IBoard } from "./interfaces/IBoard";
 
 const positionKey = ({ x, y }: Position): string => `${x},${y}`;
 
@@ -27,14 +29,6 @@ interface NeighborInfo {
   tile: ITile;
 }
 
-interface Feature {
-  type: TerrainType;
-  tiles: Set<string>;
-  edges: Set<string>;
-  isComplete: boolean;
-  pennants?: number; // Track pennants for Costco areas
-}
-
 interface CompletedFeature extends Feature {
   claimedBy: string[];
   points: number;
@@ -44,7 +38,7 @@ interface PlacementResult {
   completed: CompletedFeature[];
 }
 
-export class Board {
+export class Board implements IBoard {
   public readonly tiles: Map<string, TileRecord>;
   private readonly featureClaims: Map<string, FeatureClaim>;
 
@@ -312,7 +306,7 @@ export class Board {
     return features;
   }
 
-  private traceCostcoFeature(
+  public traceCostcoFeature(
     startPosition: Position,
     zone: CostcoSegment,
     visited: Set<string>
@@ -420,7 +414,7 @@ export class Board {
     return openEnds.size === 0;
   }
 
-  private isCostcoComplete(feature: Feature): boolean {
+  public isCostcoComplete(feature: Feature): boolean {
     // A Costco is complete if it forms a closed area with no open edges
     for (const edge of feature.edges) {
       const [posKey, segment] = edge.split(":");
@@ -459,7 +453,7 @@ export class Board {
     return surroundingPositions.every((pos) => this.getTile(pos) !== undefined);
   }
 
-  private getFeatureClaimants(feature: Feature): string[] {
+  public getFeatureClaimants(feature: Feature): string[] {
     const claimants = new Set<string>();
 
     feature.edges.forEach((edge) => {
@@ -499,6 +493,10 @@ export class Board {
 
   getFeatureClaims(): FeatureClaim[] {
     return Array.from(this.featureClaims.values());
+  }
+
+  getAllTiles(): Map<string, TileRecord> {
+    return this.tiles;
   }
 
   previewPlacement(tile: ITile, position: Position): PlacementResult | null {

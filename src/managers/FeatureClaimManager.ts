@@ -1,6 +1,5 @@
-import { Tile } from "../tile";
+import type { ITile, IBoard } from "../interfaces";
 import { Position, TerrainType, ClaimableFeature, Direction } from "../types";
-import { Board } from "../board";
 
 /**
  * FeatureClaimManager handles feature claiming logic.
@@ -13,7 +12,7 @@ export class FeatureClaimManager {
   /**
    * Get all claimable features on a tile with descriptive labels
    */
-  public getClaimableFeatures(tile: Tile): ClaimableFeature[] {
+  public getClaimableFeatures(tile: ITile): ClaimableFeature[] {
     const claimable: ClaimableFeature[] = [];
 
     // Check road connections with descriptive labels
@@ -47,7 +46,7 @@ export class FeatureClaimManager {
   /**
    * Generate a descriptive label for a road connection
    */
-  private generateRoadLabel(tile: Tile, connection: string[]): string {
+  private generateRoadLabel(tile: ITile, connection: string[]): string {
     // Create a readable description of the road connection
     const directions = connection
       .filter((dir) => dir !== "center")
@@ -89,7 +88,7 @@ export class FeatureClaimManager {
    * Claim a feature on the board at the specified position
    */
   public claimFeature(
-    board: Board,
+    board: IBoard,
     type: TerrainType,
     position: Position,
     identifier: string | undefined,
