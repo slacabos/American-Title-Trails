@@ -38,9 +38,6 @@ const App: React.FC = () => {
             <h1 className="text-sm text-accent font-game mb-1">
               American Tile Trails
             </h1>
-            <p className="text-xs opacity-80 leading-tight font-game">
-              TypeScript + React Edition
-            </p>
           </div>
         </footer>
       )}

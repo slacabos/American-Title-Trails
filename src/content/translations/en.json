@@ -2,7 +2,7 @@
   "app": {
     "title": "American Tile Trails",
     "tagline": "McDonalds abbeys, Costco castles, and cross-country roads.",
-    "taglineGame": "TypeScript + React Edition",
+    "taglineGame": "A parody of Carcassonne set in America.",
     "gameIcon": "American Tile Trails Game Icon"
   },
   "setup": {
