@@ -1,9 +1,9 @@
 import React, { useRef, useEffect } from "react";
-import { Tile } from "../tile";
+import type { ITile } from "../interfaces";
 import { renderTileToCanvas } from "../utils/tileRendering";
 
 interface TileRendererProps {
-  tile: Tile;
+  tile: ITile;
   size?: number;
   rotation?: number;
   showPreview?: boolean;

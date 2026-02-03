@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Board } from "../board";
-import { Tile } from "../tile";
+import type { ITile } from "../interfaces";
 import { Position } from "../types";
 import { UI_COLORS } from "../constants/colors";
 import { renderTileToCanvas } from "../utils/tileRendering";
@@ -138,7 +138,7 @@ const getFollowerDotPosition = (
 
 interface BoardCanvasProps {
   board: Board;
-  currentTile?: Tile;
+  currentTile?: ITile;
   onTilePlace?: (position: Position) => void;
   tileSize?: number;
   showGrid?: boolean;

@@ -6,11 +6,12 @@ import {
   TerrainType,
   CostcoSegment,
 } from "./types";
+import { ITile } from "./interfaces/ITile";
 
 const directionIndex = (direction: Direction): number =>
   DIRECTIONS.indexOf(direction);
 
-export class Tile {
+export class Tile implements ITile {
   public readonly id: string;
   public readonly name: string;
   public readonly center: TerrainType;
@@ -19,6 +20,13 @@ export class Tile {
   public readonly isStart: boolean;
   public readonly orientation: number;
   private readonly edges: TerrainType[];
+
+  /**
+   * Computed property that returns true if this tile has a McDonald's at its center.
+   */
+  get hasMcDonalds(): boolean {
+    return this.center === "mcdonalds";
+  }
 
   constructor({
     id,
@@ -109,7 +117,7 @@ export class Tile {
     return clone;
   }
 
-  edgeAt(direction: Direction): TerrainType {
+  getEdge(direction: Direction): TerrainType {
     const index = directionIndex(direction);
     if (index === -1) {
       throw new Error(`Unknown direction ${direction}`);

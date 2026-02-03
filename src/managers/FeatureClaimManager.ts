@@ -1,5 +1,5 @@
 import { Tile } from "../tile";
-import { Position, TerrainType, ClaimableFeature } from "../types";
+import { Position, TerrainType, ClaimableFeature, Direction } from "../types";
 import { Board } from "../board";
 
 /**
@@ -57,7 +57,7 @@ export class FeatureClaimManager {
     // If no directions (only center), use the directions that have roads on edges
     if (!directions) {
       const roadEdges = ["north", "east", "south", "west"]
-        .filter((dir) => tile.edgeAt(dir as any) === "road")
+        .filter((dir) => tile.getEdge(dir as Direction) === "road")
         .map((dir) => this.capitalizeFirstLetter(dir))
         .join("-");
       return roadEdges || "Center";

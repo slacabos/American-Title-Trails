@@ -118,20 +118,20 @@ const TileTable = () => {
   // Count tiles by city edges and road edges
   const getCityEdgeCount = (tile: Tile): number => {
     const edges = [
-      tile.edgeAt("north"),
-      tile.edgeAt("east"),
-      tile.edgeAt("south"),
-      tile.edgeAt("west"),
+      tile.getEdge("north"),
+      tile.getEdge("east"),
+      tile.getEdge("south"),
+      tile.getEdge("west"),
     ];
     return edges.filter((edge) => edge === "costco").length;
   };
 
   const getRoadEdgeCount = (tile: Tile): number => {
     const edges = [
-      tile.edgeAt("north"),
-      tile.edgeAt("east"),
-      tile.edgeAt("south"),
-      tile.edgeAt("west"),
+      tile.getEdge("north"),
+      tile.getEdge("east"),
+      tile.getEdge("south"),
+      tile.getEdge("west"),
     ];
     return edges.filter((edge) => edge === "road").length;
   };

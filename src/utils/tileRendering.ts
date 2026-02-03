@@ -1,4 +1,4 @@
-import { Tile } from "../tile";
+import type { ITile } from "../interfaces";
 import { CostcoSegment } from "../types";
 import { TILE_COLORS } from "../constants/colors";
 
@@ -18,7 +18,7 @@ const THREE_QUARTER_POSITION = 0.75;
  */
 export const renderTileToCanvas = (
   ctx: CanvasRenderingContext2D,
-  tile: Tile,
+  tile: ITile,
   size: number
 ) => {
   // Clear and draw background

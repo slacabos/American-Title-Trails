@@ -65,12 +65,12 @@ describe("Tile", () => {
     });
   });
 
-  describe("edgeAt", () => {
+  describe("getEdge", () => {
     it("should return correct edge terrain for each direction", () => {
-      expect(roadTile.edgeAt("north")).toBe("road");
-      expect(roadTile.edgeAt("east")).toBe("field");
-      expect(roadTile.edgeAt("south")).toBe("road");
-      expect(roadTile.edgeAt("west")).toBe("field");
+      expect(roadTile.getEdge("north")).toBe("road");
+      expect(roadTile.getEdge("east")).toBe("field");
+      expect(roadTile.getEdge("south")).toBe("road");
+      expect(roadTile.getEdge("west")).toBe("field");
     });
   });
 
@@ -84,40 +84,40 @@ describe("Tile", () => {
     it("should rotate edges correctly 90 degrees clockwise", () => {
       const rotated = roadTile.rotate(1);
 
-      expect(rotated.edgeAt("north")).toBe("field"); // was west
-      expect(rotated.edgeAt("east")).toBe("road"); // was north
-      expect(rotated.edgeAt("south")).toBe("field"); // was east
-      expect(rotated.edgeAt("west")).toBe("road"); // was south
+      expect(rotated.getEdge("north")).toBe("field"); // was west
+      expect(rotated.getEdge("east")).toBe("road"); // was north
+      expect(rotated.getEdge("south")).toBe("field"); // was east
+      expect(rotated.getEdge("west")).toBe("road"); // was south
       expect(rotated.orientation).toBe(1);
     });
 
     it("should rotate edges correctly 180 degrees", () => {
       const rotated = roadTile.rotate(2);
 
-      expect(rotated.edgeAt("north")).toBe("road"); // was south
-      expect(rotated.edgeAt("east")).toBe("field"); // was west
-      expect(rotated.edgeAt("south")).toBe("road"); // was north
-      expect(rotated.edgeAt("west")).toBe("field"); // was east
+      expect(rotated.getEdge("north")).toBe("road"); // was south
+      expect(rotated.getEdge("east")).toBe("field"); // was west
+      expect(rotated.getEdge("south")).toBe("road"); // was north
+      expect(rotated.getEdge("west")).toBe("field"); // was east
       expect(rotated.orientation).toBe(2);
     });
 
     it("should rotate edges correctly 270 degrees clockwise", () => {
       const rotated = roadTile.rotate(3);
 
-      expect(rotated.edgeAt("north")).toBe("field"); // was east
-      expect(rotated.edgeAt("east")).toBe("road"); // was south
-      expect(rotated.edgeAt("south")).toBe("field"); // was west
-      expect(rotated.edgeAt("west")).toBe("road"); // was north
+      expect(rotated.getEdge("north")).toBe("field"); // was east
+      expect(rotated.getEdge("east")).toBe("road"); // was south
+      expect(rotated.getEdge("south")).toBe("field"); // was west
+      expect(rotated.getEdge("west")).toBe("road"); // was north
       expect(rotated.orientation).toBe(3);
     });
 
     it("should handle full rotation (4 times = 360 degrees)", () => {
       const rotated = roadTile.rotate(4);
 
-      expect(rotated.edgeAt("north")).toBe(roadTile.edgeAt("north"));
-      expect(rotated.edgeAt("east")).toBe(roadTile.edgeAt("east"));
-      expect(rotated.edgeAt("south")).toBe(roadTile.edgeAt("south"));
-      expect(rotated.edgeAt("west")).toBe(roadTile.edgeAt("west"));
+      expect(rotated.getEdge("north")).toBe(roadTile.getEdge("north"));
+      expect(rotated.getEdge("east")).toBe(roadTile.getEdge("east"));
+      expect(rotated.getEdge("south")).toBe(roadTile.getEdge("south"));
+      expect(rotated.getEdge("west")).toBe(roadTile.getEdge("west"));
       expect(rotated.orientation).toBe(0); // Should wrap around
     });
 
@@ -150,20 +150,20 @@ describe("Tile", () => {
     it("should handle negative rotations", () => {
       const rotated = roadTile.rotate(-1); // Counter-clockwise
 
-      expect(rotated.edgeAt("north")).toBe("field"); // was east
-      expect(rotated.edgeAt("east")).toBe("road"); // was south
-      expect(rotated.edgeAt("south")).toBe("field"); // was west
-      expect(rotated.edgeAt("west")).toBe("road"); // was north
+      expect(rotated.getEdge("north")).toBe("field"); // was east
+      expect(rotated.getEdge("east")).toBe("road"); // was south
+      expect(rotated.getEdge("south")).toBe("field"); // was west
+      expect(rotated.getEdge("west")).toBe("road"); // was north
     });
 
     it("should not modify original tile when rotating", () => {
-      const originalNorth = roadTile.edgeAt("north");
+      const originalNorth = roadTile.getEdge("north");
       const originalOrientation = roadTile.orientation;
 
       roadTile.rotate(1);
 
       // Original tile should be unchanged
-      expect(roadTile.edgeAt("north")).toBe(originalNorth);
+      expect(roadTile.getEdge("north")).toBe(originalNorth);
       expect(roadTile.orientation).toBe(originalOrientation);
     });
   });

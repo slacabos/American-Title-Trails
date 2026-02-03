@@ -8,7 +8,7 @@ import {
   TerrainType,
   CostcoSegment,
 } from "./types";
-import { Tile } from "./tile";
+import type { ITile } from "./interfaces";
 
 const positionKey = ({ x, y }: Position): string => `${x},${y}`;
 
@@ -24,7 +24,7 @@ const addDelta = (position: Position, direction: Direction): Position => {
 
 interface NeighborInfo {
   position: Position;
-  tile: Tile;
+  tile: ITile;
 }
 
 interface Feature {
@@ -115,7 +115,7 @@ export class Board {
     return [...candidates].map(parsePositionKey);
   }
 
-  canPlace(tile: Tile, position: Position): boolean {
+  canPlace(tile: ITile, position: Position): boolean {
     if (!this.isEmpty() && this.getTile(position)) {
       return false;
     }
@@ -127,15 +127,15 @@ export class Board {
     }
 
     return neighborEntries.every(([direction, neighbor]) => {
-      const oppositeEdge = neighbor.tile.edgeAt(
+      const oppositeEdge = neighbor.tile.getEdge(
         OPPOSITE[direction as Direction]
       );
-      const currentEdge = tile.edgeAt(direction as Direction);
+      const currentEdge = tile.getEdge(direction as Direction);
       return oppositeEdge === currentEdge;
     });
   }
 
-  placeTile(tile: Tile, position: Position): PlacementResult {
+  placeTile(tile: ITile, position: Position): PlacementResult {
     if (!this.canPlace(tile, position)) {
       throw new Error(
         `Cannot place tile at position (${position.x}, ${position.y})`
@@ -153,7 +153,7 @@ export class Board {
 
   private analyzeCompletedFeatures(
     placedPosition: Position,
-    placedTile: Tile
+    placedTile: ITile
   ): CompletedFeature[] {
     const completed: CompletedFeature[] = [];
 
@@ -216,7 +216,7 @@ export class Board {
 
   private findConnectedRoads(
     startPosition: Position,
-    startTile: Tile
+    startTile: ITile
   ): Feature[] {
     const features: Feature[] = [];
     const visited = new Set<string>();
@@ -293,7 +293,7 @@ export class Board {
 
   private findConnectedCostcos(
     startPosition: Position,
-    startTile: Tile
+    startTile: ITile
   ): Feature[] {
     const features: Feature[] = [];
     const visited = new Set<string>();
@@ -501,7 +501,7 @@ export class Board {
     return Array.from(this.featureClaims.values());
   }
 
-  previewPlacement(tile: Tile, position: Position): PlacementResult | null {
+  previewPlacement(tile: ITile, position: Position): PlacementResult | null {
     if (!this.canPlace(tile, position)) {
       return null;
     }

@@ -1,5 +1,5 @@
 import { AIMove } from "./types";
-import { Tile } from "./tile";
+import type { ITile } from "./interfaces";
 import { Player } from "./player";
 
 interface AIOptions {
@@ -35,7 +35,7 @@ export class SimpleAI {
     this.costcoWeight = options.costcoWeight ?? defaultWeights.costcoPreference;
   }
 
-  planMove(game: GameInterface, player: Player, tile: Tile): AIMove | null {
+  planMove(game: GameInterface, player: Player, tile: ITile): AIMove | null {
     const candidates = game.board.getPlacementCandidates();
     if (candidates.length === 0) {
       return null;

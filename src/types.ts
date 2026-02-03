@@ -1,3 +1,5 @@
+import type { ITile } from "./interfaces";
+
 export type Direction = "north" | "east" | "south" | "west";
 
 export type TerrainType = "road" | "field" | "costco" | "mcdonalds" | "mixed";
@@ -80,7 +82,7 @@ export interface Bounds {
 
 export interface TileRecord {
   position: Position;
-  tile: any; // Will be properly typed when we convert Tile class
+  tile: ITile;
 }
 
 export interface FeatureClaim {
@@ -114,12 +116,12 @@ export enum GamePhase {
 }
 
 export interface GameState {
-  board: any; // Board type - keeping as any for now to avoid circular dependency
+  board: any; // Board type - will be IBoard in TASK-002
   players: PlayerState[];
   currentPlayerIndex: number;
-  currentTile?: any; // Tile type
-  tileDeck: any[]; // Tile[]
-  discardPile: any[]; // Tile[]
+  currentTile?: ITile;
+  tileDeck: ITile[];
+  discardPile: ITile[];
   phase: GamePhase;
   isGameOver: boolean;
   winner?: string;
