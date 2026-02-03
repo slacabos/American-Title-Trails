@@ -11,6 +11,7 @@ import type { IBoard } from "../interfaces/IBoard";
 export class ScoreManager {
   /**
    * Score completed features and award points to claiming players
+   * Uses majority rule: only player(s) with most followers on feature receive points
    */
   public scoreCompletedFeatures(
     completedFeatures: CompletedFeature[],
@@ -18,8 +19,10 @@ export class ScoreManager {
   ): void {
     completedFeatures.forEach((feature) => {
       if (feature.claimedBy && feature.claimedBy.length > 0) {
-        // Award points to claiming players
-        feature.claimedBy.forEach((playerId: string) => {
+        const followerCounts = this.countFollowersPerPlayer(feature.claimedBy);
+        const majorityHolders = this.findMajorityHolders(followerCounts);
+
+        majorityHolders.forEach((playerId) => {
           const player = players.find((p) => p.id === playerId);
           if (player) {
             player.score += feature.points;
@@ -27,6 +30,30 @@ export class ScoreManager {
         });
       }
     });
+  }
+
+  /**
+   * Count the number of followers each player has on a feature
+   */
+  private countFollowersPerPlayer(claimedBy: string[]): Map<string, number> {
+    const counts = new Map<string, number>();
+    claimedBy.forEach((playerId) => {
+      counts.set(playerId, (counts.get(playerId) || 0) + 1);
+    });
+    return counts;
+  }
+
+  /**
+   * Find player(s) with the most followers on a feature
+   */
+  private findMajorityHolders(followerCounts: Map<string, number>): string[] {
+    if (followerCounts.size === 0) return [];
+    const maxCount = Math.max(...followerCounts.values());
+    const majorityHolders: string[] = [];
+    followerCounts.forEach((count, playerId) => {
+      if (count === maxCount) majorityHolders.push(playerId);
+    });
+    return majorityHolders;
   }
 
   /**
@@ -74,7 +101,10 @@ export class ScoreManager {
         const pennantPoints = feature.pennants;
         const totalPoints = tilePoints + pennantPoints;
 
-        claimants.forEach((playerId: string) => {
+        const followerCounts = this.countFollowersPerPlayer(claimants);
+        const majorityHolders = this.findMajorityHolders(followerCounts);
+
+        majorityHolders.forEach((playerId) => {
           const player = players.find((p) => p.id === playerId);
           if (player) {
             player.score += totalPoints;

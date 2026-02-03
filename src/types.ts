@@ -63,7 +63,7 @@ export interface PlacementOptions {
 }
 
 export interface PlacementResult {
-  completed: any[];
+  completed: CompletedFeature[];
   scored: ScoringEvent[];
 }
 

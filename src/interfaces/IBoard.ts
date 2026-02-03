@@ -6,6 +6,7 @@ import {
   FeatureForClaimants,
   CostcoFeature,
   BoardBounds,
+  CompletedFeature,
 } from "../types";
 import { ITile } from "./ITile";
 
@@ -69,7 +70,7 @@ export interface IBoard {
    * @returns Result containing completed features
    * @throws Error if placement is invalid
    */
-  placeTile(tile: ITile, position: Position): { completed: any[] };
+  placeTile(tile: ITile, position: Position): { completed: CompletedFeature[] };
 
   /**
    * Claim a feature on a placed tile.
@@ -85,7 +86,7 @@ export interface IBoard {
     position: Position,
     identifier: string | undefined,
     playerId: string
-  ): any;
+  ): FeatureClaim;
 
   /**
    * Get all current feature claims on the board.
@@ -101,7 +102,7 @@ export interface IBoard {
    * @param position - The position to preview at
    * @returns Preview result or null if invalid placement
    */
-  previewPlacement(tile: ITile, position: Position): { completed: any[] } | null;
+  previewPlacement(tile: ITile, position: Position): { completed: CompletedFeature[] } | null;
 
   /**
    * Remove a follower from a claimed feature.
@@ -115,7 +116,7 @@ export interface IBoard {
    *
    * @param completed - Array of completed features
    */
-  returnFollowersFromCompletedFeatures(completed: any[]): void;
+  returnFollowersFromCompletedFeatures(completed: CompletedFeature[]): void;
 
   /**
    * Get all player IDs that have claimed a feature.

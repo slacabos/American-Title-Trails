@@ -23,6 +23,9 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    watch: {
+      ignored: ['**/*.md', '**/docs/**'],
+    },
   },
   build: {
     outDir: "dist",

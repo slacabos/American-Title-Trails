@@ -454,16 +454,16 @@ export class Board implements IBoard {
   }
 
   public getFeatureClaimants(feature: Feature): string[] {
-    const claimants = new Set<string>();
+    const claimants: string[] = [];
 
     feature.edges.forEach((edge) => {
       const claim = this.featureClaims.get(edge);
       if (claim) {
-        claim.players.forEach((player) => claimants.add(player));
+        claim.players.forEach((player) => claimants.push(player));
       }
     });
 
-    return Array.from(claimants);
+    return claimants;
   }
 
   claimFeature(
