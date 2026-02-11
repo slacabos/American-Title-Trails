@@ -11,6 +11,7 @@ import {
   TilePlacementResult,
   ClaimableFeature,
   CompletedFeature,
+  AIDifficulty,
 } from "./types";
 import { ScoreManager } from "./managers/ScoreManager";
 import { TurnManager } from "./managers/TurnManager";
@@ -19,6 +20,7 @@ import { FeatureClaimManager } from "./managers/FeatureClaimManager";
 import { PlayerManager } from "./managers/PlayerManager";
 import { shuffle } from "./utils/arrayUtils";
 import { GAME_RULES } from "./constants/gameRules";
+import { AIFactory, AIStrategy, AIContext } from "./ai";
 
 // Re-export types for backward compatibility
 export { GamePhase } from "./types";
@@ -32,6 +34,7 @@ export class Game {
   private readonly tileManager: TileManager;
   private readonly featureClaimManager: FeatureClaimManager;
   private readonly playerManager: PlayerManager;
+  private readonly aiStrategies: Map<string, AIStrategy>;
 
   constructor(playerConfigs: PlayerDefinition[], options: GameOptions = {}) {
     // Initialize managers
@@ -40,6 +43,16 @@ export class Game {
     this.tileManager = new TileManager(shuffle(buildDeck()));
     this.featureClaimManager = new FeatureClaimManager();
     this.playerManager = new PlayerManager(playerConfigs);
+
+    // Initialize AI strategies for each AI player
+    this.aiStrategies = new Map();
+    playerConfigs.forEach((config, index) => {
+      if (config.isAI) {
+        const playerId = config.id || `player_${index + 1}`;
+        const difficulty = config.aiDifficulty || "medium";
+        this.aiStrategies.set(playerId, AIFactory.create(difficulty));
+      }
+    });
 
     this.state = {
       board: new Board(),
@@ -313,16 +326,92 @@ export class Game {
       return;
     }
 
+    // Get the AI strategy for this player
+    const aiStrategy = this.aiStrategies.get(currentPlayer.id);
+    if (!aiStrategy) {
+      // Fallback to simple logic if no strategy (shouldn't happen)
+      this.processAITurnFallback();
+      return;
+    }
+
     if (this.state.phase === GamePhase.PLACE_TILE) {
-      // Simple AI: place tile at first valid position
+      const validPlacements = this.getValidPlacements();
+      if (validPlacements.length === 0) {
+        return;
+      }
+
+      // Build AI context
+      const context: AIContext = {
+        board: this.state.board,
+        currentTile,
+        currentPlayer,
+        allPlayers: this.state.players,
+        validPlacements,
+        claimableFeatures: [],
+        gameState: this.state,
+      };
+
+      // Get evaluated placements from AI strategy
+      const tilePlacements = aiStrategy.evaluateTilePlacements(context);
+
+      if (tilePlacements.length > 0) {
+        const best = tilePlacements[0];
+        this.placeTile(best.position, best.rotation);
+      }
+    } else if (this.state.phase === GamePhase.CLAIM_FEATURE) {
+      const lastPosition = this.getLastPlacedTilePosition();
+      if (!lastPosition) {
+        this.skipClaim();
+        return;
+      }
+
+      const placedTile = this.state.board.getTile(lastPosition)?.tile;
+      if (!placedTile) {
+        this.skipClaim();
+        return;
+      }
+
+      // Get claimable features that aren't already claimed
+      const claimableFeatures = this.getClaimableFeaturesForCurrentTurn();
+
+      // Build AI context for meeple placement
+      const context: AIContext = {
+        board: this.state.board,
+        currentTile: placedTile,
+        currentPlayer,
+        allPlayers: this.state.players,
+        validPlacements: [],
+        claimableFeatures,
+        gameState: this.state,
+      };
+
+      // Get meeple placement decision from AI strategy
+      const meeplePlacement = aiStrategy.evaluateMeeplePlacement(
+        context,
+        lastPosition
+      );
+
+      if (meeplePlacement && meeplePlacement.shouldClaim) {
+        this.claimFeature(meeplePlacement.type, meeplePlacement.identifier);
+      } else {
+        this.skipClaim();
+      }
+    }
+  }
+
+  /**
+   * Fallback AI logic if no strategy is available.
+   */
+  private processAITurnFallback(): void {
+    const currentPlayer = this.getCurrentPlayer();
+
+    if (this.state.phase === GamePhase.PLACE_TILE) {
       const validPlacements = this.getValidPlacements();
       if (validPlacements.length > 0) {
         this.placeTile(validPlacements[0], 0);
       }
     } else if (this.state.phase === GamePhase.CLAIM_FEATURE) {
-      // AI decides whether to claim a feature (simplified logic)
       if (currentPlayer.followers > GAME_RULES.AI_CLAIM_THRESHOLD) {
-        // Try to claim the first available feature
         const lastPosition = this.getLastPlacedTilePosition();
         if (lastPosition) {
           const placedTile = this.state.board.getTile(lastPosition)?.tile;
@@ -338,6 +427,13 @@ export class Game {
       }
       this.skipClaim();
     }
+  }
+
+  /**
+   * Set or update the AI strategy for a specific player.
+   */
+  public setAIStrategy(playerId: string, difficulty: AIDifficulty): void {
+    this.aiStrategies.set(playerId, AIFactory.create(difficulty));
   }
 
   public canRotateTile(): boolean {

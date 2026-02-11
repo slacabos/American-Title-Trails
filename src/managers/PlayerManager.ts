@@ -30,6 +30,7 @@ export class PlayerManager {
       id: config.id || `player_${index + 1}`,
       name: config.name,
       isAI: config.isAI || false,
+      aiDifficulty: config.isAI ? (config.aiDifficulty || "medium") : undefined,
       score: 0,
       followers: config.followers || GAME_RULES.FOLLOWERS_PER_PLAYER,
       color: config.color || this.getDefaultColor(index),

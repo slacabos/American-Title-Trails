@@ -31,6 +31,15 @@ export const GAME_RULES = {
   AI_MOVE_DELAY_MS: 1000,
   AI_CLAIM_THRESHOLD: 2,
 
+  // AI difficulty defaults
+  AI_DEFAULT_DIFFICULTY: "medium" as const,
+  AI_EASY_CLAIM_CHANCE: 0.3,
+  AI_MEDIUM_MIN_FOLLOWERS: 1,
+  AI_HARD_SEARCH_DEPTH: 2,
+  AI_HARD_MAX_SEARCH_TIME_MS: 400,
+  AI_EXPERT_SEARCH_DEPTH: 3,
+  AI_EXPERT_MAX_SEARCH_TIME_MS: 600,
+
   // Tile configuration
   TILE_ROTATIONS: 4,
 } as const;

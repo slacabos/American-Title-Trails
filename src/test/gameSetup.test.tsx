@@ -68,13 +68,14 @@ describe("GameSetup Component", () => {
     // The component defaults to AI for players 2 and 3
     // We can test that the selects show the correct default values
     const aiSelects = screen.getAllByRole("combobox");
-    expect(aiSelects).toHaveLength(4); // 1 player count + 3 player types
+    // 1 player count + 3 player types + 2 AI difficulty selects (for players 2 and 3)
+    expect(aiSelects).toHaveLength(6);
 
     // First player should be Human by default
     expect(aiSelects[1]).toHaveTextContent("Human");
-    // Second and third should be AI by default
+    // Second and third should be AI by default (indexes shift due to difficulty selects)
     expect(aiSelects[2]).toHaveTextContent("AI");
-    expect(aiSelects[3]).toHaveTextContent("AI");
+    expect(aiSelects[4]).toHaveTextContent("AI");
   });
 
   it("should assign correct player colors", async () => {

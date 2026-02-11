@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlayerDefinition } from "../types";
+import { PlayerDefinition, AIDifficulty } from "../types";
 import HelpModal from "./HelpModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
             : t("setup.defaultPlayerNameTemplate", { number: i + 1 }),
         id: `player-${i + 1}`,
         isAI: i > 0,
+        aiDifficulty: i > 0 ? "medium" : undefined,
         color: palette[i],
       });
     }
@@ -44,10 +45,16 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
   const updatePlayerConfig = (
     index: number,
     field: keyof PlayerDefinition,
-    value: string | boolean
+    value: string | boolean | AIDifficulty
   ) => {
     const newConfigs = [...playerConfigs];
     newConfigs[index] = { ...newConfigs[index], [field]: value };
+
+    // When toggling to AI, set default difficulty; when toggling to human, clear it
+    if (field === "isAI") {
+      newConfigs[index].aiDifficulty = value ? "medium" : undefined;
+    }
+
     setPlayerConfigs(newConfigs);
   };
 
@@ -147,6 +154,36 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                  {config.isAI && (
+                    <Select
+                      value={config.aiDifficulty || "medium"}
+                      onValueChange={(value) =>
+                        updatePlayerConfig(
+                          index,
+                          "aiDifficulty",
+                          value as AIDifficulty
+                        )
+                      }
+                    >
+                      <SelectTrigger className="w-24 h-10 font-game text-xxs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">
+                          {t("setup.aiDifficulty.easy")}
+                        </SelectItem>
+                        <SelectItem value="medium">
+                          {t("setup.aiDifficulty.medium")}
+                        </SelectItem>
+                        <SelectItem value="hard">
+                          {t("setup.aiDifficulty.hard")}
+                        </SelectItem>
+                        <SelectItem value="expert">
+                          {t("setup.aiDifficulty.expert")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               ))}
             </div>

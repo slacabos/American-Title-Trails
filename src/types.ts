@@ -50,11 +50,14 @@ export interface PlayerOptions {
   color?: string;
 }
 
+export type AIDifficulty = "easy" | "medium" | "hard" | "expert";
+
 export interface PlayerDefinition {
   name: string;
   id?: string;
   followers?: number;
   isAI?: boolean;
+  aiDifficulty?: AIDifficulty;
   color?: string;
 }
 
@@ -113,6 +116,7 @@ export interface PlayerState {
   id: string;
   name: string;
   isAI: boolean;
+  aiDifficulty?: AIDifficulty;
   score: number;
   followers: number;
   color: string;
