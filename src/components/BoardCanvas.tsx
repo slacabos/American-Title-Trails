@@ -230,6 +230,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const initialCenterRef = useRef(false);
 
   const [canvasState, setCanvasState] = useState<CanvasState>({
     offsetX: 0,
@@ -421,8 +422,19 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     canvas.width = rect.width;
     canvas.height = rect.height;
 
+    // Center the board on initial render
+    if (!initialCenterRef.current) {
+      initialCenterRef.current = true;
+      const scaledTileSize = tileSize * INITIAL_SCALE;
+      setCanvasState((prev) => ({
+        ...prev,
+        offsetX: rect.width / 2 - scaledTileSize / 2,
+        offsetY: rect.height / 2 - scaledTileSize / 2,
+      }));
+    }
+
     renderBoard();
-  }, [renderBoard]);
+  }, [renderBoard, tileSize]);
 
   // Set up resize observer
   useEffect(() => {
