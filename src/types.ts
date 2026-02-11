@@ -63,6 +63,8 @@ export interface PlayerDefinition {
 
 export interface GameOptions {
   startingPlayer?: number;
+  rng?: () => number;
+  seed?: number;
 }
 
 export interface FollowerPlacement {

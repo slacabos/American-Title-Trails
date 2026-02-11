@@ -9,6 +9,7 @@ import type { AIStrategy, AIDifficulty } from "./AIStrategy";
 import { RandomAI } from "./RandomAI";
 import { SimpleAI } from "./SimpleAI";
 import { StrategicAI, ExpertAI } from "./StrategicAI";
+import type { RNG } from "../utils/rng";
 
 /**
  * Factory for creating AI strategies by difficulty level.
@@ -20,23 +21,23 @@ export class AIFactory {
    * @param difficulty - The desired AI difficulty level
    * @returns An AI strategy instance
    */
-  static create(difficulty: AIDifficulty): AIStrategy {
+  static create(difficulty: AIDifficulty, rng?: RNG): AIStrategy {
     switch (difficulty) {
       case "easy":
-        return new RandomAI();
+        return new RandomAI({ rng });
 
       case "medium":
-        return new SimpleAI();
+        return new SimpleAI({ rng });
 
       case "hard":
-        return new StrategicAI();
+        return new StrategicAI({ rng });
 
       case "expert":
-        return new ExpertAI();
+        return new ExpertAI({ rng });
 
       default:
         // Default to medium difficulty
-        return new SimpleAI();
+        return new SimpleAI({ rng });
     }
   }
 

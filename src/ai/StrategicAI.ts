@@ -20,6 +20,7 @@ import {
   FeatureAnalyzer,
 } from "./evaluators";
 import type { EvaluationWeights } from "./evaluators";
+import type { RNG } from "../utils/rng";
 
 /**
  * Configuration options for StrategicAI.
@@ -29,6 +30,8 @@ export interface StrategicAIOptions {
   searchDepth?: number;
   maxSearchTimeMs?: number;
   defensiveWeight?: number;
+  rng?: RNG;
+  claimThresholdScale?: number;
 }
 
 /**
@@ -41,6 +44,7 @@ export class StrategicAI implements AIStrategy {
   private readonly searchDepth: number;
   private readonly maxSearchTimeMs: number;
   private readonly defensiveWeight: number;
+  private readonly claimThresholdScale: number;
   private searchStartTime: number = 0;
 
   constructor(options: StrategicAIOptions = {}) {
@@ -55,10 +59,11 @@ export class StrategicAI implements AIStrategy {
       ...options.weights,
     };
 
-    this.evaluator = new TilePlacementEvaluator(strategicWeights);
+    this.evaluator = new TilePlacementEvaluator(strategicWeights, options.rng);
     this.searchDepth = options.searchDepth ?? 2;
     this.maxSearchTimeMs = options.maxSearchTimeMs ?? 400;
     this.defensiveWeight = options.defensiveWeight ?? 2.0;
+    this.claimThresholdScale = options.claimThresholdScale ?? 1;
   }
 
   /**
@@ -143,10 +148,10 @@ export class StrategicAI implements AIStrategy {
 
     // Higher thresholds for strategic claiming
     const thresholds = {
-      mcdonalds: 7,
-      costco: 6,
-      road: 4,
-      field: 3,
+      mcdonalds: 6,
+      costco: 5.5,
+      road: 3.5,
+      field: 2.5,
     };
 
     for (const feature of claimableFeatures) {
@@ -167,8 +172,9 @@ export class StrategicAI implements AIStrategy {
         currentPlayer
       );
 
-      const threshold =
+      const baseThreshold =
         thresholds[feature.type as keyof typeof thresholds] || 4;
+      const threshold = baseThreshold * this.claimThresholdScale;
 
       if (score > bestScore && score >= threshold) {
         bestScore = score;
@@ -371,7 +377,7 @@ export class StrategicAI implements AIStrategy {
 
     // Early game: keep more followers in reserve
     if (gameProgress < 0.3) {
-      return 2;
+      return 1;
     }
 
     // Mid game: balanced approach
@@ -474,19 +480,22 @@ export class StrategicAI implements AIStrategy {
 export class ExpertAI extends StrategicAI {
   public readonly difficulty: AIDifficulty = "expert";
 
-  constructor() {
+  constructor(options: StrategicAIOptions = {}) {
     super({
       weights: {
-        completion: 10,
-        adjacency: 2,
-        costcoPreference: 4,
-        extensionBonus: 6,
-        blockingBonus: 5,
-        centerBonus: 0.5,
+        completion: 12,
+        adjacency: 2.2,
+        costcoPreference: 5,
+        extensionBonus: 7,
+        blockingBonus: 5.5,
+        centerBonus: 0.6,
+        ...(options.weights ?? {}),
       },
-      searchDepth: 3,
-      maxSearchTimeMs: 600,
-      defensiveWeight: 3.0,
+      searchDepth: options.searchDepth ?? 3,
+      maxSearchTimeMs: options.maxSearchTimeMs ?? 600,
+      defensiveWeight: options.defensiveWeight ?? 1.5,
+      claimThresholdScale: options.claimThresholdScale ?? 1,
+      rng: options.rng,
     });
   }
 }

@@ -19,6 +19,7 @@ import { TileManager } from "./managers/TileManager";
 import { FeatureClaimManager } from "./managers/FeatureClaimManager";
 import { PlayerManager } from "./managers/PlayerManager";
 import { shuffle } from "./utils/arrayUtils";
+import { getRng } from "./utils/rng";
 import { GAME_RULES } from "./constants/gameRules";
 import { AIFactory, AIStrategy, AIContext } from "./ai";
 
@@ -35,12 +36,15 @@ export class Game {
   private readonly featureClaimManager: FeatureClaimManager;
   private readonly playerManager: PlayerManager;
   private readonly aiStrategies: Map<string, AIStrategy>;
+  private readonly rng: () => number;
 
   constructor(playerConfigs: PlayerDefinition[], options: GameOptions = {}) {
+    this.rng = getRng({ rng: options.rng, seed: options.seed });
+
     // Initialize managers
     this.scoreManager = new ScoreManager();
     this.turnManager = new TurnManager(options.startingPlayer || 0);
-    this.tileManager = new TileManager(shuffle(buildDeck()));
+    this.tileManager = new TileManager(shuffle(buildDeck(), this.rng));
     this.featureClaimManager = new FeatureClaimManager();
     this.playerManager = new PlayerManager(playerConfigs);
 
@@ -50,7 +54,7 @@ export class Game {
       if (config.isAI) {
         const playerId = config.id || `player_${index + 1}`;
         const difficulty = config.aiDifficulty || "medium";
-        this.aiStrategies.set(playerId, AIFactory.create(difficulty));
+        this.aiStrategies.set(playerId, AIFactory.create(difficulty, this.rng));
       }
     });
 
@@ -345,6 +349,7 @@ export class Game {
       // and filter out invalid placement/rotation combinations
       const candidatePositions = this.state.board.getPlacementCandidates();
       if (candidatePositions.length === 0) {
+        this.discardCurrentTileAndEndTurn();
         return;
       }
 
@@ -365,6 +370,8 @@ export class Game {
       if (tilePlacements.length > 0) {
         const best = tilePlacements[0];
         this.placeTile(best.position, best.rotation);
+      } else {
+        this.discardCurrentTileAndEndTurn();
       }
     } else if (this.state.phase === GamePhase.CLAIM_FEATURE) {
       const lastPosition = this.getLastPlacedTilePosition();
@@ -419,14 +426,20 @@ export class Game {
 
       // Try all candidate positions with all rotations
       const candidates = this.state.board.getPlacementCandidates();
+      let placed = false;
       for (const position of candidates) {
         for (let rotation = 0; rotation < GAME_RULES.TILE_ROTATIONS; rotation++) {
           const rotatedTile = currentTile.rotate(rotation);
           if (this.state.board.canPlace(rotatedTile, position)) {
             this.placeTile(position, rotation);
-            return;
+            placed = true;
+            break;
           }
         }
+        if (placed) break;
+      }
+      if (!placed) {
+        this.discardCurrentTileAndEndTurn();
       }
     } else if (this.state.phase === GamePhase.CLAIM_FEATURE) {
       if (currentPlayer.followers > GAME_RULES.AI_CLAIM_THRESHOLD) {
@@ -451,7 +464,17 @@ export class Game {
    * Set or update the AI strategy for a specific player.
    */
   public setAIStrategy(playerId: string, difficulty: AIDifficulty): void {
-    this.aiStrategies.set(playerId, AIFactory.create(difficulty));
+    this.aiStrategies.set(playerId, AIFactory.create(difficulty, this.rng));
+  }
+
+  /**
+   * Discard the current tile when no valid placements exist and end the turn.
+   */
+  private discardCurrentTileAndEndTurn(): void {
+    this.tileManager.discardCurrentTile();
+    this.syncTileState();
+    this.endTurn();
+    this.notifyStateChange();
   }
 
   public canRotateTile(): boolean {

@@ -12,6 +12,7 @@
 import type { ITile, IBoard } from "../../interfaces";
 import type { Position, PlayerState } from "../../types";
 import { GAME_RULES } from "../../constants/gameRules";
+import type { RNG } from "../../utils/rng";
 
 /**
  * Weights for different scoring factors.
@@ -59,9 +60,11 @@ export interface PlacementScore {
  */
 export class TilePlacementEvaluator {
   private readonly weights: EvaluationWeights;
+  private readonly rng: RNG;
 
-  constructor(weights: Partial<EvaluationWeights> = {}) {
+  constructor(weights: Partial<EvaluationWeights> = {}, rng: RNG = Math.random) {
     this.weights = { ...DEFAULT_WEIGHTS, ...weights };
+    this.rng = rng;
   }
 
   /**
@@ -114,7 +117,7 @@ export class TilePlacementEvaluator {
     const positionScore = this.evaluatePosition(board, position);
 
     // Add small random factor to break ties
-    const randomFactor = Math.random() * 0.1;
+    const randomFactor = this.rng() * 0.1;
 
     const totalScore =
       completionScore * this.weights.completion +

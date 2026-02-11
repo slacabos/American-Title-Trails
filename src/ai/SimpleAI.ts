@@ -19,6 +19,7 @@ import {
   FeatureAnalyzer,
 } from "./evaluators";
 import type { EvaluationWeights } from "./evaluators";
+import type { RNG } from "../utils/rng";
 
 /**
  * Configuration options for SimpleAI.
@@ -26,6 +27,7 @@ import type { EvaluationWeights } from "./evaluators";
 export interface SimpleAIOptions {
   weights?: Partial<EvaluationWeights>;
   minFollowersToKeep?: number;
+  rng?: RNG;
 }
 
 /**
@@ -38,8 +40,8 @@ export class SimpleAI implements AIStrategy {
   private readonly minFollowersToKeep: number;
 
   constructor(options: SimpleAIOptions = {}) {
-    this.evaluator = new TilePlacementEvaluator(options.weights);
-    this.minFollowersToKeep = options.minFollowersToKeep ?? 1;
+    this.evaluator = new TilePlacementEvaluator(options.weights, options.rng);
+    this.minFollowersToKeep = options.minFollowersToKeep ?? 0;
   }
 
   /**
@@ -88,10 +90,10 @@ export class SimpleAI implements AIStrategy {
 
     // Score thresholds for different feature types
     const featureThresholds = {
-      mcdonalds: 6, // High value - monastery equivalent
-      costco: 5, // High value - city equivalent
-      road: 3, // Lower priority
-      field: 2, // Farmers - only late game
+      mcdonalds: 4.5, // High value - monastery equivalent
+      costco: 4, // High value - city equivalent
+      road: 2, // Lower priority
+      field: 1, // Farmers - only late game
     };
 
     for (const feature of claimableFeatures) {

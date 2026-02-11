@@ -15,12 +15,14 @@ import type {
   AIDecision,
 } from "./AIStrategy";
 import { GAME_RULES } from "../constants/gameRules";
+import type { RNG } from "../utils/rng";
 
 /**
  * Configuration options for RandomAI.
  */
 export interface RandomAIOptions {
   claimChance?: number; // Probability of claiming any feature (0-1)
+  rng?: RNG;
 }
 
 /**
@@ -30,9 +32,11 @@ export class RandomAI implements AIStrategy {
   public readonly difficulty: AIDifficulty = "easy";
 
   private readonly claimChance: number;
+  private readonly rng: RNG;
 
   constructor(options: RandomAIOptions = {}) {
-    this.claimChance = options.claimChance ?? 0.3;
+    this.claimChance = options.claimChance ?? GAME_RULES.AI_EASY_CLAIM_CHANCE;
+    this.rng = options.rng ?? Math.random;
   }
 
   /**
@@ -50,7 +54,7 @@ export class RandomAI implements AIStrategy {
           placements.push({
             position,
             rotation,
-            score: Math.random(), // Random score
+            score: this.rng(), // Random score
           });
         }
       }
@@ -79,18 +83,18 @@ export class RandomAI implements AIStrategy {
     }
 
     // Random chance to claim
-    if (Math.random() > this.claimChance) {
+    if (this.rng() > this.claimChance) {
       return null;
     }
 
     // Pick a random claimable feature
-    const randomIndex = Math.floor(Math.random() * claimableFeatures.length);
+    const randomIndex = Math.floor(this.rng() * claimableFeatures.length);
     const feature = claimableFeatures[randomIndex];
 
     return {
       type: feature.type,
       identifier: feature.identifier,
-      score: Math.random(),
+      score: this.rng(),
       shouldClaim: true,
     };
   }
@@ -106,7 +110,9 @@ export class RandomAI implements AIStrategy {
     }
 
     // Pick a random placement from valid options
-    const randomIndex = Math.floor(Math.random() * Math.min(tilePlacements.length, 5));
+    const randomIndex = Math.floor(
+      this.rng() * Math.min(tilePlacements.length, 5)
+    );
     const tilePlacement = tilePlacements[randomIndex];
 
     return {

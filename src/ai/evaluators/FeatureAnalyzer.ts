@@ -6,7 +6,14 @@
  */
 
 import type { IBoard } from "../../interfaces";
-import type { Position, TerrainType, Feature } from "../../types";
+import type {
+  Position,
+  TerrainType,
+  Feature,
+  FieldSegment,
+  Direction,
+  CostcoSegment,
+} from "../../types";
 import { GAME_RULES } from "../../constants/gameRules";
 
 /**
@@ -24,6 +31,12 @@ export interface FeatureValueEstimate {
  */
 export class FeatureAnalyzer {
   private readonly board: IBoard;
+  private static readonly OPPOSITE: Record<Direction, Direction> = {
+    north: "south",
+    east: "west",
+    south: "north",
+    west: "east",
+  };
 
   constructor(board: IBoard) {
     this.board = board;
@@ -149,6 +162,72 @@ export class FeatureAnalyzer {
   }
 
   /**
+   * Estimate the value of a field feature.
+   * Fields score based on adjacent completed Costcos at game end.
+   */
+  estimateFieldValue(
+    position: Position,
+    identifier?: string
+  ): FeatureValueEstimate {
+    const tileRecord = this.board.getTile(position);
+    if (!tileRecord || !tileRecord.tile.fieldSegments) {
+      return { currentPoints: 0, potentialPoints: 0, completionChance: 0, totalValue: 0 };
+    }
+
+    const segments = tileRecord.tile.fieldSegments;
+    let fieldSegment: FieldSegment | undefined;
+
+    if (identifier && identifier.startsWith("field_")) {
+      const index = parseInt(identifier.replace("field_", ""));
+      fieldSegment = segments[index];
+    } else {
+      fieldSegment = segments[0];
+    }
+
+    if (!fieldSegment) {
+      return { currentPoints: 0, potentialPoints: 0, completionChance: 0, totalValue: 0 };
+    }
+
+    const fieldFeature = this.board.traceFieldFeature(
+      position,
+      fieldSegment,
+      new Set()
+    );
+
+    const adjacentCostcoFeatures = this.collectAdjacentCostcoFeatures(
+      fieldFeature
+    );
+
+    let expectedPoints = 0;
+    let completedCount = 0;
+
+    adjacentCostcoFeatures.forEach((feature) => {
+      if (this.board.isCostcoComplete(feature)) {
+        expectedPoints += GAME_RULES.FARMER_POINTS_PER_COSTCO;
+        completedCount += 1;
+        return;
+      }
+
+      const openEdges = this.countOpenEdges(feature);
+      const completionChance = Math.max(0.1, 1.0 - openEdges * 0.15);
+      expectedPoints += completionChance * GAME_RULES.FARMER_POINTS_PER_COSTCO;
+    });
+
+    const currentPoints =
+      completedCount * GAME_RULES.FARMER_POINTS_PER_COSTCO;
+    const maxPoints =
+      adjacentCostcoFeatures.size * GAME_RULES.FARMER_POINTS_PER_COSTCO;
+    const completionChance = maxPoints > 0 ? expectedPoints / maxPoints : 0;
+
+    return {
+      currentPoints,
+      potentialPoints: maxPoints,
+      completionChance,
+      totalValue: expectedPoints,
+    };
+  }
+
+  /**
    * Estimate feature value by type.
    */
   estimateFeatureValue(
@@ -173,6 +252,9 @@ export class FeatureAnalyzer {
 
       case "mcdonalds":
         return this.estimateMcDonaldsValue(position);
+
+      case "field":
+        return this.estimateFieldValue(position, identifier);
 
       default:
         return { currentPoints: 0, potentialPoints: 0, completionChance: 0, totalValue: 0 };
@@ -237,5 +319,53 @@ export class FeatureAnalyzer {
 
     const delta = deltas[direction] || { x: 0, y: 0 };
     return { x: position.x + delta.x, y: position.y + delta.y };
+  }
+
+  private parsePositionKey(key: string): Position {
+    const [x, y] = key.split(",").map(Number);
+    return { x, y };
+  }
+
+  private collectAdjacentCostcoFeatures(fieldFeature: Feature): Set<Feature> {
+    const unique = new Map<string, Feature>();
+    const directions: Direction[] = ["north", "east", "south", "west"];
+
+    const addFeature = (feature: Feature): void => {
+      const id = Array.from(feature.tiles).sort().join("|");
+      if (!unique.has(id)) {
+        unique.set(id, feature);
+      }
+    };
+
+    fieldFeature.tiles.forEach((tileKey) => {
+      const position = this.parsePositionKey(tileKey);
+      const tileRecord = this.board.getTile(position);
+      if (!tileRecord) return;
+
+      directions.forEach((direction) => {
+        const neighborPos = this.getNeighborPosition(position, direction);
+        const neighbor = this.board.getTile(neighborPos);
+        if (!neighbor) return;
+
+        neighbor.tile.costcoZones.forEach((zone: CostcoSegment) => {
+          const oppositeDir = FeatureAnalyzer.OPPOSITE[direction];
+          if (zone.segments.includes(oppositeDir)) {
+            const feature = this.board.traceCostcoFeature(
+              neighborPos,
+              zone,
+              new Set()
+            );
+            addFeature(feature);
+          }
+        });
+      });
+
+      tileRecord.tile.costcoZones.forEach((zone: CostcoSegment) => {
+        const feature = this.board.traceCostcoFeature(position, zone, new Set());
+        addFeature(feature);
+      });
+    });
+
+    return new Set(unique.values());
   }
 }

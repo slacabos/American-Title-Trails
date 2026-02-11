@@ -33,7 +33,7 @@ export const GAME_RULES = {
 
   // AI difficulty defaults
   AI_DEFAULT_DIFFICULTY: "medium" as const,
-  AI_EASY_CLAIM_CHANCE: 0.3,
+  AI_EASY_CLAIM_CHANCE: 0.15,
   AI_MEDIUM_MIN_FOLLOWERS: 1,
   AI_HARD_SEARCH_DEPTH: 2,
   AI_HARD_MAX_SEARCH_TIME_MS: 400,

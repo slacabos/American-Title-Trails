@@ -13,6 +13,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run",
+    "test:ai-sim": "vitest run src/test/ai.sim.test.ts",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src --ext .ts,.tsx",
