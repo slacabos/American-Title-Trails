@@ -53,6 +53,24 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
     // When toggling to AI, set default difficulty; when toggling to human, clear it
     if (field === "isAI") {
       newConfigs[index].aiDifficulty = value ? "medium" : undefined;
+
+      // Update name when toggling player type
+      const currentName = newConfigs[index].name;
+      const humanDefault = t("setup.defaultPlayerName"); // "You"
+      const playerDefault = t("setup.defaultPlayerNameTemplate", { number: index + 1 });
+      const aiDefault = t("setup.aiPlayerNameTemplate", { number: index + 1 });
+
+      if (value) {
+        // Switching to AI - update name if it's the human default or empty
+        if (currentName === humanDefault || currentName.trim() === "") {
+          newConfigs[index].name = aiDefault;
+        }
+      } else {
+        // Switching to Human - restore "You" for first player if using default names
+        if (index === 0 && (currentName === aiDefault || currentName === playerDefault)) {
+          newConfigs[index].name = humanDefault;
+        }
+      }
     }
 
     setPlayerConfigs(newConfigs);

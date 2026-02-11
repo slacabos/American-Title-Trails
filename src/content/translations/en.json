@@ -20,6 +20,7 @@
     "playerPlaceholder": "Player",
     "defaultPlayerName": "You",
     "defaultPlayerNameTemplate": "Player {number}",
+    "aiPlayerNameTemplate": "Computer {number}",
     "playerTypes": {
       "human": "Human",
       "ai": "AI"
