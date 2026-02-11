@@ -12,6 +12,9 @@ import {
   ClaimableFeature,
   CompletedFeature,
   AIDifficulty,
+  ScoreBreakdown,
+  ScoreCategory,
+  SCORE_CATEGORIES,
 } from "./types";
 import { ScoreManager } from "./managers/ScoreManager";
 import { TurnManager } from "./managers/TurnManager";
@@ -58,15 +61,19 @@ export class Game {
       }
     });
 
+    const players = this.playerManager.getPlayers();
+    const scoreBreakdown = this.initializeScoreBreakdown(players);
+
     this.state = {
       board: new Board(),
-      players: this.playerManager.getPlayers(),
+      players,
       currentPlayerIndex: this.turnManager.getCurrentPlayerIndex(),
       tileDeck: this.tileManager.getTileDeck(),
       discardPile: this.tileManager.getDiscardPile(),
       phase: this.turnManager.getPhase(),
       isGameOver: false,
       turnNumber: this.turnManager.getTurnNumber(),
+      scoreBreakdown,
     };
 
     // Place the starting tile
@@ -84,6 +91,22 @@ export class Game {
     this.state.currentTile = this.tileManager.getCurrentTile();
     this.state.tileDeck = this.tileManager.getTileDeck();
     this.state.discardPile = this.tileManager.getDiscardPile();
+  }
+
+  private initializeScoreBreakdown(
+    players: PlayerState[]
+  ): ScoreBreakdown {
+    const breakdown: ScoreBreakdown = {};
+
+    players.forEach((player) => {
+      const categories = {} as Record<ScoreCategory, number>;
+      SCORE_CATEGORIES.forEach((category) => {
+        categories[category] = 0;
+      });
+      breakdown[player.id] = categories;
+    });
+
+    return breakdown;
   }
 
   public setStateChangeListener(callback: (state: GameState) => void): void {
@@ -195,7 +218,8 @@ export class Game {
   private scoreCompletedFeatures(completedFeatures: CompletedFeature[]): void {
     this.scoreManager.scoreCompletedFeatures(
       completedFeatures,
-      this.state.players
+      this.state.players,
+      this.state.scoreBreakdown
     );
   }
 
@@ -307,7 +331,8 @@ export class Game {
     // Calculate final scores using ScoreManager
     this.scoreManager.calculateFinalScores(
       this.state.players,
-      this.state.board
+      this.state.board,
+      this.state.scoreBreakdown
     );
 
     // Determine winner

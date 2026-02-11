@@ -1,7 +1,16 @@
+import React from "react";
 import type { Preview } from "@storybook/react-vite";
 import "../src/index.css";
 
 const preview: Preview = {
+  decorators: [
+    (Story) => {
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.add("dark");
+      }
+      return React.createElement(Story);
+    },
+  ],
   parameters: {
     controls: {
       matchers: {

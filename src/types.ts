@@ -88,6 +88,20 @@ export interface ScoringEvent {
   points: number;
 }
 
+export const SCORE_CATEGORIES = [
+  "completed_road",
+  "completed_costco",
+  "completed_mcdonalds",
+  "incomplete_costco",
+  "incomplete_road",
+  "incomplete_mcdonalds",
+  "farmers",
+] as const;
+
+export type ScoreCategory = (typeof SCORE_CATEGORIES)[number];
+
+export type ScoreBreakdown = Record<string, Record<ScoreCategory, number>>;
+
 export interface Bounds {
   minX: number;
   maxX: number;
@@ -144,6 +158,7 @@ export interface GameState {
   winner?: string;
   turnNumber: number;
   lastPlacedPosition?: Position;
+  scoreBreakdown: ScoreBreakdown;
 }
 
 export interface TilePlacementResult {

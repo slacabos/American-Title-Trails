@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { ScoreManager } from "../managers/ScoreManager";
-import { PlayerState, CompletedFeature, TerrainType } from "../types";
+import {
+  PlayerState,
+  CompletedFeature,
+  TerrainType,
+  ScoreBreakdown,
+} from "../types";
+import { GAME_RULES } from "../constants/gameRules";
 
 // Test helpers
 const createPlayer = (id: string, name: string, score = 0): PlayerState => ({
@@ -24,6 +30,22 @@ const createCompletedFeature = (
   points,
   claimedBy,
 });
+
+const createScoreBreakdown = (playerIds: string[]): ScoreBreakdown => {
+  const breakdown: ScoreBreakdown = {};
+  playerIds.forEach((id) => {
+    breakdown[id] = {
+      completed_road: 0,
+      completed_costco: 0,
+      completed_mcdonalds: 0,
+      incomplete_costco: 0,
+      incomplete_road: 0,
+      incomplete_mcdonalds: 0,
+      farmers: 0,
+    };
+  });
+  return breakdown;
+};
 
 describe("ScoreManager", () => {
   describe("scoreCompletedFeatures", () => {
@@ -211,6 +233,65 @@ describe("ScoreManager", () => {
         expect(players[0].score).toBe(10 + 8); // First feature + tie
         expect(players[1].score).toBe(5 + 8); // Second feature + tie
       });
+    });
+  });
+
+  describe("score breakdown tracking", () => {
+    it("should track completed feature categories", () => {
+      const scoreManager = new ScoreManager();
+      const players = [createPlayer("p1", "Alice"), createPlayer("p2", "Bob")];
+      const breakdown = createScoreBreakdown(["p1", "p2"]);
+      const features = [
+        createCompletedFeature("costco", 10, ["p1"]),
+        createCompletedFeature("road", 5, ["p2"]),
+        createCompletedFeature("mcdonalds", 9, ["p1"]),
+      ];
+
+      scoreManager.scoreCompletedFeatures(features, players, breakdown);
+
+      expect(breakdown.p1.completed_costco).toBe(10);
+      expect(breakdown.p1.completed_mcdonalds).toBe(9);
+      expect(breakdown.p2.completed_road).toBe(5);
+    });
+
+    it("should track final scoring categories", () => {
+      const scoreManager = new ScoreManager();
+      const players = [createPlayer("p1", "Alice"), createPlayer("p2", "Bob")];
+      const breakdown = createScoreBreakdown(["p1", "p2"]);
+
+      const board = {
+        getFeatureClaims: () => [
+          { edge: "0,0:north", type: "road", players: ["p1"] },
+          { edge: "1,1", type: "mcdonalds", players: ["p2"] },
+          { edge: "0,0:nw", type: "field", players: ["p1"], followerType: "farmer" },
+        ],
+        getAllTiles: () => new Map(),
+        getTile: () => ({
+          tile: {
+            fieldSegments: [{ corners: ["nw"] }],
+          },
+        }),
+        traceFieldFeature: () => ({
+          type: "field",
+          tiles: new Set(["0,0"]),
+          edges: new Set(["0,0:nw"]),
+          isComplete: false,
+        }),
+        findAdjacentCostcos: () => new Set(["c1", "c2"]),
+        getFeatureClaimants: () => ["p1"],
+      } as unknown as any;
+
+      scoreManager.calculateFinalScores(players, board, breakdown);
+
+      expect(breakdown.p1.incomplete_road).toBe(
+        GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE
+      );
+      expect(breakdown.p2.incomplete_mcdonalds).toBe(
+        GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE
+      );
+      expect(breakdown.p1.farmers).toBe(
+        2 * GAME_RULES.FARMER_POINTS_PER_COSTCO
+      );
     });
   });
 });

@@ -11,6 +11,7 @@ import BoardCanvas from "./BoardCanvas";
 import TileRenderer from "./TileRenderer";
 import HelpModal from "./HelpModal";
 import FollowerDetails from "./FollowerDetails";
+import GameOverPanel from "./GameOverPanel";
 import { Button } from "@/components/ui/button";
 import { GAME_RULES } from "../constants/gameRules";
 import { getFollowerBreakdown } from "../utils/followerUtils";
@@ -221,16 +222,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         )}
 
         {gameState.isGameOver && (
-          <div className="game-over">
-            <h2>Game Over!</h2>
-            <p>Winner: {gameState.winner}</p>
-            <Button
-              onClick={onReset}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              Play Again
-            </Button>
-          </div>
+          <GameOverPanel
+            players={gameState.players}
+            winner={gameState.winner}
+            scoreBreakdown={gameState.scoreBreakdown}
+            onReset={onReset}
+          />
         )}
       </div>
 
