@@ -1,6 +1,6 @@
 # American Tile Trails
 
-American Tile Trails is a Carcassonne-inspired board game built with **TypeScript** and **React**. Place tiles across an American landscape where abbeys are McDonalds, castles are sprawling Costcos, and highways stitch everything together. Challenge AI opponents in local multiplayer with support for up to 5 players (human + AI mix).
+American Tile Trails is a Carcassonne-inspired board game built with TypeScript and React. Place tiles across an American landscape where McDonald's stands in for monasteries, Costcos replace castles, and highways stitch everything together. Play locally with 2-5 players in any mix of humans and AI.
 
 ## Getting started
 
@@ -9,52 +9,53 @@ npm install
 npm run dev
 ```
 
-Running `npm run dev` launches the Vite development server and opens the interactive board at [http://localhost:3000](http://localhost:3000). The modern React interface includes:
+The Vite dev server runs at http://localhost:3000 and opens automatically.
 
-- **Pixel art tile rendering** – Each tile is drawn with chunky asphalt roads, bright Costco warehouses, and the Golden Arches for McDonalds abbeys.
-- **Local multiplayer** – Configure 2-5 players with any combination of human and AI players.
-- **Follower placement controls** – Choose whether to deploy a representative on a road, Costco edge, or McDonalds before finalizing each tile.
-- **Real-time scoreboard** – Track scoring events, follower counts, and turn indicators with player colors.
-- **Activity log** – Live feed of game events and scoring updates.
+## Game features
 
-## Technology Stack
+- Local multiplayer with 2-5 players.
+- AI opponents with easy, medium, hard, and expert difficulty.
+- 16 tile types, 52 tiles in the deck, plus a starting tile.
+- Tile rotation with live placement validation.
+- Feature claiming for roads, Costcos, McDonald's, and fields (farmers).
+- Farmers stay on the board and score at game end.
+- Real-time scoreboard, activity log, and turn/tile stats.
+- Zoom, pan, and hover previews on the board canvas.
+- In-app Help modal backed by markdown content.
 
-- **TypeScript** – Full type safety and modern JavaScript features
-- **React 18** – Component-based UI with hooks for state management
-- **Vite** – Fast development server and optimized production builds
-- **HTML5 Canvas** – Hardware-accelerated pixel art rendering
-- **CSS3** – Custom styling with CSS variables and modern layout
+## AI difficulty modes
 
-## Game Features
+- Easy (RandomAI): random valid placements, with a ~30% chance to claim a feature.
+- Medium (SimpleAI): weighted heuristics for completion, adjacency, Costco preference, and extension. Uses value thresholds for claiming and avoids fields early game.
+- Hard (StrategicAI): heuristic scoring plus defensive play and limited look-ahead (depth 2, ~400ms). More conservative follower usage and blocking bias.
+- Expert (ExpertAI): stronger weights with deeper look-ahead (depth 3, ~600ms) and more defensive pressure.
 
-- **Local Multiplayer**: 2-5 players on the same device
-- **Smart AI**: Heuristic-driven AI opponents with configurable difficulty
-- **Tile Management**: 41 unique tiles with rotation and validation
-- **Feature Scoring**: Roads (1pt/tile), Costcos (2pts/tile), McDonalds (9pts)
-- **Interactive Setup**: Choose player count, names, and human vs AI
-- **Real-time Updates**: Live game state with visual feedback
+## How to play (quick)
 
-## 🎮 How to Play
+1. Place a tile on a valid highlighted position.
+2. Optionally claim a feature with a follower.
+3. Completed features score immediately; farmers score at game end.
 
-**Quick Start:**
+For the full guide, see `src/content/help/en.md` (the in-app Help modal uses this file).
 
-1. Run `npm run dev` and open http://localhost:3000
-2. Configure 2-5 players (human or AI)
-3. Take turns placing tiles and claiming features
-4. Score points when roads, Costcos, or McDonalds are completed
-5. Player with the most points wins!
+## Scoring summary
 
-**📖 [Complete Gameplay Instructions](./GAMEPLAY_INSTRUCTIONS.md)** - Detailed rules, strategies, and tips
+- Roads: 1 point per tile when completed.
+- Costcos (completed): 2 points per tile, plus 2 points per pennant.
+- Costcos (incomplete at game end): 1 point per tile, plus 1 point per pennant.
+- McDonald's: 9 points when all 8 surrounding tiles are filled.
+- Farmers (fields): 3 points per adjacent completed Costco at game end.
 
-**Basic Gameplay:**
+## Technology stack
 
-- **Place Tiles**: Click on green highlighted areas to place tiles
-- **Rotate**: Use "Rotate Tile" button to change orientation
-- **Claim Features**: After placing, optionally claim roads, Costcos, or McDonalds
-- **Score Points**: Completed features score immediately and return followers
-- **Win**: Highest score when all tiles are placed
+- TypeScript + React 18
+- Vite + Tailwind CSS v4
+- Radix UI primitives
+- HTML5 Canvas for board rendering
+- Storybook for UI development
+- Vitest + Playwright for tests
 
-## Development Commands
+## Development commands
 
 ```bash
 # Install dependencies
@@ -71,43 +72,29 @@ npm run preview
 
 # Type checking
 npx tsc --noEmit
+
+# Tests
+npm run test
+npm run test:ui
+npm run test:coverage
+
+# Linting
+npm run lint
+npm run lint:fix
+
+# Storybook
+npm run storybook
+npm run build-storybook
+
+# Sync help content from markdown to TS
+npm run sync-help-content en
 ```
 
-## Project Structure
+## Requirements
 
-```text
-src/
-├── components/           # React components
-│   ├── GameSetup.tsx    # Player configuration
-│   ├── GameBoard.tsx    # Main game interface
-│   └── ...              # Additional UI components
-├── types.ts             # TypeScript type definitions
-├── game.ts              # Core game logic
-├── board.ts             # Board state management
-├── player.ts            # Player class
-├── tile.ts              # Tile system
-├── tileLibrary.ts       # Tile definitions
-├── ai.ts                # AI player logic
-├── directions.ts        # Direction utilities
-└── main.tsx             # React entry point
-```
+- Node >= 20.19.5
+- npm >= 10.8.2
 
-## Game concepts
+## Localization
 
-- **Tiles** – Each tile describes the terrain on its edges (roads, fields, or Costcos) along with optional road connections and Costco zones. Tiles can be rotated before placement to match neighboring edges.
-- **Board** – Validates placement rules, tracks tile locations, and evaluates when features are completed. McDonalds score when all eight surrounding spaces are filled. Roads score one point per tile, while Costcos are worth two points per tile when enclosed.
-- **Players** – Manage a supply of field representatives (followers) used to claim roads, Costcos, or McDonalds.
-- **Game** – Shuffles a deck of American-themed tiles, enforces turn order, handles follower placement, and awards points when features are closed.
-- **AI (SimpleAI)** – Uses a lightweight heuristic that prefers completing features, connecting to active networks, and securing lucrative Costco zones.
-
-## Customizing the experience
-
-The core classes are fully typed and can be easily extended:
-
-- `Tile`, `buildDeck`, and `getStartTile` in `src/tileLibrary.ts`
-- `Board` in `src/board.ts`
-- `Player` in `src/player.ts`
-- `Game` in `src/game.ts`
-- `SimpleAI` in `src/ai.ts`
-
-Feel free to extend the deck with new tile definitions, tweak the AI weights, add new React components, or integrate with a multiplayer backend.
+UI strings live in `src/content/translations/en.json` and are accessed via `src/hooks/useTranslations.ts`. The help content is markdown in `src/content/help/en.md` and can be synced to TS with `npm run sync-help-content en`.
