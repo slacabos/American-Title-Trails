@@ -10,8 +10,10 @@ import { Game, GamePhase } from "../game";
 import BoardCanvas from "./BoardCanvas";
 import TileRenderer from "./TileRenderer";
 import HelpModal from "./HelpModal";
+import FollowerDetails from "./FollowerDetails";
 import { Button } from "@/components/ui/button";
 import { GAME_RULES } from "../constants/gameRules";
+import { getFollowerBreakdown } from "../utils/followerUtils";
 
 interface GameBoardProps {
   players: PlayerDefinition[];
@@ -367,10 +369,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
                 <div className="flex-1 flex flex-col gap-1">
                   <strong className="text-xxs font-game">
                     {player.name}
-                    {player.isAI ? " 🤖" : ""}
+                    {player.isAI && (
+                      <>
+                        {" 🤖 "}
+                        <span className="opacity-70 capitalize">
+                          {player.aiDifficulty || "medium"}
+                        </span>
+                      </>
+                    )}
                   </strong>
                   <span className="text-xs opacity-80 font-game">
-                    {player.score} pts • {player.followers} followers
+                    {player.score} pts •{" "}
+                    <FollowerDetails
+                      breakdown={getFollowerBreakdown(
+                        player.id,
+                        player.followers,
+                        gameState.board
+                      )}
+                    />
                   </span>
                 </div>
               </li>
