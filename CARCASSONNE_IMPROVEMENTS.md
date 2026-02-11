@@ -4,15 +4,15 @@
 
 **IMPORTANT**: Understanding how Carcassonne terms map to your American-themed implementation:
 
-| Carcassonne Term | American Title Trails Term | Current Status                               |
-| ---------------- | -------------------------- | -------------------------------------------- |
-| City             | **Costco**                 | ✅ Fully implemented with zones and pennants |
-| Road             | **Road**                   | ✅ Fully implemented with connections        |
-| Monastery        | **McDonald's**             | ✅ Fully implemented with 8-tile surrounding |
-| Field            | **Field**                  | ⚠️ Exists as terrain type but NO scoring     |
-| Meeple           | **Follower**               | ✅ Implemented (7 per player)                |
-| Farmer           | **Follower on Field**      | ❌ NOT IMPLEMENTED                           |
-| Shield/Pennant   | **Gas Station (Pennant)**  | ✅ Implemented on Costcos                    |
+| Carcassonne Term | American Title Trails Term | Current Status                                        |
+| ---------------- | -------------------------- | ----------------------------------------------------- |
+| City             | **Costco**                 | ✅ Fully implemented with zones and pennants          |
+| Road             | **Road**                   | ✅ Fully implemented with connections                 |
+| Monastery        | **McDonald's**             | ✅ Fully implemented with 8-tile surrounding          |
+| Field            | **Field**                  | ✅ Fully implemented with corner-based segments       |
+| Meeple           | **Follower**               | ✅ Implemented (7 per player)                         |
+| Farmer           | **Follower on Field**      | ✅ Fully implemented with end-game scoring            |
+| Shield/Pennant   | **Gas Station (Pennant)**  | ✅ Implemented on Costcos                             |
 
 **What are FIELDS in your game?**
 
@@ -20,8 +20,8 @@
 - In your code: `TerrainType = "road" | "field" | "costco" | "mcdonalds"`
 - Fields appear on tile edges (e.g., `edges: { north: "field", east: "costco", ... }`)
 - Fields appear in tile centers (e.g., `center: "field"`)
-- **Current problem**: Fields have ZERO gameplay impact - just filler terrain
-- **Solution needed**: Implement farmer scoring (detailed in Section 1 below)
+- **Implementation**: Fields use corner-based segments (FieldSegment with FieldCorner[]) for accurate tracing
+- **Scoring**: Farmers score 3 points per adjacent completed Costco at game end
 
 **How FIELDS work**:
 
@@ -35,142 +35,13 @@
 
 ## Executive Summary
 
-Your American Title Trails implementation has solid fundamentals but is missing several core Carcassonne mechanics that significantly impact gameplay balance and strategy. This document outlines the gaps and provides implementation recommendations.
+Your American Title Trails implementation has solid fundamentals. This document outlines remaining gaps and provides implementation recommendations.
 
 ---
 
 ## Critical Issues
 
-### 1. 🔴 MISSING: Field/Farmer Scoring System
-
-**Current State:** Fields exist as terrain but have no scoring mechanism.
-
-**Impact:** This removes 30-40% of the strategic depth. In Carcassonne, farmer placement is one of the most important decisions and often determines the winner.
-
-**What are farmers?**
-
-- A farmer is a follower placed on a FIELD (grass area) instead of on a road/Costco/McDonald's
-- Farmers are placed "lying down" = they stay PERMANENTLY on the field until game end
-- Regular followers on roads/Costcos return when those features complete
-- Farmers NEVER return during the game (only at game end when they score)
-
-**Standard Carcassonne Rules:**
-
-- Farmers are placed **lying down** (permanent placement - not returned until game end)
-- At game end, farmers score **3 points** per **completed Costco** adjacent to their field
-- Fields are bounded/separated by roads and Costcos (these act as walls between fields)
-- Multiple farmers can occupy the same field - **majority wins all points**
-- **Important**: Only COMPLETED Costcos count for scoring (incomplete Costcos = 0 points for farmers)
-
-**Example Scoring:**
-
-- Player places farmer on a field
-- During the game, 3 different Costco shopping areas get completed adjacent to that field
-- At game end: Farmer scores 3 Costcos × 3 points = **9 points**
-- This is often the highest-scoring strategy!
-
-**Implementation Steps:**
-
-```typescript
-// 1. Add farmer type to TerrainType
-export type FollowerType = "road" | "costco" | "mcdonalds" | "farmer";
-
-// 2. Add field tracking to Board
-interface FieldFeature {
-  type: "field";
-  segments: Set<string>; // Position keys + field segment identifiers
-  adjacentCostcos: Set<string>; // Track which Costcos touch this field (for scoring!)
-  claimants: Map<string, number>; // playerId -> follower count
-}
-
-// 3. Detect field boundaries
-// Fields are separated by:
-// - Roads (roads divide fields - they act as walls)
-// - Costco areas (Costcos divide fields - they act as walls)
-// - Board edges
-
-// 4. At game end, score farmers
-private scoreFields(board: Board, players: PlayerState[]): void {
-  const fields = this.findAllFields(board);
-
-  fields.forEach(field => {
-    // Count COMPLETED Costcos adjacent to this field
-    const completedCostcos = Array.from(field.adjacentCostcos)
-      .filter(costcoKey => this.isCostcoComplete(costcoKey, board));
-
-    const points = completedCostcos.length * 3; // 3 points per completed Costco
-
-    // Find majority owner(s)
-    const majorityOwners = this.getMajorityOwners(field.claimants);
-
-    majorityOwners.forEach(playerId => {
-      const player = players.find(p => p.id === playerId);
-      if (player) player.score += points;
-    });
-  });
-}
-
-// 5. Field segment detection on tiles
-// Add to TileDefinition:
-interface TileDefinition {
-  // ... existing fields
-  fieldSegments?: FieldSegment[]; // Define which field areas exist on this tile
-}
-
-interface FieldSegment {
-  id: string; // e.g., "field-north-west", "field-east"
-  boundaries: Direction[]; // Which edges this field touches
-  separators: string[]; // What separates this from other fields on the tile
-}
-```
-
-**Example Tile Field Segments:**
-
-```typescript
-// Straight road tile: has 2 separate fields (left and right of road)
-{
-  id: "straight-road",
-  fieldSegments: [
-    {
-      id: "left",
-      boundaries: ["north", "west"],
-      separators: ["road"]  // Road separates this from the "right" field
-    },
-    {
-      id: "right",
-      boundaries: ["south", "east"],
-      separators: ["road"]  // Road separates this from the "left" field
-    }
-  ]
-}
-
-// T-junction: has 3 separate fields (one in each corner without road)
-{
-  id: "three-way-road",
-  fieldSegments: [
-    { id: "north", boundaries: ["north"], separators: ["road"] },
-    { id: "east", boundaries: ["east"], separators: ["road"] },
-    { id: "west", boundaries: ["west"], separators: ["road"] }
-  ]
-}
-
-// Tile with Costco on north edge: field surrounds the Costco
-{
-  id: "costco-cap",
-  fieldSegments: [
-    {
-      id: "surrounding",
-      boundaries: ["east", "south", "west"],
-      separators: ["costco"],  // Costco on north separates this field
-      adjacentCostcos: ["north"]  // This field touches the north Costco edge
-    }
-  ]
-}
-```
-
----
-
-### 2. 🟠 INCOMPLETE: Majority Rule for Tied Features
+### 1. 🟠 Majority Rule for Tied Features
 
 **Current State:** Code collects all claimants but doesn't implement majority rule.
 
@@ -227,7 +98,7 @@ private getFeatureClaimants(feature: Feature): string[] {
 
 ---
 
-### 3. 🟡 INCORRECT: City Completion Requirement
+### 2. 🟡 City Completion Requirement
 
 **Current Code (board.ts line 451):**
 
@@ -284,7 +155,7 @@ private isCostcoComplete(feature: Feature): boolean {
 
 ---
 
-### 4. 🟡 MISSING: Validation - Prevent Invalid Claims
+### 3. 🟡 Validation - Prevent Invalid Claims
 
 **Current State:** No validation that a feature is already claimed before allowing placement.
 
@@ -328,7 +199,7 @@ public canClaimFeature(
 
 ## Medium Priority Issues
 
-### 5. 🟢 Road Completion Logic - Edge Case
+### 4. 🟢 Road Completion Logic - Edge Case
 
 **Current Road Detection:** Appears correct but verify edge cases:
 
@@ -346,7 +217,7 @@ it("should complete a road that loops back to itself", () => {
 
 ---
 
-### 6. 🟢 Tile Deck Distribution
+### 5. 🟢 Tile Deck Distribution
 
 **Current Counts (from tileLibrary.ts):**
 
@@ -370,7 +241,7 @@ Total tiles in deck: ~51 tiles
 
 ---
 
-### 7. 🟢 Final Scoring - Incomplete Features
+### 6. 🟢 Final Scoring - Incomplete Features
 
 **Current Implementation (ScoreManager.ts):**
 
@@ -391,7 +262,7 @@ This appears correct!
 
 ## Low Priority Enhancements
 
-### 8. Enhanced AI Strategy
+### 7. Enhanced AI Strategy
 
 **Current AI (ai.ts):**
 

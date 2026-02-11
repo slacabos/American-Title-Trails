@@ -24,6 +24,13 @@
       "human": "Human",
       "ai": "AI"
     },
+    "aiDifficulty": {
+      "label": "Difficulty",
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard",
+      "expert": "Expert"
+    },
     "startGame": "Start Game",
     "howToPlay": "📖 How to Play",
     "readyToPlay": "🎮 Ready to Play!",
@@ -60,7 +67,8 @@
     "types": {
       "road": "road",
       "costco": "Costco Areas",
-      "mcdonalds": "McDonald's"
+      "mcdonalds": "McDonald's",
+      "field": "Field (Farmer)"
     }
   },
   "gameOver": {
@@ -97,7 +105,9 @@
       "costcos": "Costcos:",
       "costcosDesc": "2 points per tile",
       "mcdonalds": "McDonalds:",
-      "mcdonaldsDesc": "9 points (when surrounded)"
+      "mcdonaldsDesc": "9 points (when surrounded)",
+      "farmers": "Farmers:",
+      "farmersDesc": "3 points per adjacent completed Costco (at game end)"
     },
     "controls": "🎮 Controls",
     "controlsDesc": {
@@ -184,6 +194,8 @@
       "followerLimitDesc": "You can only claim if you have followers available",
       "skipOption": "Skip Option:",
       "skipOptionDesc": "You can choose not to claim any feature",
+      "farmerClaiming": "Fields (Farmers):",
+      "farmerClaimingDesc": "Claim a field area - farmer stays until game end and scores for adjacent completed Costcos",
 
       "scoringPhase": "3. Scoring Phase 📈 (Automatic)",
       "immediateScoring": "Immediate Scoring:",
@@ -246,10 +258,23 @@
         "riskReward": "Risk/Reward:",
         "riskRewardDesc": "Difficult to complete but worth many points"
       },
+      "farmers": {
+        "title": "Farmers (3 points per adjacent Costco)",
+        "placement": "Placement:",
+        "placementDesc": "Farmers are placed lying down on field areas (grass between roads and Costcos)",
+        "permanent": "Permanent:",
+        "permanentDesc": "Unlike other followers, farmers STAY on the board until game end",
+        "scoring": "Scoring:",
+        "scoringDesc": "At game end, score 3 points per completed Costco touching the field",
+        "strategy": "Strategy:",
+        "strategyDesc": "High-risk, high-reward - commit a follower permanently for potential big end-game points"
+      },
       "gameEndScoring": {
         "title": "Game End Scoring",
         "incompleteFeatures": "Incomplete Features:",
         "incompleteFeaturesDesc": "1 point per tile for any uncompleted claimed features",
+        "majorityRule": "Majority Rule:",
+        "majorityRuleDesc": "When multiple players have followers on the same feature, only the player(s) with the MOST followers score points. Ties: all tied players get full points.",
         "winner": "Winner:",
         "winnerDesc": "Player with the most total points wins"
       }
@@ -260,7 +285,14 @@
       "behavior": "AI Behavior",
       "delay": "AI players make moves with a 1-second delay",
       "strategy": "AI considers feature completion opportunities, tile adjacency, Costco preferences, and follower conservation",
-      "indicator": "AI players are marked with 🤖 in the scoreboard"
+      "indicator": "AI players are marked with 🤖 in the scoreboard",
+      "difficultyLevels": "Difficulty Levels",
+      "difficultyDesc": {
+        "easy": "Easy: Random moves with occasional claims - good for beginners",
+        "medium": "Medium: Weighted heuristics for balanced, competitive play",
+        "hard": "Hard: Strategic play with look-ahead and defensive moves",
+        "expert": "Expert: Advanced strategy with deep analysis and blocking"
+      }
     },
 
     "strategy": {
