@@ -72,8 +72,8 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
 
   return (
     <>
-      <div className="relative bg-card backdrop-blur-sm border border-border rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
-        <div className="flex flex-col justify-center min-h-[500px] p-8">
+      <div className="relative bg-card backdrop-blur-sm border border-border rounded-2xl p-6 shadow-2xl flex flex-col">
+        <div className="flex flex-col justify-center p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-center mb-6 text-accent font-game">
               🎮 {t("setup.gameSetup")}

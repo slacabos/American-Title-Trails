@@ -153,20 +153,23 @@ describe("AI Strategy Pattern", () => {
 
     it("should evaluate placements with scores", () => {
       const state = game.getState();
-      const validPlacements = game.getValidPlacements();
+      // Use getPlacementCandidates to get ALL candidate positions
+      // The evaluator will try all rotations for each position
+      const candidatePositions = state.board.getPlacementCandidates();
 
       const context: AIContext = {
         board: state.board,
         currentTile: state.currentTile!,
         currentPlayer: state.players[0],
         allPlayers: state.players,
-        validPlacements,
+        validPlacements: candidatePositions,
         claimableFeatures: [],
         gameState: state,
       };
 
       const placements = ai.evaluateTilePlacements(context);
 
+      // Should find at least one valid placement (with some rotation)
       expect(placements.length).toBeGreaterThan(0);
 
       // Should be sorted by score (descending)

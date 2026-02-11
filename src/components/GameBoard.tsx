@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   PlayerDefinition,
   Position,
@@ -21,6 +21,7 @@ interface GameBoardProps {
 const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const [game, setGame] = useState<Game | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const gameRef = useRef<Game | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [claimableFeatures, setClaimableFeatures] = useState<
@@ -31,6 +32,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   useEffect(() => {
     try {
       const gameInstance = new Game(players);
+      gameRef.current = gameInstance;
       setGame(gameInstance);
 
       // Set up state change listener
@@ -50,20 +52,23 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     }
   }, [players]);
 
-  // Handle AI turns
-  useEffect(() => {
-    if (
-      game &&
-      gameState &&
-      gameState.players[gameState.currentPlayerIndex]?.isAI
-    ) {
-      const timer = setTimeout(() => {
-        game.processAITurn();
-      }, GAME_RULES.AI_MOVE_DELAY_MS);
+  // Handle AI turns - trigger on relevant state changes only
+  const currentPlayerIndex = gameState?.currentPlayerIndex;
+  const phase = gameState?.phase;
+  const isGameOver = gameState?.isGameOver;
+  const currentPlayerIsAI = gameState?.players?.[currentPlayerIndex ?? 0]?.isAI;
 
-      return () => clearTimeout(timer);
-    }
-  }, [game, gameState?.currentPlayerIndex, gameState?.phase]);
+  useEffect(() => {
+    // Early return if game not initialized or not AI's turn
+    if (!gameRef.current || !currentPlayerIsAI || isGameOver) return;
+
+    // Set timeout for AI move with slight delay for UX
+    const timer = setTimeout(() => {
+      gameRef.current?.processAITurn();
+    }, GAME_RULES.AI_MOVE_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [currentPlayerIsAI, currentPlayerIndex, phase, isGameOver]);
 
   const addLog = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString([], {
@@ -152,6 +157,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   }
 
   const tileStats = game.getTileStats();
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const isCurrentPlayerAI = currentPlayer?.isAI ?? false;
 
   return (
     <>
@@ -164,13 +171,19 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           gameState={gameState}
         />
 
-        {gameState.phase === GamePhase.PLACE_TILE && (
+        {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
           <div className="mt-2 text-xs opacity-70 text-center leading-tight font-game">
             💡 Click green areas to place • Wheel to zoom • Drag to pan
           </div>
         )}
 
-        {gameState.phase === GamePhase.CLAIM_FEATURE && (
+        {isCurrentPlayerAI && !gameState.isGameOver && (
+          <div className="mt-2 text-xs text-center leading-tight font-game animate-pulse">
+            {currentPlayer?.name} is thinking...
+          </div>
+        )}
+
+        {gameState.phase === GamePhase.CLAIM_FEATURE && !isCurrentPlayerAI && (
           <div className="mt-3 p-3 bg-accent/10 rounded-lg border border-accent/20">
             <h3 className="m-0 mb-2 text-xs text-accent font-game">
               Claim a Feature
@@ -237,7 +250,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
                   Phase: {gameState.phase.replace("_", " ")}
                 </div>
               </div>
-              {gameState.phase === GamePhase.PLACE_TILE && (
+              {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
                 <div className="flex flex-col gap-2 w-full mt-2">
                   <div className="grid grid-cols-2 gap-2">
                     <Button

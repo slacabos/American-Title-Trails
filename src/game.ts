@@ -321,8 +321,14 @@ export class Game {
 
   public processAITurn(): void {
     const currentPlayer = this.getCurrentPlayer();
+    if (!currentPlayer.isAI) {
+      return;
+    }
+
+    // For PLACE_TILE phase, we need a current tile
+    // For CLAIM_FEATURE phase, the tile was already placed so we don't need it
     const currentTile = this.tileManager.getCurrentTile();
-    if (!currentPlayer.isAI || !currentTile) {
+    if (this.state.phase === GamePhase.PLACE_TILE && !currentTile) {
       return;
     }
 
@@ -335,18 +341,20 @@ export class Game {
     }
 
     if (this.state.phase === GamePhase.PLACE_TILE) {
-      const validPlacements = this.getValidPlacements();
-      if (validPlacements.length === 0) {
+      // Get ALL candidate positions - the evaluator will try all rotations
+      // and filter out invalid placement/rotation combinations
+      const candidatePositions = this.state.board.getPlacementCandidates();
+      if (candidatePositions.length === 0) {
         return;
       }
 
-      // Build AI context
+      // Build AI context (currentTile is guaranteed non-null in PLACE_TILE phase)
       const context: AIContext = {
         board: this.state.board,
-        currentTile,
+        currentTile: currentTile!,
         currentPlayer,
         allPlayers: this.state.players,
-        validPlacements,
+        validPlacements: candidatePositions,
         claimableFeatures: [],
         gameState: this.state,
       };
@@ -404,11 +412,21 @@ export class Game {
    */
   private processAITurnFallback(): void {
     const currentPlayer = this.getCurrentPlayer();
+    const currentTile = this.tileManager.getCurrentTile();
 
     if (this.state.phase === GamePhase.PLACE_TILE) {
-      const validPlacements = this.getValidPlacements();
-      if (validPlacements.length > 0) {
-        this.placeTile(validPlacements[0], 0);
+      if (!currentTile) return;
+
+      // Try all candidate positions with all rotations
+      const candidates = this.state.board.getPlacementCandidates();
+      for (const position of candidates) {
+        for (let rotation = 0; rotation < GAME_RULES.TILE_ROTATIONS; rotation++) {
+          const rotatedTile = currentTile.rotate(rotation);
+          if (this.state.board.canPlace(rotatedTile, position)) {
+            this.placeTile(position, rotation);
+            return;
+          }
+        }
       }
     } else if (this.state.phase === GamePhase.CLAIM_FEATURE) {
       if (currentPlayer.followers > GAME_RULES.AI_CLAIM_THRESHOLD) {
