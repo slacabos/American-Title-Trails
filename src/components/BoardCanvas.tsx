@@ -242,6 +242,38 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
 
   const [validPlacements, setValidPlacements] = useState<Position[]>([]);
 
+  // Auto-fit: zoom and center to keep all tiles visible with 2-tile padding
+  const tileCount = board.getAllTiles().size;
+  useEffect(() => {
+    if (tileCount === 0) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const bounds = board.getBounds();
+    const paddedWidth = (bounds.maxX - bounds.minX + 1 + 4) * tileSize;
+    const paddedHeight = (bounds.maxY - bounds.minY + 1 + 4) * tileSize;
+
+    const fitScale = Math.min(
+      canvas.width / paddedWidth,
+      canvas.height / paddedHeight
+    );
+    const newScale = Math.max(MIN_SCALE, Math.min(INITIAL_SCALE, fitScale));
+
+    const scaledTileSize = tileSize * newScale;
+    const boardPixelWidth = (bounds.maxX - bounds.minX + 1 + 4) * scaledTileSize;
+    const boardPixelHeight = (bounds.maxY - bounds.minY + 1 + 4) * scaledTileSize;
+
+    const offsetX = (canvas.width - boardPixelWidth) / 2 - (bounds.minX - 2) * scaledTileSize;
+    const offsetY = (canvas.height - boardPixelHeight) / 2 - (bounds.minY - 2) * scaledTileSize;
+
+    setCanvasState((prev) => ({
+      ...prev,
+      scale: newScale,
+      offsetX,
+      offsetY,
+    }));
+  }, [tileCount, board, tileSize]);
+
   // Update valid placements when board or current tile changes
   useEffect(() => {
     if (currentTile) {
