@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 :root {
   color-scheme: dark;
@@ -81,6 +82,20 @@ canvas {
 }
 
 @theme inline {
+  --font-game: "Press Start 2P", "VT323", "Courier New", monospace;
+  --text-xs: 0.6rem;
+  --text-xxs: 0.7rem;
+  --shadow-game-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --color-game-primary: #E84B26;
+  --color-game-accent: #F9D65B;
+  --color-game-asphalt: #2C3039;
+  --color-game-grass: #6E7F4F;
+  --color-game-road: #474B52;
+  --color-game-neutral: #1F2229;
+  --color-game-text: #f1faee;
+  --color-game-bg-primary: #2C3039;
+  --color-game-bg-secondary: #1F2229;
+  --color-game-blue: #2C3039;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -116,6 +131,22 @@ canvas {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@utility bg-btn-primary {
+  background-image: linear-gradient(135deg, var(--color-game-primary) 0%, #d63e1f 100%);
+}
+
+@utility bg-btn-secondary {
+  background-image: linear-gradient(135deg, var(--color-game-road) 0%, var(--color-game-asphalt) 100%);
+}
+
+@utility bg-btn-primary-hover {
+  background-image: linear-gradient(135deg, #f55d3a 0%, var(--color-game-primary) 100%);
+}
+
+@utility bg-btn-secondary-hover {
+  background-image: linear-gradient(135deg, #5a5e67 0%, var(--color-game-road) 100%);
 }
 
 .dark {
