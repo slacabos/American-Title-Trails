@@ -25,10 +25,12 @@ The Vite dev server runs at http://localhost:3000 and opens automatically.
 
 ## AI difficulty modes
 
-- Easy (RandomAI): random valid placements, with a ~30% chance to claim a feature.
+- Easy (RandomAI): random valid placements, with a ~15% chance to claim a feature.
 - Medium (SimpleAI): weighted heuristics for completion, adjacency, Costco preference, and extension. Uses value thresholds for claiming and avoids fields early game.
 - Hard (StrategicAI): heuristic scoring plus defensive play and limited look-ahead (depth 2, ~400ms). More conservative follower usage and blocking bias.
-- Expert (ExpertAI): stronger weights with deeper look-ahead (depth 3, ~600ms) and more defensive pressure.
+- Expert (ExpertAI): stronger weights with deeper look-ahead (depth 3, ~600ms) and more aggressive scoring.
+
+For the full architecture, scoring formulas, weight tables, and extension guide, see [docs/ai-system.md](docs/ai-system.md).
 
 ## How to play (quick)
 
