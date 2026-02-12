@@ -28,6 +28,15 @@ export const TILE_COLORS = {
   pennantOrange: GAME_COLORS.primary, // Follower pennants
 } as const;
 
+// Player colors - used for player identification in setup and game UI
+export const PLAYER_COLORS = [
+  "#ff595e", // Red
+  "#1982c4", // Blue
+  "#ffca3a", // Yellow
+  "#6a4c93", // Purple
+  "#43aa8b", // Green
+] as const;
+
 // UI color mapping for components
 export const UI_COLORS = {
   background: GAME_COLORS.neutral,

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { useEffect, useState } from "react";
 import GameOverPanel from "../components/GameOverPanel";
 import type { PlayerState, ScoreBreakdown } from "../types";
 
@@ -81,11 +82,42 @@ export default meta;
 
 type Story = StoryObj<typeof GameOverPanel>;
 
+const renderInteractive: Story["render"] = (args) => {
+  const [collapsed, setCollapsed] = useState(args.collapsed ?? false);
+
+  useEffect(() => {
+    setCollapsed(args.collapsed ?? false);
+  }, [args.collapsed]);
+
+  return (
+    <GameOverPanel
+      {...args}
+      collapsed={collapsed}
+      onToggle={() => setCollapsed((prev) => !prev)}
+    />
+  );
+};
+
 export const Default: Story = {
   args: {
     players,
     winner: "Alex",
     scoreBreakdown,
     onReset: () => undefined,
+    collapsed: false,
+    onToggle: () => undefined,
   },
+  render: renderInteractive,
+};
+
+export const Collapsed: Story = {
+  args: {
+    players,
+    winner: "Alex",
+    scoreBreakdown,
+    onReset: () => undefined,
+    collapsed: true,
+    onToggle: () => undefined,
+  },
+  render: renderInteractive,
 };

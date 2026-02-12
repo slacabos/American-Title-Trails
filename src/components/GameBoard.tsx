@@ -27,6 +27,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const gameRef = useRef<Game | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [isGameOverCollapsed, setIsGameOverCollapsed] = useState(false);
   const [claimableFeatures, setClaimableFeatures] = useState<
     ClaimableFeature[]
   >([]);
@@ -72,6 +73,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
     return () => clearTimeout(timer);
   }, [currentPlayerIsAI, currentPlayerIndex, phase, isGameOver]);
+
+  useEffect(() => {
+    if (gameState?.isGameOver) {
+      setIsGameOverCollapsed(false);
+    }
+  }, [gameState?.isGameOver]);
 
   const addLog = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString([], {
@@ -222,12 +229,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         )}
 
         {gameState.isGameOver && (
-          <GameOverPanel
-            players={gameState.players}
-            winner={gameState.winner}
-            scoreBreakdown={gameState.scoreBreakdown}
-            onReset={onReset}
-          />
+          <div className="absolute inset-x-4 bottom-4 lg:inset-x-auto lg:right-4 lg:bottom-4 lg:w-[420px] w-auto pointer-events-none">
+            <div className="pointer-events-auto">
+              <GameOverPanel
+                players={gameState.players}
+                winner={gameState.winner}
+                scoreBreakdown={gameState.scoreBreakdown}
+                onReset={onReset}
+                collapsed={isGameOverCollapsed}
+                onToggle={() => setIsGameOverCollapsed((prev) => !prev)}
+              />
+            </div>
+          </div>
         )}
       </div>
 

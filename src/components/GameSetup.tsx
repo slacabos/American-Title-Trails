@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { PlayerDefinition, AIDifficulty } from "../types";
 import HelpModal from "./HelpModal";
+import PlayerConfigRow from "./PlayerConfigRow";
+import GameSetupSidebar from "./GameSetupSidebar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -12,12 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import useTranslations from "@/hooks/useTranslations";
+import { PLAYER_COLORS } from "@/constants/colors";
 
 interface GameSetupProps {
   onStartGame: (players: PlayerDefinition[]) => void;
 }
-
-const palette = ["#ff595e", "#1982c4", "#ffca3a", "#6a4c93", "#43aa8b"];
 
 const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
   const { t } = useTranslations();
@@ -36,7 +36,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         id: `player-${i + 1}`,
         isAI: i > 0,
         aiDifficulty: i > 0 ? "medium" : undefined,
-        color: palette[i],
+        color: PLAYER_COLORS[i],
       });
     }
     setPlayerConfigs(configs);
@@ -83,7 +83,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         config.name.trim() ||
         t("setup.defaultPlayerNameTemplate", { number: index + 1 }),
       id: `player-${index + 1}`,
-      color: palette[index],
+      color: PLAYER_COLORS[index],
     }));
     onStartGame(validatedPlayers);
   };
@@ -133,76 +133,12 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
                 {t("setup.players")}
               </Label>
               {playerConfigs.map((config, index) => (
-                <div
+                <PlayerConfigRow
                   key={index}
-                  className="flex items-center gap-3 bg-muted/10 p-2 rounded-lg border border-accent/20 transition-all duration-200 hover:bg-muted/15 hover:border-accent/30"
-                >
-                  <div
-                    className="w-5 h-5 rounded-full border-2 border-game-text inline-block"
-                    style={{ backgroundColor: config.color }}
-                  />
-                  <Label className="text-white min-w-[50px] text-sm font-game text-xxs">
-                    {t("setup.playerPrefix")}
-                    {index + 1}:
-                  </Label>
-                  <Input
-                    type="text"
-                    value={config.name}
-                    onChange={(e) =>
-                      updatePlayerConfig(index, "name", e.target.value)
-                    }
-                    placeholder={`${t("setup.playerPlaceholder")} ${index + 1}`}
-                    className="flex-1 h-10"
-                  />
-                  <Select
-                    value={config.isAI ? "ai" : "human"}
-                    onValueChange={(value) =>
-                      updatePlayerConfig(index, "isAI", value === "ai")
-                    }
-                  >
-                    <SelectTrigger className="w-24 h-10 font-game text-xxs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="human">
-                        {t("setup.playerTypes.human")}
-                      </SelectItem>
-                      <SelectItem value="ai">
-                        {t("setup.playerTypes.ai")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {config.isAI && (
-                    <Select
-                      value={config.aiDifficulty || "medium"}
-                      onValueChange={(value) =>
-                        updatePlayerConfig(
-                          index,
-                          "aiDifficulty",
-                          value as AIDifficulty
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-24 h-10 font-game text-xxs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="easy">
-                          {t("setup.aiDifficulty.easy")}
-                        </SelectItem>
-                        <SelectItem value="medium">
-                          {t("setup.aiDifficulty.medium")}
-                        </SelectItem>
-                        <SelectItem value="hard">
-                          {t("setup.aiDifficulty.hard")}
-                        </SelectItem>
-                        <SelectItem value="expert">
-                          {t("setup.aiDifficulty.expert")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
+                  config={config}
+                  index={index}
+                  onUpdate={updatePlayerConfig}
+                />
               ))}
             </div>
 
@@ -217,27 +153,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         </div>
       </div>
 
-      <aside className="relative bg-card backdrop-blur-md border-2 border-accent/30 rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
-        <h1 className="m-0 text-xl text-accent font-game">{t("app.title")}</h1>
-        <img
-          src="/src/assets/icon.png"
-          alt={t("app.gameIcon")}
-          className="w-full mx-auto my-2 block rounded-lg shadow-game-sm"
-        />
-        <p className="m-0 text-xxs opacity-80 leading-tight font-game">
-          {t("app.tagline")}
-        </p>
-
-        <div className="mt-auto pt-4 border-t border-accent/20">
-          <Button
-            onClick={() => setShowHelp(true)}
-            variant="outline"
-            className="w-full font-game text-xxs"
-          >
-            {t("setup.howToPlay")}
-          </Button>
-        </div>
-      </aside>
+      <GameSetupSidebar onShowHelp={() => setShowHelp(true)} />
 
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </>
