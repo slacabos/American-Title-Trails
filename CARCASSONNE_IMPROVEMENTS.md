@@ -41,7 +41,7 @@ Your American Title Trails implementation has solid fundamentals. This document 
 
 ## Critical Issues
 
-### 1. 🟠 Majority Rule for Tied Features
+### 1. ✅ Majority Rule for Tied Features — Done (`ScoreManager.ts`)
 
 **Current State:** Code collects all claimants but doesn't implement majority rule.
 
@@ -98,7 +98,7 @@ private getFeatureClaimants(feature: Feature): string[] {
 
 ---
 
-### 2. 🟡 City Completion Requirement
+### 2. ✅ Single-Tile Costco Completion — Done (commit `8dcb6b7`)
 
 **Current Code (board.ts line 451):**
 
@@ -155,7 +155,7 @@ private isCostcoComplete(feature: Feature): boolean {
 
 ---
 
-### 3. 🟡 Validation - Prevent Invalid Claims
+### 3. ✅ Claim Validation — Done (`board.ts` `canClaimFeature()`)
 
 **Current State:** No validation that a feature is already claimed before allowing placement.
 
@@ -199,7 +199,7 @@ public canClaimFeature(
 
 ## Medium Priority Issues
 
-### 4. 🟢 Road Completion Logic - Edge Case
+### 4. ✅ Road Loop Edge Cases — Done (test added in `board.test.ts`)
 
 **Current Road Detection:** Appears correct but verify edge cases:
 
@@ -217,7 +217,7 @@ it("should complete a road that loops back to itself", () => {
 
 ---
 
-### 5. 🟢 Tile Deck Distribution
+### 5. ✅ Tile Distribution — Done (53 tiles, balanced)
 
 **Current Counts (from tileLibrary.ts):**
 
@@ -241,7 +241,7 @@ Total tiles in deck: ~51 tiles
 
 ---
 
-### 6. 🟢 Final Scoring - Incomplete Features
+### 6. ✅ Final Scoring — Done (verified correct)
 
 **Current Implementation (ScoreManager.ts):**
 
@@ -262,7 +262,7 @@ This appears correct!
 
 ## Low Priority Enhancements
 
-### 7. Enhanced AI Strategy
+### 7. ✅ AI Strategy — Done (`StrategicAI.ts`)
 
 **Current AI (ai.ts):**
 

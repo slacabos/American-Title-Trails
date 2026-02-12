@@ -352,20 +352,42 @@ describe("Board", () => {
   });
 
   describe("feature completion detection", () => {
-    it("should detect completed roads", () => {
-      // This test would require a more complex setup with multiple tiles
-      // For now, we'll just verify the method exists and doesn't crash
-      const roadTile = new Tile({
-        id: "test-road",
-        name: "Test Road",
-        edges: { north: "field", east: "field", south: "field", west: "road" },
+    it("should detect a completed road loop", () => {
+      // Place 4 curve-road tiles in a 2×2 grid to form a closed road loop.
+      // Base curve-road: edges N=road, E=road, S=field, W=field
+      const curveDef = {
+        id: "curve-road",
+        name: "Scenic Byway Curve",
+        edges: { north: "road", east: "road", south: "field", west: "field" },
         center: "field",
-        roadConnections: [["west", "center"]],
+        roadConnections: [["north", "east"]],
         costcoZones: [],
-      } as TileDefinition);
+        fieldSegments: [
+          { id: "field-0", corners: ["ne"] },
+          { id: "field-1", corners: ["nw", "sw", "se"] },
+        ],
+      } as TileDefinition;
 
-      const result = board.placeTile(roadTile, { x: 1, y: 0 });
-      expect(result.completed).toBeDefined();
+      const freshBoard = new Board();
+
+      // (0,0) rot 1 → roads on E+S
+      freshBoard.placeTile(new Tile(curveDef).rotate(1), { x: 0, y: 0 });
+      // (1,0) rot 2 → roads on S+W  (west matches (0,0) east)
+      freshBoard.placeTile(new Tile(curveDef).rotate(2), { x: 1, y: 0 });
+      // (0,1) rot 0 → roads on N+E  (north matches (0,0) south)
+      freshBoard.placeTile(new Tile(curveDef).rotate(0), { x: 0, y: 1 });
+      // (1,1) rot 3 → roads on W+N  (closes the loop)
+      const result = freshBoard.placeTile(
+        new Tile(curveDef).rotate(3),
+        { x: 1, y: 1 }
+      );
+
+      const completedRoads = result.completed.filter(
+        (f) => f.type === "road" && f.isComplete
+      );
+      expect(completedRoads).toHaveLength(1);
+      expect(completedRoads[0].tiles.size).toBe(4);
+      expect(completedRoads[0].points).toBe(4);
     });
 
     it("should detect completed Costco areas", () => {
