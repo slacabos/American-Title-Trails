@@ -106,7 +106,7 @@
       "costcos": "Costcos:",
       "costcosDesc": "2 points per tile",
       "mcdonalds": "McDonalds:",
-      "mcdonaldsDesc": "9 points (when surrounded)",
+      "mcdonaldsDesc": "1 point per tile in 3x3 (max 9)",
       "farmers": "Farmers:",
       "farmersDesc": "3 points per adjacent completed Costco (at game end)"
     },
@@ -190,7 +190,7 @@
       "costcoAreas": "Costco Areas:",
       "costcoAreasDesc": "Claim a shopping area",
       "mcdonalds": "McDonald's:",
-      "mcdonaldsDesc": "Claim the restaurant (worth 9 points when surrounded)",
+      "mcdonaldsDesc": "Claim the restaurant (1 point per tile in the 3x3 area, max 9)",
       "followerLimit": "Follower Limit:",
       "followerLimitDesc": "You can only claim if you have followers available",
       "skipOption": "Skip Option:",
@@ -253,11 +253,11 @@
         "strategyDesc": "Higher point value but harder to complete than roads"
       },
       "mcdonalds": {
-        "title": "McDonald's Restaurants (9 points)",
+        "title": "McDonald's Restaurants (1 point per tile)",
         "completion": "Completion:",
         "completionDesc": "Complete when all 8 surrounding positions have tiles",
         "riskReward": "Risk/Reward:",
-        "riskRewardDesc": "Difficult to complete but worth many points"
+        "riskRewardDesc": "Difficult to complete but worth many points (max 9)"
       },
       "farmers": {
         "title": "Farmers (3 points per adjacent Costco)",
@@ -273,7 +273,7 @@
       "gameEndScoring": {
         "title": "Game End Scoring",
         "incompleteFeatures": "Incomplete Features:",
-        "incompleteFeaturesDesc": "1 point per tile for any uncompleted claimed features",
+        "incompleteFeaturesDesc": "Roads 1 per tile, Costcos 1 per tile + 1 per pennant, McDonald's 1 per tile in the 3x3 area",
         "majorityRule": "Majority Rule:",
         "majorityRuleDesc": "When multiple players have followers on the same feature, only the player(s) with the MOST followers score points. Ties: all tied players get full points.",
         "winner": "Winner:",
@@ -312,7 +312,7 @@
       "costcoStrategy": "Costco Strategy:",
       "costcoStrategyDesc": "Costcos are worth 2x points but require more planning to complete",
       "mcdonaldsRisk": "McDonald's Risk:",
-      "mcdonaldsRiskDesc": "9 points is tempting, but McDonald's are very hard to complete safely"
+      "mcdonaldsRiskDesc": "Max 9 points is tempting, but McDonald's are very hard to complete safely"
     },
 
     "winning": {
@@ -320,7 +320,7 @@
       "gameEnd": "Game End:",
       "gameEndDesc": "Game ends when no more tiles remain in the deck",
       "finalScoring": "Final Scoring:",
-      "finalScoringDesc": "All incomplete features score 1 point per tile",
+      "finalScoringDesc": "Incomplete features score by type (roads 1 per tile, Costcos 1 per tile + 1 per pennant, McDonald's 1 per tile in the 3x3 area)",
       "winner": "Winner:",
       "winnerDesc": "Player with highest total score wins (tied players share victory)"
     },

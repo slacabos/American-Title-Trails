@@ -90,7 +90,7 @@ export class SimpleAI implements AIStrategy {
 
     // Score thresholds for different feature types
     const featureThresholds = {
-      mcdonalds: 4.5, // High value - monastery equivalent
+      mcdonalds: 4.0, // High value - monastery equivalent
       costco: 4, // High value - city equivalent
       road: 2, // Lower priority
       field: 1, // Farmers - only late game
@@ -113,7 +113,7 @@ export class SimpleAI implements AIStrategy {
 
       // McDonald's bonus when well-positioned
       if (feature.type === "mcdonalds" && estimate.currentPoints >= 5) {
-        score *= 1.5;
+        score *= 1.4;
       }
 
       // Costco bonus for larger features

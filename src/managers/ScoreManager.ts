@@ -79,11 +79,19 @@ export class ScoreManager {
     // Score incomplete Costco features
     this.scoreIncompleteCostcoFeatures(players, board, scoreBreakdown);
 
+    // Score incomplete McDonald's features (1 point per tile in 3x3 area)
+    this.scoreIncompleteMcDonaldsFeatures(players, board, scoreBreakdown);
+
     // Score other incomplete features using simplified scoring
     const claims = board.getFeatureClaims();
     claims.forEach((claim) => {
       // Skip field claims - farmers are scored separately
-      if (claim.type === "costco" || claim.type === "field") return;
+      if (
+        claim.type === "costco" ||
+        claim.type === "field" ||
+        claim.type === "mcdonalds"
+      )
+        return;
 
       const player = players.find((p) => claim.players.includes(p.id));
       if (!player) return;
@@ -101,6 +109,36 @@ export class ScoreManager {
 
     // Score farmer features (fields with farmers get points for adjacent completed Costcos)
     this.scoreFarmerFeatures(players, board, scoreBreakdown);
+  }
+
+  /**
+   * Score incomplete McDonald's features at game end.
+   * Scoring: 1 point per tile in the 3x3 area (including the McDonald's tile).
+   */
+  private scoreIncompleteMcDonaldsFeatures(
+    players: PlayerState[],
+    board: IBoard,
+    scoreBreakdown?: ScoreBreakdown
+  ): void {
+    const claims = board
+      .getFeatureClaims()
+      .filter((claim) => claim.type === "mcdonalds");
+
+    claims.forEach((claim) => {
+      const edgeKey = claim.edge.split(":")[0];
+      const position = this.parsePositionKey(edgeKey);
+      const points = this.countMcDonaldsPoints(board, position);
+
+      claim.players.forEach((playerId) => {
+        this.awardPoints(
+          players,
+          playerId,
+          points,
+          "incomplete_mcdonalds",
+          scoreBreakdown
+        );
+      });
+    });
   }
 
   /**
@@ -199,6 +237,32 @@ export class ScoreManager {
   private parsePositionKey(key: string): { x: number; y: number } {
     const [x, y] = key.split(",").map(Number);
     return { x, y };
+  }
+
+  private countMcDonaldsPoints(
+    board: IBoard,
+    position: { x: number; y: number }
+  ): number {
+    const positions = [
+      position,
+      { x: position.x - 1, y: position.y - 1 },
+      { x: position.x, y: position.y - 1 },
+      { x: position.x + 1, y: position.y - 1 },
+      { x: position.x - 1, y: position.y },
+      { x: position.x + 1, y: position.y },
+      { x: position.x - 1, y: position.y + 1 },
+      { x: position.x, y: position.y + 1 },
+      { x: position.x + 1, y: position.y + 1 },
+    ];
+
+    let count = 0;
+    positions.forEach((pos) => {
+      if (board.getTile(pos)) {
+        count += GAME_RULES.MCDONALDS_POINTS_PER_TILE;
+      }
+    });
+
+    return count;
   }
 
   /**

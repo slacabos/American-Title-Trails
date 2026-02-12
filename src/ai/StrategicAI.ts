@@ -148,7 +148,7 @@ export class StrategicAI implements AIStrategy {
 
     // Higher thresholds for strategic claiming
     const thresholds = {
-      mcdonalds: 6,
+      mcdonalds: 5,
       costco: 5.5,
       road: 3.5,
       field: 2.5,
@@ -411,9 +411,9 @@ export class StrategicAI implements AIStrategy {
     // McDonald's strategic value
     if (feature.type === "mcdonalds") {
       if (estimate.currentPoints >= 6) {
-        adjustedScore *= 1.8; // Very well positioned
+        adjustedScore *= 1.6; // Very well positioned
       } else if (estimate.currentPoints >= 4) {
-        adjustedScore *= 1.3;
+        adjustedScore *= 1.25;
       }
     }
 

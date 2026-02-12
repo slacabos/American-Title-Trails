@@ -43,7 +43,8 @@ For the full guide, see `src/content/help/en.md` (the in-app Help modal uses thi
 - Roads: 1 point per tile when completed.
 - Costcos (completed): 2 points per tile, plus 2 points per pennant.
 - Costcos (incomplete at game end): 1 point per tile, plus 1 point per pennant.
-- McDonald's: 9 points when all 8 surrounding tiles are filled.
+- McDonald's (completed): 9 points when all 8 surrounding tiles are filled.
+- McDonald's (incomplete at game end): 1 point per tile in the 3x3 area (including the McDonald's tile).
 - Farmers (fields): 3 points per adjacent completed Costco at game end.
 
 ## Technology stack

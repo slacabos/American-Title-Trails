@@ -266,11 +266,24 @@ describe("ScoreManager", () => {
           { edge: "0,0:nw", type: "field", players: ["p1"], followerType: "farmer" },
         ],
         getAllTiles: () => new Map(),
-        getTile: () => ({
-          tile: {
-            fieldSegments: [{ corners: ["nw"] }],
-          },
-        }),
+        getTile: (position: { x: number; y: number }) => {
+          const key = `${position.x},${position.y}`;
+          const mcDonaldsTiles = new Set(["1,1", "1,0", "0,1", "2,1"]);
+
+          if (key === "0,0") {
+            return {
+              tile: {
+                fieldSegments: [{ corners: ["nw"] }],
+              },
+            };
+          }
+
+          if (mcDonaldsTiles.has(key)) {
+            return { tile: {} };
+          }
+
+          return undefined;
+        },
         traceFieldFeature: () => ({
           type: "field",
           tiles: new Set(["0,0"]),
@@ -287,7 +300,7 @@ describe("ScoreManager", () => {
         GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE
       );
       expect(breakdown.p2.incomplete_mcdonalds).toBe(
-        GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE
+        5 * GAME_RULES.MCDONALDS_POINTS_PER_TILE
       );
       expect(breakdown.p1.farmers).toBe(
         2 * GAME_RULES.FARMER_POINTS_PER_COSTCO

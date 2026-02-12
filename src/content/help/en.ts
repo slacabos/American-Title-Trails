@@ -49,7 +49,7 @@ Each turn consists of up to 3 phases:
 - After placing a tile, you may claim ONE feature on that tile
 - **Roads:** Claim a road segment
 - **Costco Areas:** Claim a shopping area
-- **McDonald's:** Claim the restaurant (worth 9 points when surrounded)
+- **McDonald's:** Claim the restaurant (1 point per tile in the 3x3 area, max 9)
 - You must have available followers to claim features
 
 ### 3. Scoring Phase 📊 (Automatic)
@@ -85,13 +85,16 @@ Each turn consists of up to 3 phases:
 
 ### 🍟 McDonald's Restaurants
 
-- **Points:** 9 points (fixed value)
+- **Points:** 1 point per tile in the 3x3 area (including the McDonald's tile)
 - **Completion:** Complete when all 8 surrounding positions have tiles
-- **Risk/Reward:** Difficult to complete but worth many points
+- **Risk/Reward:** Difficult to complete but worth many points (max 9)
 
 ### Game End Scoring
 
-- **Incomplete Features:** 1 point per tile for any uncompleted claimed features
+- **Incomplete Roads:** 1 point per tile
+- **Incomplete Costcos:** 1 point per tile + 1 point per pennant
+- **Incomplete McDonald's:** 1 point per tile in the 3x3 area (including the McDonald's tile)
+- **Farmers:** 3 points per adjacent completed Costco
 - **Winner:** Player with the most total points wins
 
 ---
@@ -126,7 +129,7 @@ Each turn consists of up to 3 phases:
 ## 🎯 Winning Conditions
 
 - **Game End:** Game ends when no more tiles remain in the deck
-- **Final Scoring:** All incomplete features score 1 point per tile
+- **Final Scoring:** Incomplete features score by type (roads 1 per tile, Costcos 1 per tile + 1 per pennant, McDonald's 1 per tile in the 3x3 area)
 - **Winner:** Player with highest total score wins (tied players share victory)
 
 ---
