@@ -8,10 +8,18 @@ const preview: Preview = {
       if (typeof document !== "undefined") {
         document.documentElement.classList.add("dark");
       }
-      return React.createElement(Story);
+      return React.createElement(
+        "div",
+        {
+          className:
+            "min-h-screen w-full bg-background p-8 flex items-center justify-center",
+        },
+        React.createElement(Story)
+      );
     },
   ],
   parameters: {
+    layout: "fullscreen",
     controls: {
       matchers: {
         color: /(background|color)$/i,

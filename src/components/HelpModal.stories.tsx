@@ -1,12 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import HelpModal from "../components/HelpModal";
+import HelpModal from "./HelpModal";
 
 const meta: Meta<typeof HelpModal> = {
   title: "Game/HelpModal",
   component: HelpModal,
-  parameters: {
-    layout: "fullscreen",
-  },
 };
 
 export default meta;

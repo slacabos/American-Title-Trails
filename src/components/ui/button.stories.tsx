@@ -1,20 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Heart } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { Button } from "./button";
 
 const meta: Meta<typeof Button> = {
   title: "UI/Button",
   component: Button,
-  parameters: {
-    layout: "fullscreen",
-  },
-  decorators: [
-    (Story) => (
-      <div className="min-h-screen w-full bg-background p-8 flex items-center justify-center">
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

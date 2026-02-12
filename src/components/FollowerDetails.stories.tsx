@@ -1,19 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import FollowerDetails from "../components/FollowerDetails";
+import FollowerDetails from "./FollowerDetails";
 
 const meta: Meta<typeof FollowerDetails> = {
   title: "Game/FollowerDetails",
   component: FollowerDetails,
-  parameters: {
-    layout: "fullscreen",
-  },
-  decorators: [
-    (Story) => (
-      <div className="min-h-screen w-full bg-background p-8 flex items-center justify-center">
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

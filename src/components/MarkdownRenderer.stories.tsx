@@ -1,18 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import MarkdownRenderer from "../components/MarkdownRenderer";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 const meta: Meta<typeof MarkdownRenderer> = {
   title: "Game/MarkdownRenderer",
   component: MarkdownRenderer,
-  parameters: {
-    layout: "fullscreen",
-  },
   decorators: [
     (Story) => (
-      <div className="min-h-screen w-full bg-background p-8 flex items-center justify-center">
-        <div className="w-full max-w-2xl">
-          <Story />
-        </div>
+      <div className="w-full max-w-2xl">
+        <Story />
       </div>
     ),
   ],

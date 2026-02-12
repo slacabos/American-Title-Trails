@@ -1,19 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import PlayerConfigRow from "../components/PlayerConfigRow";
+import PlayerConfigRow from "./PlayerConfigRow";
 import { PLAYER_COLORS } from "@/constants/colors";
 
 const meta: Meta<typeof PlayerConfigRow> = {
   title: "Game/PlayerConfigRow",
   component: PlayerConfigRow,
-  parameters: {
-    layout: "fullscreen",
-  },
   decorators: [
     (Story) => (
-      <div className="min-h-screen w-full bg-background p-8 flex items-center justify-center">
-        <div className="max-w-lg w-full">
-          <Story />
-        </div>
+      <div className="max-w-lg w-full">
+        <Story />
       </div>
     ),
   ],

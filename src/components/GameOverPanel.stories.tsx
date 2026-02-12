@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect, useState } from "react";
-import GameOverPanel from "../components/GameOverPanel";
+import GameOverPanel from "./GameOverPanel";
 import type { PlayerState, ScoreBreakdown } from "../types";
 
 const players: PlayerState[] = [
@@ -64,15 +64,10 @@ const scoreBreakdown: ScoreBreakdown = {
 const meta: Meta<typeof GameOverPanel> = {
   title: "Game/GameOverPanel",
   component: GameOverPanel,
-  parameters: {
-    layout: "fullscreen",
-  },
   decorators: [
     (Story) => (
-      <div className="min-h-screen w-full bg-background p-8 flex items-center justify-center">
-        <div className="w-full max-w-xl">
-          <Story />
-        </div>
+      <div className="w-full max-w-xl">
+        <Story />
       </div>
     ),
   ],
