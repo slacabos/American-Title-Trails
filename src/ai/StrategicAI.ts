@@ -50,20 +50,20 @@ export class StrategicAI implements AIStrategy {
   constructor(options: StrategicAIOptions = {}) {
     // Enhanced weights for strategic play
     const strategicWeights: Partial<EvaluationWeights> = {
-      completion: 8,
-      adjacency: 1.5,
-      costcoPreference: 3,
-      extensionBonus: 5,
-      blockingBonus: 4,
-      centerBonus: 0.3,
+      completion: 4.5,
+      adjacency: 1.0,
+      costcoPreference: 1.9,
+      extensionBonus: 2.2,
+      blockingBonus: 1.6,
+      centerBonus: 0.2,
       ...options.weights,
     };
 
     this.evaluator = new TilePlacementEvaluator(strategicWeights, options.rng);
     this.searchDepth = options.searchDepth ?? 2;
     this.maxSearchTimeMs = options.maxSearchTimeMs ?? 400;
-    this.defensiveWeight = options.defensiveWeight ?? 2.0;
-    this.claimThresholdScale = options.claimThresholdScale ?? 1;
+    this.defensiveWeight = options.defensiveWeight ?? 1.0;
+    this.claimThresholdScale = options.claimThresholdScale ?? 1.7;
   }
 
   /**
@@ -236,12 +236,12 @@ export class StrategicAI implements AIStrategy {
 
           // Bonus for completing features that benefit us over opponents
           if (ourClaims.length >= opponentClaims.length && ourClaims.length > 0) {
-            defensiveScore += completed.points * 0.5;
+            defensiveScore += completed.points * 0.35 * this.defensiveWeight;
           }
 
           // Penalty for completing features that only benefit opponents
           if (opponentClaims.length > 0 && ourClaims.length === 0) {
-            defensiveScore -= completed.points * 0.3;
+            defensiveScore -= completed.points * 0.45 * this.defensiveWeight;
           }
         }
       }
@@ -266,7 +266,7 @@ export class StrategicAI implements AIStrategy {
           // Penalize helping opponent complete features
           // Bonus for potentially blocking them
           if (claim.type === "costco") {
-            defensiveScore += this.defensiveWeight * 0.5;
+            defensiveScore += this.defensiveWeight * 0.3;
           }
         }
       }
@@ -483,18 +483,18 @@ export class ExpertAI extends StrategicAI {
   constructor(options: StrategicAIOptions = {}) {
     super({
       weights: {
-        completion: 12,
+        completion: 13,
         adjacency: 2.2,
         costcoPreference: 5,
-        extensionBonus: 7,
-        blockingBonus: 5.5,
+        extensionBonus: 8,
+        blockingBonus: 6.5,
         centerBonus: 0.6,
         ...(options.weights ?? {}),
       },
       searchDepth: options.searchDepth ?? 3,
       maxSearchTimeMs: options.maxSearchTimeMs ?? 600,
-      defensiveWeight: options.defensiveWeight ?? 1.5,
-      claimThresholdScale: options.claimThresholdScale ?? 1,
+      defensiveWeight: options.defensiveWeight ?? 3.2,
+      claimThresholdScale: options.claimThresholdScale ?? 0.9,
       rng: options.rng,
     });
   }

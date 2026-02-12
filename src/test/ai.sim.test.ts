@@ -10,11 +10,32 @@ const RANK: Record<AIDifficulty, number> = {
   expert: 3,
 };
 
-const GAMES_PER_PAIR = 100;
+const DEFAULT_GAMES_PER_PAIR = 100;
+const gamesPerPairOverride = Number.parseInt(
+  process.env.AI_SIM_GAMES_PER_PAIR ?? "",
+  10
+);
+const GAMES_PER_PAIR =
+  Number.isFinite(gamesPerPairOverride) && gamesPerPairOverride > 0
+    ? gamesPerPairOverride
+    : DEFAULT_GAMES_PER_PAIR;
 const MAX_TURNS = 10000;
 const BASE_SEED = 1337;
-const MIN_HIGH_WIN_RATE = 0.53;
-const MAX_LOW_WIN_RATE = 0.47;
+const minHighWinOverride = Number.parseFloat(
+  process.env.AI_SIM_MIN_HIGH_WIN_RATE ?? ""
+);
+const maxLowWinOverride = Number.parseFloat(
+  process.env.AI_SIM_MAX_LOW_WIN_RATE ?? ""
+);
+const MIN_HIGH_WIN_RATE =
+  Number.isFinite(minHighWinOverride) && minHighWinOverride >= 0
+    ? minHighWinOverride
+    : 0.6;
+const MAX_LOW_WIN_RATE =
+  Number.isFinite(maxLowWinOverride) && maxLowWinOverride >= 0
+    ? maxLowWinOverride
+    : 0.4;
+const TEST_TIMEOUT_MS = Math.max(60000, GAMES_PER_PAIR * 700);
 
 const playGame = (
   difficultyA: AIDifficulty,
@@ -59,7 +80,7 @@ const playGame = (
 describe("AI difficulty balance (simulation)", () => {
   it(
     "should favor higher difficulties across all pairings",
-    { timeout: 60000 },
+    { timeout: TEST_TIMEOUT_MS },
     () => {
       const pairings: Array<[AIDifficulty, AIDifficulty]> = [];
       for (let i = 0; i < DIFFICULTIES.length; i += 1) {
@@ -69,6 +90,10 @@ describe("AI difficulty balance (simulation)", () => {
       }
 
       const summaryLines: string[] = [];
+      const tableRows: string[] = [
+        "pairing | highWinRate | lowWinRate | ties | result",
+        "--- | ---: | ---: | ---: | ---",
+      ];
 
       pairings.forEach(([low, high], pairIndex) => {
         if (RANK[low] >= RANK[high]) {
@@ -101,11 +126,18 @@ describe("AI difficulty balance (simulation)", () => {
 
         const highWinRate = (highWins + ties * 0.5) / GAMES_PER_PAIR;
         const lowWinRate = (lowWins + ties * 0.5) / GAMES_PER_PAIR;
+        const passed =
+          highWinRate >= MIN_HIGH_WIN_RATE && lowWinRate <= MAX_LOW_WIN_RATE;
 
         const summary = `${high} vs ${low}: highWinRate=${highWinRate.toFixed(
           3
         )} lowWinRate=${lowWinRate.toFixed(3)} ties=${ties}`;
         summaryLines.push(summary);
+        tableRows.push(
+          `${high} vs ${low} | ${highWinRate.toFixed(3)} | ${lowWinRate.toFixed(
+            3
+          )} | ${ties} | ${passed ? "PASS" : "FAIL"}`
+        );
 
         expect(
           highWinRate,
@@ -121,6 +153,14 @@ describe("AI difficulty balance (simulation)", () => {
 
       summaryLines.forEach((line) => {
         console.log(`[AI SIM] ${line}`);
+      });
+      console.log(
+        `[AI SIM] gamesPerPair=${GAMES_PER_PAIR}, thresholds high>=${MIN_HIGH_WIN_RATE.toFixed(
+          2
+        )}, low<=${MAX_LOW_WIN_RATE.toFixed(2)}`
+      );
+      tableRows.forEach((line) => {
+        console.log(`[AI SIM TABLE] ${line}`);
       });
     }
   );
