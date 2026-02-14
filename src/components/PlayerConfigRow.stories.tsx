@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import PlayerConfigRow from "./PlayerConfigRow";
 import { PLAYER_COLORS } from "@/constants/colors";
 

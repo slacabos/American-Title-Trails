@@ -1,5 +1,5 @@
 import type { ITile, IBoard } from "../interfaces";
-import { Position } from "../types";
+import { Position, CompletedFeature } from "../types";
 
 /**
  * TileManager handles all tile-related operations.
@@ -114,7 +114,7 @@ export class TileManager {
   /**
    * Preview what would happen if the current tile were placed at a position
    */
-  public previewTilePlacement(board: IBoard, position: Position): any {
+  public previewTilePlacement(board: IBoard, position: Position): { completed: CompletedFeature[] } | null {
     if (!this.currentTile) {
       return null;
     }

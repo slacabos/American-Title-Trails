@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import HelpModal from "./HelpModal";
 
 const meta: Meta<typeof HelpModal> = {

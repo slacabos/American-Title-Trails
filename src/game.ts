@@ -529,7 +529,7 @@ export class Game {
     return this.tileManager.getValidPlacements(this.state.board);
   }
 
-  public previewTilePlacement(position: Position): any {
+  public previewTilePlacement(position: Position): { completed: CompletedFeature[] } | null {
     return this.tileManager.previewTilePlacement(this.state.board, position);
   }
 

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import GameSetup from "./components/GameSetup";
 import GameBoard from "./components/GameBoard";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { PlayerDefinition } from "./types";
 
 const App: React.FC = () => {
@@ -21,7 +22,9 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 grid grid-cols-[minmax(640px,1fr)_360px] gap-8 p-6 w-full min-w-fit max-w-[1200px] mx-auto">
         {gameStarted ? (
-          <GameBoard players={players} onReset={handleResetGame} />
+          <ErrorBoundary onReset={handleResetGame}>
+            <GameBoard players={players} onReset={handleResetGame} />
+          </ErrorBoundary>
         ) : (
           <GameSetup onStartGame={handleStartGame} />
         )}

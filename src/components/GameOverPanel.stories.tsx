@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useState } from "react";
 import GameOverPanel from "./GameOverPanel";
 import type { PlayerState, ScoreBreakdown } from "../types";

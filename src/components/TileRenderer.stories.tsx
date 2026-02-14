@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { TileRenderer } from "./TileRenderer";
 import { getStartTile, buildDeck } from "../tileLibrary";
 import { Tile } from "../tile";

@@ -399,7 +399,7 @@ export const drawMcDonalds = (ctx: CanvasRenderingContext2D, size: number) => {
   ctx.stroke();
 
   // Add "M" text
-  ctx.fillStyle = MCDONALDS_COLOR;
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = `bold ${size * 0.2}px Arial`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";

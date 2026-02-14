@@ -25,7 +25,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const [game, setGame] = useState<Game | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const gameRef = useRef<Game | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
+  const logIdRef = useRef(0);
+  const [logs, setLogs] = useState<{ id: number; message: string }[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [isGameOverCollapsed, setIsGameOverCollapsed] = useState(false);
   const [claimableFeatures, setClaimableFeatures] = useState<
@@ -85,18 +86,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       hour: "2-digit",
       minute: "2-digit",
     });
-    setLogs((prev) => [`${timestamp} — ${message}`, ...prev.slice(0, 19)]);
+    const id = logIdRef.current++;
+    setLogs((prev) => [
+      { id, message: `${timestamp} — ${message}` },
+      ...prev.slice(0, 19),
+    ]);
   }, []);
 
-  const updateClaimableFeatures = (gameInstance: Game, state: GameState) => {
-    if (state.phase === GamePhase.CLAIM_FEATURE) {
-      // Use the game's method to get claimable features for the current turn
-      const features = gameInstance.getClaimableFeaturesForCurrentTurn();
-      setClaimableFeatures(features);
-    } else {
-      setClaimableFeatures([]);
-    }
-  };
+  const updateClaimableFeatures = useCallback(
+    (gameInstance: Game, state: GameState) => {
+      if (state.phase === GamePhase.CLAIM_FEATURE) {
+        const features = gameInstance.getClaimableFeaturesForCurrentTurn();
+        setClaimableFeatures(features);
+      } else {
+        setClaimableFeatures([]);
+      }
+    },
+    []
+  );
 
   const handleTilePlace = (position: Position) => {
     if (!game || !gameState) return;
@@ -154,6 +161,52 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     );
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      const g = gameRef.current;
+      if (!g) return;
+
+      switch (e.key) {
+        case "r":
+          if (e.shiftKey) {
+            if (g.canRotateTile()) {
+              g.rotateTileCounterClockwise();
+              addLog("Tile rotated counter-clockwise");
+            }
+          } else {
+            if (g.canRotateTile()) {
+              g.rotateTileClockwise();
+              addLog("Tile rotated clockwise");
+            }
+          }
+          break;
+        case "R":
+          if (g.canRotateTile()) {
+            g.rotateTileCounterClockwise();
+            addLog("Tile rotated counter-clockwise");
+          }
+          break;
+        case "s":
+        case "S":
+          if (phase === GamePhase.CLAIM_FEATURE && !currentPlayerIsAI) {
+            g.skipClaim();
+            addLog("Skipped claiming (keyboard)");
+          }
+          break;
+        case "?":
+          setShowHelp((prev) => !prev);
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [addLog, phase, currentPlayerIsAI]);
+
   if (!game || !gameState) {
     return (
       <div className="grid grid-cols-[minmax(640px,1fr)_360px] gap-6 p-8 w-full min-w-fit max-w-[1200px]">
@@ -184,6 +237,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
           <div className="mt-2 text-xs opacity-70 text-center leading-tight font-game">
             💡 Click green areas to place • Wheel to zoom • Drag to pan
+            <br />
+            R to rotate • Shift+R counter-clockwise • ? for help
           </div>
         )}
 
@@ -222,7 +277,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
                 variant="outline"
                 className="font-game text-xxs"
               >
-                Skip Claiming
+                Skip Claiming (S)
               </Button>
             </div>
           </div>
@@ -343,18 +398,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
                 </li>
               </ul>
 
-              <div className="help-footer">
-                <small>
-                  📖{" "}
-                  <a
-                    href="./GAMEPLAY_INSTRUCTIONS.md"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Complete Instructions
-                  </a>
-                </small>
-              </div>
             </div>
           </section>
         )}
@@ -439,12 +482,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
             Activity Log
           </h2>
           <ul className="list-none m-0 p-0 flex flex-col gap-1 max-h-48 overflow-y-auto">
-            {logs.map((log, index) => (
+            {logs.map((log) => (
               <li
-                key={index}
+                key={log.id}
                 className="text-xs leading-tight py-1 opacity-80 border-b border-slate-100/10 last:border-b-0 font-game"
               >
-                {log}
+                {log.message}
               </li>
             ))}
           </ul>

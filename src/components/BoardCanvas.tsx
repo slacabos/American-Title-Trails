@@ -1,17 +1,24 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import type { ITile, IBoard } from "../interfaces";
-import { Position } from "../types";
+import {
+  Position,
+  TileRecord,
+  FeatureClaim,
+  PlayerState,
+  GameState,
+  FieldSegment,
+} from "../types";
 import { UI_COLORS } from "../constants/colors";
 import { renderTileToCanvas } from "../utils/tileRendering";
 
 // Helper function to render follower dots on claimed features
 const renderFollowerDots = (
   ctx: CanvasRenderingContext2D,
-  record: any,
+  record: TileRecord,
   x: number,
   y: number,
   scaledTileSize: number,
-  gameState: any,
+  gameState: GameState,
   board: IBoard
 ) => {
   const featureClaims = board.getFeatureClaims();
@@ -24,7 +31,7 @@ const renderFollowerDots = (
 
   tileClaims.forEach((claim) => {
     // Get player info for the claiming player
-    const player = gameState.players.find((p: any) =>
+    const player = gameState.players.find((p: PlayerState) =>
       claim.players.includes(p.id)
     );
     if (!player) return;
@@ -63,9 +70,9 @@ const renderFollowerDots = (
 
 // Helper function to determine follower dot position based on feature type
 const getFollowerDotPosition = (
-  claim: any,
+  claim: FeatureClaim,
   tileSize: number,
-  record: any
+  record: TileRecord
 ): { x: number; y: number } => {
   // Define segment positions on the tile (5 segments: N, E, S, W, Center)
   const segmentPositions: { [key: string]: { x: number; y: number } } = {
@@ -151,8 +158,8 @@ const getFollowerDotPosition = (
     // For fields, the identifier is a corner (nw, ne, sw, se)
     // Find the field segment that contains this corner
     if (tile.fieldSegments) {
-      const fieldSegment = tile.fieldSegments.find((fs: any) =>
-        fs.corners.includes(identifier)
+      const fieldSegment = tile.fieldSegments.find((fs: FieldSegment) =>
+        fs.corners.includes(identifier as FieldSegment["corners"][number])
       );
 
       if (fieldSegment) {
@@ -200,7 +207,7 @@ interface BoardCanvasProps {
   tileSize?: number;
   showGrid?: boolean;
   showValidPlacements?: boolean;
-  gameState?: any; // Game state for accessing feature claims and player info
+  gameState?: GameState;
 }
 
 interface CanvasState {
@@ -217,7 +224,6 @@ const MIN_SCALE = 0.25;
 const MAX_SCALE = 4;
 const GRID_COLOR = UI_COLORS.muted;
 const VALID_PLACEMENT_COLOR = "rgba(0, 255, 0, 0.3)";
-const HOVER_COLOR = "rgba(0, 0, 255, 0.2)";
 
 export const BoardCanvas: React.FC<BoardCanvasProps> = ({
   board,
@@ -231,6 +237,14 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const initialCenterRef = useRef(false);
+  const canvasStateRef = useRef<CanvasState>({
+    offsetX: 0,
+    offsetY: 0,
+    scale: INITIAL_SCALE,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+  });
+  const tileCacheRef = useRef<Map<string, HTMLCanvasElement>>(new Map());
 
   const [canvasState, setCanvasState] = useState<CanvasState>({
     offsetX: 0,
@@ -240,7 +254,37 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     dragStart: { x: 0, y: 0 },
   });
 
+  // Keep ref in sync with state
+  useEffect(() => {
+    canvasStateRef.current = canvasState;
+  }, [canvasState]);
+
   const [validPlacements, setValidPlacements] = useState<Position[]>([]);
+
+  // Clear tile cache when tileSize changes
+  useEffect(() => {
+    tileCacheRef.current.clear();
+  }, [tileSize]);
+
+  // Get or create a cached tile canvas
+  const getCachedTile = useCallback(
+    (tile: ITile): HTMLCanvasElement => {
+      const cacheKey = `${tile.id}_${tile.orientation}_${tileSize}`;
+      const cached = tileCacheRef.current.get(cacheKey);
+      if (cached) return cached;
+
+      const tileCanvas = document.createElement("canvas");
+      tileCanvas.width = tileSize;
+      tileCanvas.height = tileSize;
+      const tileCtx = tileCanvas.getContext("2d");
+      if (tileCtx) {
+        renderTileToCanvas(tileCtx, tile, tileSize);
+      }
+      tileCacheRef.current.set(cacheKey, tileCanvas);
+      return tileCanvas;
+    },
+    [tileSize]
+  );
 
   // Auto-fit: zoom and center to keep all tiles visible with 2-tile padding
   const tileCount = board.getAllTiles().size;
@@ -375,31 +419,21 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
         y + scaledTileSize >= 0 &&
         y <= height
       ) {
-        // Create a temporary canvas for the tile
-        const tileCanvas = document.createElement("canvas");
-        tileCanvas.width = tileSize;
-        tileCanvas.height = tileSize;
-        const tileCtx = tileCanvas.getContext("2d");
+        // Use cached tile canvas
+        const tileCanvas = getCachedTile(record.tile);
+        ctx.drawImage(tileCanvas, x, y, scaledTileSize, scaledTileSize);
 
-        if (tileCtx) {
-          // Render the actual tile with its features using curved roads
-          renderTileToCanvas(tileCtx, record.tile, tileSize);
-
-          // Draw the tile to main canvas
-          ctx.drawImage(tileCanvas, x, y, scaledTileSize, scaledTileSize);
-
-          // Draw follower dots for claimed features
-          if (gameState) {
-            renderFollowerDots(
-              ctx,
-              record,
-              x,
-              y,
-              scaledTileSize,
-              gameState,
-              board
-            );
-          }
+        // Draw follower dots for claimed features
+        if (gameState) {
+          renderFollowerDots(
+            ctx,
+            record,
+            x,
+            y,
+            scaledTileSize,
+            gameState,
+            board
+          );
         }
       }
     });
@@ -415,7 +449,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
       });
     }
 
-    // Draw hover indicator
+    // Draw hover indicator with tile preview
     if (canvasState.hoverPosition && currentTile) {
       const { x, y } = boardToScreen(
         canvasState.hoverPosition.x,
@@ -423,10 +457,13 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
       );
 
       if (board.canPlace(currentTile, canvasState.hoverPosition)) {
-        ctx.fillStyle = HOVER_COLOR;
-        ctx.fillRect(x, y, scaledTileSize, scaledTileSize);
+        // Render tile preview at reduced opacity
+        const previewCanvas = getCachedTile(currentTile);
+        ctx.globalAlpha = 0.6;
+        ctx.drawImage(previewCanvas, x, y, scaledTileSize, scaledTileSize);
+        ctx.globalAlpha = 1.0;
 
-        // Draw preview of current tile
+        // Draw blue outline
         ctx.strokeStyle = "#00f";
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, scaledTileSize, scaledTileSize);
@@ -442,6 +479,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     showValidPlacements,
     boardToScreen,
     gameState,
+    getCachedTile,
   ]);
 
   // Handle canvas resize
@@ -483,7 +521,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     renderBoard();
   }, [renderBoard]);
 
-  // Set up native wheel event listener to prevent page scrolling
+  // Set up native wheel event listener to prevent page scrolling (register once)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -492,10 +530,11 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
       e.preventDefault();
       e.stopPropagation();
 
+      const state = canvasStateRef.current;
       const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
       const newScale = Math.max(
         MIN_SCALE,
-        Math.min(MAX_SCALE, canvasState.scale * scaleFactor)
+        Math.min(MAX_SCALE, state.scale * scaleFactor)
       );
 
       // Zoom towards mouse position
@@ -503,9 +542,9 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      const scaleRatio = newScale / canvasState.scale;
-      const newOffsetX = mouseX - (mouseX - canvasState.offsetX) * scaleRatio;
-      const newOffsetY = mouseY - (mouseY - canvasState.offsetY) * scaleRatio;
+      const scaleRatio = newScale / state.scale;
+      const newOffsetX = mouseX - (mouseX - state.offsetX) * scaleRatio;
+      const newOffsetY = mouseY - (mouseY - state.offsetY) * scaleRatio;
 
       setCanvasState((prev) => ({
         ...prev,
@@ -520,7 +559,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     return () => {
       canvas.removeEventListener("wheel", handleNativeWheel);
     };
-  }, [canvasState.scale, canvasState.offsetX, canvasState.offsetY]);
+  }, []);
 
   // Handle mouse events
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -583,13 +622,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="board-canvas-container"
-      style={{
-        width: "100%",
-        height: "100%",
-        position: "relative",
-        overflow: "hidden",
-      }}
+      className="board-canvas-container w-full h-full relative overflow-hidden"
     >
       <canvas
         ref={canvasRef}
@@ -609,20 +642,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
       />
 
       {/* Controls overlay */}
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          background: "rgba(13, 27, 42, 0.9)",
-          color: "#f1faee",
-          padding: "8px",
-          borderRadius: "4px",
-          fontSize: "12px",
-          border: "1px solid rgba(69, 123, 157, 0.5)",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        }}
-      >
+      <div className="absolute top-2.5 right-2.5 bg-[rgba(13,27,42,0.9)] text-[#f1faee] p-2 rounded text-xs border border-[rgba(69,123,157,0.5)] shadow-lg">
         <div>Zoom: {Math.round(canvasState.scale * 100)}%</div>
         <div>Tiles: {board.getAllTiles().size}</div>
         {currentTile && <div>Valid placements: {validPlacements.length}</div>}

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import FollowerDetails from "./FollowerDetails";
 
 const meta: Meta<typeof FollowerDetails> = {
