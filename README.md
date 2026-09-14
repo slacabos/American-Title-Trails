@@ -101,3 +101,35 @@ npm run sync-help-content en
 ## Localization
 
 UI strings live in `src/content/translations/en.json` and are accessed via `src/hooks/useTranslations.ts`. The help content is markdown in `src/content/help/en.md` and can be synced to TS with `npm run sync-help-content en`.
+
+### 3D tabletop
+
+The game opens in an angled 3D view with miniature highways, Costco warehouses,
+McDonald's restaurants, parking lots, vegetation, and colored followers. The
+**3D scenery / 2D classic** switch preserves the current game and remembers your
+choice. If WebGL cannot start or its context is lost, play continues in 2D.
+
+- **Mouse:** hover over a green outline to preview; click to place. Drag to pan,
+  scroll to zoom, and use **Fit board** to restore automatic framing.
+- **Tablet:** drag to pan or pinch to zoom. Tap a legal space to preview, then
+  press **Place tile**; **Cancel** dismisses the preview. A light grid fades into
+  the tabletop around the board, with stronger outlines for legal placements.
+- **Rotation:** use the rotation buttons, `R`, or `Shift+R` before placing.
+- **Claims:** hover or focus a claim button to highlight its feature. Standing
+  pawns mark ordinary followers; reclining pawns mark farmers. Gold signs mark
+  bonus pennants; small fences distinguish otherwise adjoining separate fields.
+
+The board and current-tile preview share procedural scenery. No downloaded model
+packs or image service are needed. The 3D code loads when selected, batches
+repeated tile models, and renders on demand to avoid drawing while idle.
+
+```bash
+npm run test:browser       # Chromium: placement, touch, fallback, full-board checks
+npm run test:coverage      # Unit + Storybook browser coverage; enforces the 80% gate
+npm run storybook         # Game / 3D Tabletop: connected scenery, full deck, all rotations
+```
+
+Browser checks use Playwright Chromium; install it with `npx playwright install
+chromium` if it is not available. The `e2e/tabletop.html` fixture is used only by the
+development test server and is excluded from the production build. See
+[3D rendering notes](docs/3d-rendering.md) for architecture and validation details.

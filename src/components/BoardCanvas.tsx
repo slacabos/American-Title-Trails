@@ -1,203 +1,33 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import type { ITile, IBoard } from "../interfaces";
-import {
-  Position,
-  TileRecord,
-  FeatureClaim,
-  PlayerState,
-  GameState,
-  FieldSegment,
-} from "../types";
+import { Position, TileRecord, GameState } from "../types";
+import { featureAnchor, resolveClaim } from "@/rendering/tileLayout";
 import { UI_COLORS } from "../constants/colors";
 import { renderTileToCanvas } from "../utils/tileRendering";
 
-// Helper function to render follower dots on claimed features
+// Both renderers resolve the engine's stored direction/corner claims identically.
 const renderFollowerDots = (
-  ctx: CanvasRenderingContext2D,
-  record: TileRecord,
-  x: number,
-  y: number,
-  scaledTileSize: number,
-  gameState: GameState,
-  board: IBoard
+  ctx: CanvasRenderingContext2D, record: TileRecord, x: number, y: number,
+  size: number, gameState: GameState, board: IBoard
 ) => {
-  const featureClaims = board.getFeatureClaims();
-  const positionKey = `${record.position.x},${record.position.y}`;
-
-  // Find claims for this tile
-  const tileClaims = featureClaims.filter((claim) =>
-    claim.edge.startsWith(positionKey)
-  );
-
-  tileClaims.forEach((claim) => {
-    // Get player info for the claiming player
-    const player = gameState.players.find((p: PlayerState) =>
-      claim.players.includes(p.id)
-    );
-    if (!player) return;
-
-    // Determine dot position based on feature type and identifier
-    const dotPosition = getFollowerDotPosition(claim, scaledTileSize, record);
-
-    // Draw the follower
-    ctx.fillStyle = player.color;
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 1;
-
-    const dotX = x + dotPosition.x;
-    const dotY = y + dotPosition.y;
-
-    // Farmers (field claims) are rendered as rectangles (lying down)
-    // Standard followers are rendered as circles
-    if (claim.followerType === "farmer") {
-      const rectWidth = Math.max(8, scaledTileSize * 0.12);
-      const rectHeight = Math.max(4, scaledTileSize * 0.06);
-
+  board.getFeatureClaims().forEach((claim) => {
+    const feature = resolveClaim(record.tile, record.position, claim);
+    if (!feature) return;
+    const anchor = featureAnchor(record.tile, feature);
+    claim.players.forEach((id, index) => {
+      const player = gameState.players.find((candidate) => candidate.id === id);
+      if (!player) return;
+      const px = x + (anchor[0] + 0.5 + index * 0.085) * size;
+      const py = y + (anchor[1] + 0.5) * size;
+      ctx.fillStyle = player.color;
+      ctx.strokeStyle = "#fff6da";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.rect(dotX - rectWidth / 2, dotY - rectHeight / 2, rectWidth, rectHeight);
-      ctx.fill();
-      ctx.stroke();
-    } else {
-      const dotRadius = Math.max(3, scaledTileSize * 0.08);
-
-      ctx.beginPath();
-      ctx.arc(dotX, dotY, dotRadius, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.stroke();
-    }
+      if (claim.followerType === "farmer") ctx.rect(px - size * 0.065, py - size * 0.035, size * 0.13, size * 0.07);
+      else ctx.arc(px, py, Math.max(3, size * 0.065), 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+    });
   });
-};
-
-// Helper function to determine follower dot position based on feature type
-const getFollowerDotPosition = (
-  claim: FeatureClaim,
-  tileSize: number,
-  record: TileRecord
-): { x: number; y: number } => {
-  // Define segment positions on the tile (5 segments: N, E, S, W, Center)
-  const segmentPositions: { [key: string]: { x: number; y: number } } = {
-    north: { x: tileSize / 2, y: tileSize * 0.15 }, // Top edge
-    east: { x: tileSize * 0.85, y: tileSize / 2 }, // Right edge
-    south: { x: tileSize / 2, y: tileSize * 0.85 }, // Bottom edge
-    west: { x: tileSize * 0.15, y: tileSize / 2 }, // Left edge
-    center: { x: tileSize / 2, y: tileSize / 2 }, // Center
-  };
-
-  // Define corner positions for field segments
-  const cornerPositions: { [key: string]: { x: number; y: number } } = {
-    nw: { x: tileSize * 0.15, y: tileSize * 0.15 }, // Top-left corner
-    ne: { x: tileSize * 0.85, y: tileSize * 0.15 }, // Top-right corner
-    sw: { x: tileSize * 0.15, y: tileSize * 0.85 }, // Bottom-left corner
-    se: { x: tileSize * 0.85, y: tileSize * 0.85 }, // Bottom-right corner
-  };
-
-  // Extract identifier from edge (format: "x,y:identifier" or just "x,y")
-  const parts = claim.edge.split(":");
-  const identifier = parts.length > 1 ? parts[1] : "";
-  const tile = record.tile;
-
-  if (claim.type === "road") {
-    const roadIndex = parseInt(identifier.replace("road_", "")) || 0;
-
-    if (tile.roadConnections && tile.roadConnections[roadIndex]) {
-      const roadConnection = tile.roadConnections[roadIndex];
-
-      // Calculate average position of all segments in this road connection
-      let totalX = 0;
-      let totalY = 0;
-      let validSegments = 0;
-
-      roadConnection.forEach((segment: string) => {
-        if (segmentPositions[segment]) {
-          totalX += segmentPositions[segment].x;
-          totalY += segmentPositions[segment].y;
-          validSegments++;
-        }
-      });
-
-      if (validSegments > 0) {
-        return {
-          x: totalX / validSegments,
-          y: totalY / validSegments,
-        };
-      }
-    }
-
-    // Fallback: use first available road segment position
-    return segmentPositions["center"];
-  } else if (claim.type === "costco") {
-    const costcoIndex = parseInt(identifier.replace("costco_", "")) || 0;
-
-    if (tile.costcoZones && tile.costcoZones[costcoIndex]) {
-      const zone = tile.costcoZones[costcoIndex];
-
-      // Calculate average position of all segments in this Costco zone
-      let totalX = 0;
-      let totalY = 0;
-      let validSegments = 0;
-
-      zone.segments.forEach((segment: string) => {
-        if (segmentPositions[segment]) {
-          totalX += segmentPositions[segment].x;
-          totalY += segmentPositions[segment].y;
-          validSegments++;
-        }
-      });
-
-      if (validSegments > 0) {
-        return {
-          x: totalX / validSegments,
-          y: totalY / validSegments,
-        };
-      }
-    }
-
-    // Fallback: use center position
-    return segmentPositions["center"];
-  } else if (claim.type === "field") {
-    // For fields, the identifier is a corner (nw, ne, sw, se)
-    // Find the field segment that contains this corner
-    if (tile.fieldSegments) {
-      const fieldSegment = tile.fieldSegments.find((fs: FieldSegment) =>
-        fs.corners.includes(identifier as FieldSegment["corners"][number])
-      );
-
-      if (fieldSegment) {
-        // Calculate centroid of all corners in this field segment
-        let totalX = 0;
-        let totalY = 0;
-        let validCorners = 0;
-
-        fieldSegment.corners.forEach((corner: string) => {
-          if (cornerPositions[corner]) {
-            totalX += cornerPositions[corner].x;
-            totalY += cornerPositions[corner].y;
-            validCorners++;
-          }
-        });
-
-        if (validCorners > 0) {
-          return {
-            x: totalX / validCorners,
-            y: totalY / validCorners,
-          };
-        }
-      }
-    }
-
-    // Fallback: use the corner position directly
-    if (cornerPositions[identifier]) {
-      return cornerPositions[identifier];
-    }
-
-    return segmentPositions["center"];
-  } else if (claim.type === "mcdonalds") {
-    // McDonald's is always at center
-    return segmentPositions["center"];
-  }
-
-  // Default position
-  return segmentPositions["center"];
 };
 
 interface BoardCanvasProps {

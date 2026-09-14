@@ -60,10 +60,14 @@ Each turn consists of up to 3 phases:
 
 ### Board Interaction
 
-- **Zoom:** Mouse wheel to zoom in/out (25% - 400%)
-- **Pan:** Click and drag to move around the board
-- **Tile Placement:** Click on green highlighted areas to place tiles
-- **Hover Preview:** See tile preview when hovering over valid positions
+- **View:** Switch between 3D scenery and 2D classic without restarting the game.
+- **Zoom:** Scroll or pinch to zoom; use **Fit board** to restore automatic framing in 3D.
+- **Pan:** Drag to move around the board.
+- **Tile Placement:** Click a green space to place. On a touchscreen in 3D, tap a space to preview, then press **Place tile**. Use **Cancel** to dismiss it.
+- **Hover Preview:** See the current tile on a legal space before placing it.
+- **Rotate:** Use the rotation buttons, **R**, or **Shift+R**.
+- **Claim Preview:** Hover or focus a claim button to highlight its feature in 3D.
+- **Followers:** Standing pawns claim roads, stores, and restaurants. Reclining pawns are farmers; small fences distinguish adjoining separate fields.
 
 ---
 

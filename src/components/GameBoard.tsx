@@ -7,8 +7,8 @@ import {
   ClaimableFeature,
 } from "../types";
 import { Game, GamePhase } from "../game";
-import BoardCanvas from "./BoardCanvas";
-import TileRenderer from "./TileRenderer";
+import { BoardView, CurrentTilePreview } from "./BoardView";
+import { readRenderMode, saveRenderMode, RenderMode } from "@/rendering/renderMode";
 import HelpModal from "./HelpModal";
 import FollowerDetails from "./FollowerDetails";
 import GameOverPanel from "./GameOverPanel";
@@ -28,6 +28,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const logIdRef = useRef(0);
   const [logs, setLogs] = useState<{ id: number; message: string }[]>([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [renderMode, setRenderMode] = useState<RenderMode>(readRenderMode);
+  const [graphicsUnavailable, setGraphicsUnavailable] = useState(false);
+  const [highlightedFeature, setHighlightedFeature] = useState<ClaimableFeature>();
+  const handleGraphicsUnavailable = useCallback(() => {
+    setGraphicsUnavailable(true);
+    setRenderMode("2d");
+  }, []);
+  const handleRenderMode = (mode: RenderMode) => {
+    setRenderMode(mode);
+    setGraphicsUnavailable(false);
+    saveRenderMode(mode);
+  };
   const [isGameOverCollapsed, setIsGameOverCollapsed] = useState(false);
   const [claimableFeatures, setClaimableFeatures] = useState<
     ClaimableFeature[]
@@ -106,7 +118,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   );
 
   const handleTilePlace = (position: Position) => {
-    if (!game || !gameState) return;
+    if (!game || !gameState || gameState.phase !== GamePhase.PLACE_TILE || gameState.isGameOver || gameState.players[gameState.currentPlayerIndex]?.isAI) return;
 
     const result = game.placeTile(position);
     if (result.success) {
@@ -225,22 +237,16 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
   return (
     <>
-      <div className="relative bg-card backdrop-blur-sm border border-border rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
-        <BoardCanvas
-          board={gameState.board}
-          currentTile={gameState.currentTile}
+      <div className="game-board-panel relative bg-card backdrop-blur-sm border border-border rounded-2xl p-4 shadow-2xl flex flex-col min-w-0">
+        <BoardView
+          state={gameState}
+          mode={renderMode}
+          onModeChange={handleRenderMode}
           onTilePlace={handleTilePlace}
-          showValidPlacements={gameState.phase === GamePhase.PLACE_TILE}
-          gameState={gameState}
+          onUnavailable={handleGraphicsUnavailable}
+          unavailable={graphicsUnavailable}
+          highlightedFeature={highlightedFeature}
         />
-
-        {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
-          <div className="mt-2 text-xs opacity-70 text-center leading-tight font-game">
-            💡 Click green areas to place • Wheel to zoom • Drag to pan
-            <br />
-            R to rotate • Shift+R counter-clockwise • ? for help
-          </div>
-        )}
 
         {isCurrentPlayerAI && !gameState.isGameOver && (
           <div className="mt-2 text-xs text-center leading-tight font-game animate-pulse">
@@ -263,6 +269,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
               {claimableFeatures.map((feature, index) => (
                 <Button
                   key={index}
+                  onMouseEnter={() => setHighlightedFeature(feature)}
+                  onMouseLeave={() => setHighlightedFeature(undefined)}
+                  onFocus={() => setHighlightedFeature(feature)}
+                  onBlur={() => setHighlightedFeature(undefined)}
                   onClick={() =>
                     handleClaimFeature(feature.type, feature.identifier)
                   }
@@ -306,11 +316,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </h2>
           {gameState.currentTile ? (
             <div className="bg-muted/30 rounded-xl p-4 flex flex-col items-center gap-3">
-              <TileRenderer
-                tile={gameState.currentTile}
-                size={96}
-                className="preview-tile border-2 border-game-blue bg-game-bg-primary"
-              />
+              <CurrentTilePreview tile={gameState.currentTile} mode={renderMode} onUnavailable={handleGraphicsUnavailable} />
               <div className="text-center text-xxs leading-tight font-game">
                 <strong>{gameState.currentTile.name}</strong>
                 <div className="opacity-80 mt-1">
