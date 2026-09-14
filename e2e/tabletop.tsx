@@ -52,13 +52,7 @@ function Harness() {
         />
       </div>
       <aside>
-        {state.currentTile && (
-          <CurrentTilePreview
-            tile={state.currentTile}
-            mode={mode}
-            onUnavailable={fallback}
-          />
-        )}
+        <CurrentTilePreview tile={state.currentTile} mode={mode} />
         <button onClick={() => game.rotateTileClockwise()}>Rotate tile</button>
         {state.phase === GamePhase.CLAIM_FEATURE && (
           <>
@@ -131,6 +125,13 @@ Object.assign(window, {
         '.tabletop-tile-preview canvas',
       )!;
       return _roots.get(canvas)!.store.getState().gl.info.render.frame;
+    },
+    losePreviewContext: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>(
+        '.tabletop-tile-preview canvas',
+      )!;
+      _roots.get(canvas)!.store.getState().gl.getContext()
+        .getExtension("WEBGL_lose_context")!.loseContext();
     },
     loseContext: () => {
       const canvas = document.querySelector<HTMLCanvasElement>(

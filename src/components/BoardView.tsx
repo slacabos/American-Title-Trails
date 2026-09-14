@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useCallback, useState } from "react";
 import type { ClaimableFeature, GameState, Position } from "@/types";
 import { GamePhase } from "@/types";
 import type { ITile } from "@/interfaces/ITile";
@@ -130,23 +130,37 @@ export function BoardView({
   );
 }
 
-export function CurrentTilePreview({
-  tile,
-  mode,
-  onUnavailable,
-}: {
-  tile: ITile;
-  mode: RenderMode;
-  onUnavailable: () => void;
-}) {
-  const flat = <TileRenderer tile={tile} size={128} />;
-  return mode === "3d" ? (
+function SceneryTilePreview({ tile }: { tile?: ITile }) {
+  const [unavailable, setUnavailable] = useState(false);
+  const onUnavailable = useCallback(() => setUnavailable(true), []);
+  const flat = tile ? <TileRenderer tile={tile} size={128} /> : null;
+  // A preview failure should never change the healthy board's render mode.
+  if (unavailable) return flat;
+  return (
     <GraphicsBoundary fallback={flat} onUnavailable={onUnavailable}>
       <Suspense fallback={flat}>
         <TilePreviewScene tile={tile} onUnavailable={onUnavailable} />
       </Suspense>
     </GraphicsBoundary>
-  ) : (
-    flat
+  );
+}
+
+export function CurrentTilePreview({
+  tile,
+  mode,
+}: {
+  tile?: ITile;
+  mode: RenderMode;
+}) {
+  // Keep the canvas and its library alive during the claim phase. Recreating
+  // WebGL contexts every turn can exhaust the device's graphics resources.
+  return (
+    <div hidden={!tile}>
+      {mode === "3d" ? (
+        <SceneryTilePreview tile={tile} />
+      ) : tile ? (
+        <TileRenderer tile={tile} size={128} />
+      ) : null}
+    </div>
   );
 }

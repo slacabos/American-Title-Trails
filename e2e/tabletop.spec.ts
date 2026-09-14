@@ -25,6 +25,7 @@ declare global {
       };
       loseContext: () => void;
       previewFrame: () => number;
+      losePreviewContext: () => void;
     };
   }
 }
@@ -51,9 +52,13 @@ async function legalPoint(page: Page) {
         (position) => window.tabletopTest.point(position),
         legal[0],
       );
+    const frame = await page.evaluate(() => window.tabletopTest.stats().frame);
     await page
       .getByRole("button", { name: "Rotate tile", exact: true })
       .click();
+    // Legal cells in the DOM update before the separate R3F root has drawn
+    // them. Click the rendered orientation, not the previous frame's cells.
+    await expect.poll(() => page.evaluate(() => window.tabletopTest.stats().frame)).toBeGreaterThan(frame);
   }
   throw new Error("No legal placement in any rotation");
 }
@@ -77,6 +82,49 @@ test("the 3D preview redraws every quarter turn and returns to its original imag
   const idleFrame = await page.evaluate(() => window.tabletopTest.previewFrame());
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => window.tabletopTest.previewFrame())).toBe(idleFrame);
+});
+
+test("a preview context failure keeps the board and game in 3D", async ({ page }) => {
+  await ready(page);
+  await expect.poll(() => page.evaluate(() => window.tabletopTest.previewFrame())).toBeGreaterThan(0);
+  const state = await page.evaluate(() => window.tabletopTest.state());
+  await page.evaluate(() => window.tabletopTest.losePreviewContext());
+  await expect(page.locator(".tile-renderer-container")).toBeVisible();
+  await expect(page.getByTestId("board-3d")).toBeVisible();
+  await expect(page.getByRole("button", { name: "3D scenery" })).toHaveAttribute("aria-pressed", "true");
+  expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(state);
+  const point = await legalPoint(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(page.getByTestId("tile-count")).toHaveText("2");
+  await page.getByRole("button", { name: "Skip claim" }).click();
+  await expect(page.locator(".tile-renderer-container")).toBeVisible();
+  await expect(page.getByTestId("board-3d")).toBeVisible();
+});
+
+test("placement and claiming reuse the same preview canvas across turns", async ({ page }) => {
+  await ready(page);
+  const canvas = await page.locator(".tabletop-tile-preview canvas").elementHandle();
+  expect(canvas).not.toBeNull();
+  for (let turn = 0; turn < 20; turn++) {
+    await expect.poll(() => page.evaluate(() => window.tabletopTest.previewFrame())).toBeGreaterThan(0);
+    const boardFrame = await page.evaluate(() => window.tabletopTest.stats().frame);
+    await page.getByRole("button", { name: "Fit board", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.tabletopTest.stats().frame)).toBeGreaterThan(boardFrame);
+    const point = await legalPoint(page);
+    await page.mouse.click(point.x, point.y);
+    await expect(page.getByTestId("tile-count")).toHaveText(String(turn + 2));
+    expect(await canvas!.evaluate((element) => element.isConnected)).toBe(true);
+    await expect(page.locator(".tabletop-tile-preview")).toBeHidden();
+    const claimFrame = await page.evaluate(() => window.tabletopTest.previewFrame());
+    await page.getByRole("button", { name: "Skip claim" }).click();
+    await expect(page.locator(".tabletop-tile-preview")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.tabletopTest.previewFrame())).toBeGreaterThan(claimFrame);
+    expect(await canvas!.evaluate((element) => element === document.querySelector(".tabletop-tile-preview canvas"))).toBe(true);
+    await expect(page.getByTestId("board-3d")).toBeVisible();
+  }
+  // R3F's delayed context teardown must not switch a later turn to 2D.
+  await page.waitForTimeout(700);
+  await expect(page.getByTestId("board-3d")).toBeVisible();
 });
 
 test("desktop placement, dragging, rotation, claiming and view switching preserve the game", async ({

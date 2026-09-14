@@ -48,16 +48,18 @@ const CAMERA_DIRECTION = new THREE.Vector3(
 ).normalize();
 
 function ContextHealth({ onUnavailable }: { onUnavailable: () => void }) {
-  const { gl } = useThree();
+  const { gl, get } = useThree();
   useEffect(() => {
     const canvas = gl.domElement;
     const lost = (event: Event) => {
+      // R3F deliberately loses the context when disposing an unmounted canvas.
+      if (!canvas.isConnected || !get().internal.active) return;
       event.preventDefault();
       onUnavailable();
     };
     canvas.addEventListener("webglcontextlost", lost);
     return () => canvas.removeEventListener("webglcontextlost", lost);
-  }, [gl, onUnavailable]);
+  }, [gl, get, onUnavailable]);
   return null;
 }
 
@@ -440,20 +442,23 @@ export function TilePreviewScene({
   tile,
   onUnavailable,
 }: {
-  tile: ITile;
+  tile?: ITile;
   onUnavailable: () => void;
 }) {
   const { t } = useTranslations();
-  const records = useMemo(() => [{ tile, position: { x: 0, y: 0 } }], [tile]);
+  const records = useMemo(
+    () => tile ? [{ tile, position: { x: 0, y: 0 } }] : [],
+    [tile],
+  );
   return (
-    <div className="tabletop-tile-preview" role="img" aria-label={tile.name}>
+    <div className="tabletop-tile-preview" role="img" aria-label={tile?.name}>
       <Canvas
         orthographic
         shadows
         camera={{ position: [3, 5.056, 3], zoom: 122, near: 0.1, far: 40 }}
         frameloop="demand"
         dpr={[1, 1.5]}
-        fallback={t("board.unavailable")}
+        fallback={t("board.previewUnavailable")}
         onCreated={({ camera }) => camera.lookAt(0, 0.04, 0)}
       >
         <ContextHealth onUnavailable={onUnavailable} />

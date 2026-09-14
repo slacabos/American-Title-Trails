@@ -42,7 +42,9 @@ within a tile type, then repeated tiles are instanced across the board. A subtle
 shader grid aligns to tile edges and fades out beyond the board, using one
 additional draw call. The tile
 gallery uses one canvas for every tile and rotation. The current-tile preview is
-a second canvas, sharing the same model-building code and camera angle.
+a second canvas, sharing the same model-building code and camera angle. It stays
+mounted (hidden while claiming) and reuses its library across turns, avoiding
+repeated WebGL context creation and delayed teardown.
 
 The orthographic camera has a fixed 45-degree diagonal and 50-degree elevation.
 OrbitControls has rotation disabled. Automatic fitting follows board growth until
@@ -55,7 +57,9 @@ board object and tile map mutate in place. Rendering uses `frameloop="demand"`;
 camera and instance-matrix changes explicitly invalidate it, including preview
 rotation. Pixel density is capped at 1.5, with one
 1024-pixel directional shadow map per scene. Context-loss listeners and a graphics
-error boundary fall back to classic rendering without resetting the game.
+error boundary fall back to classic rendering without resetting the game. Preview
+failures fall back only within the preview; a healthy board stays in 3D. Context
+loss from a detached or inactive canvas during teardown is ignored.
 
 ## Verification
 

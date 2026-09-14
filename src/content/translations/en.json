@@ -348,6 +348,7 @@
     "2d": "2D classic",
     "loading": "Setting the tabletop…",
     "unavailable": "3D is unavailable on this device. Your game continues in 2D.",
+    "previewUnavailable": "3D tile preview is unavailable.",
     "hint3d": "Click a green space to place · Drag to pan · Scroll / pinch to zoom · Touch: tap, then confirm · R / Shift+R to rotate",
     "hint2d": "Click a green space to place · Drag to pan · Scroll to zoom · R / Shift+R to rotate",
     "cameraControls": "Camera controls",

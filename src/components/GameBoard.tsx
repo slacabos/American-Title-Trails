@@ -314,45 +314,47 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           <h2 className="m-0 mb-3 text-sm text-accent font-game">
             Current Tile
           </h2>
-          {gameState.currentTile ? (
-            <div className="bg-muted/30 rounded-xl p-4 flex flex-col items-center gap-3">
-              <CurrentTilePreview tile={gameState.currentTile} mode={renderMode} onUnavailable={handleGraphicsUnavailable} />
-              <div className="text-center text-xxs leading-tight font-game">
-                <strong>{gameState.currentTile.name}</strong>
-                <div className="opacity-80 mt-1">
-                  Phase: {gameState.phase.replace("_", " ")}
-                </div>
-              </div>
-              {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
-                <div className="flex flex-col gap-2 w-full mt-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      onClick={handleRotateClockwise}
-                      disabled={!gameState.currentTile}
-                      className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
-                      title="Rotate Clockwise"
-                      style={{ fontSize: "32px" }}
-                    >
-                      ⟳
-                    </Button>
-                    <Button
-                      onClick={handleRotateCounterClockwise}
-                      disabled={!gameState.currentTile}
-                      className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
-                      title="Rotate Counter-Clockwise"
-                      style={{ fontSize: "32px" }}
-                    >
-                      ⟲
-                    </Button>
+          <div className="bg-muted/30 rounded-xl p-4 flex flex-col items-center gap-3">
+            <CurrentTilePreview tile={gameState.currentTile} mode={renderMode} />
+            {gameState.currentTile ? (
+              <>
+                <div className="text-center text-xxs leading-tight font-game">
+                  <strong>{gameState.currentTile.name}</strong>
+                  <div className="opacity-80 mt-1">
+                    Phase: {gameState.phase.replace("_", " ")}
                   </div>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center text-xxs opacity-60 font-game">
-              No current tile
-            </div>
-          )}
+                {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
+                  <div className="flex flex-col gap-2 w-full mt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={handleRotateClockwise}
+                        disabled={!gameState.currentTile}
+                        className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
+                        title="Rotate Clockwise"
+                        style={{ fontSize: "32px" }}
+                      >
+                        ⟳
+                      </Button>
+                      <Button
+                        onClick={handleRotateCounterClockwise}
+                        disabled={!gameState.currentTile}
+                        className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
+                        title="Rotate Counter-Clockwise"
+                        style={{ fontSize: "32px" }}
+                      >
+                        ⟲
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center text-xxs opacity-60 font-game">
+                No current tile
+              </div>
+            )}
+          </div>
         </section>
 
         {showHelp && (
