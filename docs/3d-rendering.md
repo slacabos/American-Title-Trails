@@ -46,6 +46,9 @@ Claim markers keep these world-space anchors but render as a final transparent
 overlay with depth testing and depth writing disabled. Their solid colour and
 base ring stay visible through buildings, trees, and placement previews; farmers
 retain their lying-down shape. Markers do not cast misleading scenery shadows.
+Claim highlights clear on game-state changes, including when claiming or skipping
+removes a focused button without blur. Missing features and empty highlight
+polygons are ignored so stale selections cannot take down the 3D canvas.
 
 ## Rendering and interaction
 

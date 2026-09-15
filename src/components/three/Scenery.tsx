@@ -241,12 +241,15 @@ export function CellOutline({
 
 function HighlightPolygon({ points }: { points: Point[] }) {
   const geometry = useMemo(() => {
+    // Three's Shape constructor reads points[0], even for an empty array.
+    if (points.length < 3) return null;
     const shape = new THREE.Shape(
       points.map(([x, z]) => new THREE.Vector2(x, -z)),
     );
     return new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
   }, [points]);
-  useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => () => geometry?.dispose(), [geometry]);
+  if (!geometry) return null;
   return (
     <mesh geometry={geometry} position={[0, 0.008, 0]}>
       <meshBasicMaterial
@@ -272,6 +275,14 @@ export function FeatureHighlight({
   z: number;
 }) {
   const index = Number(feature.identifier?.split("_")[1] ?? 0);
+  // A stale selection can refer to a zone on the previous tile. Ignore it
+  // rather than drawing a phantom highlight or failing the whole 3D canvas.
+  if (
+    (feature.type === "costco" && !tile.costcoZones[index]) ||
+    (feature.type === "road" && !tile.roadConnections[index]) ||
+    (feature.type === "field" && !tile.fieldSegments[index]) ||
+    (feature.type === "mcdonalds" && !tile.hasMcDonalds)
+  ) return null;
   const anchor = featureAnchor(tile, feature);
   return (
     <group position={[x, 0.004, z]}>

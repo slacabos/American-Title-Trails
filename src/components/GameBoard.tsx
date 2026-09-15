@@ -107,6 +107,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
   const updateClaimableFeatures = useCallback(
     (gameInstance: Game, state: GameState) => {
+      // Claiming/skipping unmounts the hovered or focused button without
+      // necessarily firing mouseleave/blur. Never carry its selection forward.
+      setHighlightedFeature(undefined);
       if (state.phase === GamePhase.CLAIM_FEATURE) {
         const features = gameInstance.getClaimableFeaturesForCurrentTurn();
         setClaimableFeatures(features);

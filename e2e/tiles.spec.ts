@@ -54,3 +54,15 @@ test("all 16 tile types render in every orientation", async ({ page }, testInfo)
   }
   expect(errors).toEqual([]);
 });
+
+
+test("feature highlights tolerate stale selections and empty polygons on every tile and rotation", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  for (let group = 0; group < 4; group++) {
+    await page.goto(`/e2e/tiles.html?page=${group}&highlights`);
+    await expect(page.locator("canvas")).toHaveCount(4);
+    await expect.poll(() => page.evaluate(() => window.tileSceneryTest.rendered())).toBe(true);
+  }
+  expect(errors).toEqual([]);
+});

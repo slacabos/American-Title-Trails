@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { Canvas, _roots } from "@react-three/fiber";
 import { MeshStandardMaterial, WebGLRenderTarget } from "three";
-import { Daylight, Follower, Scenery, SceneryProvider } from "../src/components/three/Scenery";
+import { Daylight, FeatureHighlight, Follower, Scenery, SceneryProvider } from "../src/components/three/Scenery";
 import { buildDeck, getStartTile } from "../src/tileLibrary";
 import { SceneryLibrary } from "../src/rendering/scenery";
 import { featureAnchor, type Point } from "../src/rendering/tileLayout";
@@ -121,6 +121,28 @@ createRoot(document.getElementById("root")!).render(
               </group>
             )}
             </group>
+            {params.has("highlights") && rotations.flatMap((rotation) => {
+              const rotated = tile.rotate(rotation);
+              // Include stale selections from other tiles and an empty custom zone.
+              const selections: ClaimableFeature[] = [
+                ...features(rotated),
+                { type: "costco", identifier: "costco_99" },
+                { type: "costco", identifier: "costco_invalid" },
+                { type: "road", identifier: "road_99" },
+                { type: "field", identifier: "field_99" },
+              ];
+              return <group key={rotation}>
+                {selections.map((feature, i) => <FeatureHighlight
+                  key={i} tile={rotated} feature={feature}
+                  x={(rotation - 1.5) * 1.5} z={0}
+                />)}
+                <FeatureHighlight
+                  tile={{ ...rotated, costcoZones: [{ id: "empty", segments: [] }] }}
+                  feature={{ type: "costco", identifier: "costco_0" }}
+                  x={(rotation - 1.5) * 1.5} z={0}
+                />
+              </group>;
+            })}
             {params.has("markers") && rotations.flatMap((rotation) => {
               const rotated = tile.rotate(rotation);
               return features(rotated).map((feature) => {
