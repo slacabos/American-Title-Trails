@@ -19,6 +19,19 @@ claim resolution from `ITile`. `scenery.ts` owns building layouts, vegetation,
 fences, materials, and procedural ground/sign textures. Shopping portals share a
 half-tile width; roads share a fixed width and tangent-aligned endpoints. Buildings
 sit within their tile, and separate Costco zones retain separate paved areas.
+`warehouseLayout.ts` groups Costco zones by their actual edge connections. Each
+tile contributes a roof section; joined portals remove both internal walls and
+curbs. `warehouseGeometry.ts` batches the complete board's warehouses by material,
+with continuous roof seams, exterior red fascia, one main entrance/sign per
+complex, and loading bays on larger complexes. Entrance selection excludes
+enclosed courtyards. Parking follows the perimeter and leaves road entrances clear.
+The main board, current-tile preview, and placement ghost use the same footprints.
+Warehouse geometry changes only when placed Costco topology changes, and its old
+buffers are disposed on replacement. Fields and separately defined Costco zones
+retain their original connections and claim anchors.
+
+Grass has subtle meadow patches, trees vary in size and form small clusters,
+and through-roads meander gently while retaining matching edge positions/tangents.
 Road shoulders, curbs, and asphalt are painted across the whole network in
 separate passes so intersections have no internal borders. Lane markings leave
 junction centers clear, with stop lines on incoming lanes. Asphalt extends into
@@ -78,6 +91,10 @@ loss from a detached or inactive canvas during teardown is ignored.
 - The development-only `/e2e/tiles.html?page=0` gallery has four pages (`0`–`3`)
   showing all 16 tile types at four readable orientations. Playwright saves these
   review sheets in its test artifacts.
+- `/e2e/warehouses.html?example=0` through `4` shows the straight, L-shaped,
+  four-tile courtyard, separate-zone, and gas-station prototypes. Add/remove
+  controls exercise live joins and GPU geometry cleanup. These layouts are also
+  available in the Connected Warehouses Storybook story.
 
 The headless Linux Chromium/SwiftShader check measures draw calls, triangles,
 and idle-frame stability; software-renderer timing is not a hardware FPS benchmark.

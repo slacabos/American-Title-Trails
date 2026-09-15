@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
+import { warehouseLayout, warehouseLayoutKey } from "@/rendering/warehouseLayout";
 import type { ITile } from "@/interfaces/ITile";
 import type { ClaimableFeature, TileRecord } from "@/types";
 import { SceneryLibrary, SceneryPart } from "@/rendering/scenery";
@@ -95,7 +96,28 @@ export function Scenery({ records }: { records: TileRecord[] }) {
           ))}
         </group>
       ))}
+      <Warehouses records={records} />
     </>
+  );
+}
+
+function Warehouses({ records }: { records: TileRecord[] }) {
+  return <WarehouseModel key={warehouseLayoutKey(records)} records={records} />;
+}
+
+function WarehouseModel({ records }: { records: TileRecord[] }) {
+  const library = useContext(LibraryContext)!;
+  // The parent key changes only when placed warehouse topology changes.
+  const [model] = useState(
+    () => library.createWarehouses(warehouseLayout(records)),
+  );
+  useEffect(() => () => model.parts.forEach((part) => part.geometry.dispose()), [model]);
+  return (
+    <group dispose={null} name="connected-warehouses">
+      {model.parts.map((part, i) => (
+        <mesh key={i} geometry={part.geometry} material={part.material} castShadow receiveShadow />
+      ))}
+    </group>
   );
 }
 
@@ -109,7 +131,7 @@ export function GhostTile({
   z: number;
 }) {
   const library = useContext(LibraryContext)!;
-  const model = library.get(tile);
+  const model = library.getGhost(tile);
   const materials = useMemo(
     () =>
       model.parts.map((part) => {

@@ -5,6 +5,7 @@ import { Board } from "@/board";
 import { buildDeck, getStartTile } from "@/tileLibrary";
 import { GamePhase, GameState } from "@/types";
 import { positionKey } from "@/rendering/tileLayout";
+import { warehouseExamples } from "@/test/fixtures/warehouseExamples";
 
 function populatedState(count: number): GameState {
   const game = new Game(
@@ -50,6 +51,17 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const ConnectedScenery: Story = {};
 export const FullDeck: Story = { args: { state: populatedState(52) } };
+
+const warehouseBoard = new Board();
+warehouseExamples.forEach((example, i) => {
+  example.records.forEach((record) => {
+    const position = { x: record.position.x + i * 3.5, y: record.position.y };
+    warehouseBoard.tiles.set(positionKey(position), { tile: record.tile, position });
+  });
+});
+export const ConnectedWarehouses: Story = {
+  args: { state: { ...populatedState(1), board: warehouseBoard, lastPlacedPosition: undefined } },
+};
 
 const gallery = new Board();
 const unique = [

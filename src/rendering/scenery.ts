@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { ITile } from "@/interfaces/ITile";
+import { buildWarehouses } from "./warehouseGeometry";
+import { WarehouseComplex, warehouseLayout } from "./warehouseLayout";
 import {
   canonicalTile,
   CORNERS,
@@ -19,25 +21,13 @@ interface BuildingLayout {
   width?: number;
   depth?: number;
 }
-// Art direction belongs here; tile definitions continue to own the rules.
-const BUILDINGS: Record<string, BuildingLayout[]> = {
-  "starter-proper": [{ x: 0.02, z: -0.39, width: 0.32, depth: 0.14 }],
-  "costco-straight": [{ x: -0.025, z: -0.06 }],
-  "costco-corner": [{ x: 0.14, z: -0.15, yaw: -Math.PI / 4 }],
-  "costco-road": [{ x: 0.15, z: -0.17, yaw: -Math.PI / 4, width: 0.27 }],
-  "costco-cap": [{ x: 0, z: -0.15 }],
-  "road-costco-split": [
-    { x: 0, z: -0.39, depth: 0.13 },
-    { x: -0.39, z: 0, depth: 0.13, yaw: Math.PI / 2 },
-  ],
-  "costco-complex-l": [{ x: 0.06, z: -0.02, width: 0.34, depth: 0.24 }],
-  "costco-peninsula": [{ x: 0.14, z: 0, yaw: -Math.PI / 2 }],
-  "costco-separate-dual": [
-    { x: 0, z: -0.39, depth: 0.13 },
-    { x: 0, z: 0.39, depth: 0.13, yaw: Math.PI },
-  ],
-  "costco-mega-complex": [{ x: 0, z: -0.06, width: 0.45, depth: 0.31 }],
-  "costco-bridge": [{ x: -0.04, z: 0, width: 0.34, depth: 0.19 }],
+const scenerySeed = (id: string) => Array.from(id).reduce(
+  (seed, character) => (seed * 31 + character.charCodeAt(0)) >>> 0, 177,
+);
+const PENNANTS: Record<string, Point> = {
+  "costco-road": [0.26, -0.2],
+  "costco-complex-l": [0.17, -0.05],
+  "costco-mega-complex": [0.11, -0.09],
 };
 
 // These fields are separate in the rules even where no road divides the grass.
@@ -75,6 +65,53 @@ export class SceneryLibrary {
   private models = new Map<string, TileModel>();
   private materials = new Map<string, THREE.Material>();
   private textures = new Set<THREE.Texture>();
+  private ghosts = new Map<string, TileModel>();
+  private ghostGeometry = new Set<THREE.BufferGeometry>();
+
+  /** Board geometry is owned by its component; shared materials live here. */
+  createWarehouses(layout: WarehouseComplex[]): TileModel {
+    let roof = this.materials.get("warehouse-roof");
+    if (!roof) {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 256;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "#9caeaf";
+      ctx.fillRect(0, 0, 256, 256);
+      for (let x = 0; x < 256; x += 16) {
+        ctx.fillStyle = "#82999b";
+        ctx.fillRect(x, 0, 1, 256);
+        ctx.fillStyle = "#b9c7c6";
+        ctx.fillRect(x + 1, 0, 1, 256);
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.anisotropy = 4;
+      this.textures.add(texture);
+      roof = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.85 });
+      this.materials.set("warehouse-roof", roof);
+    }
+    return buildWarehouses(layout, {
+      roof, wall: this.material("#e4ddca"), trim: this.material("#d9d4be"),
+      fascia: this.material("#c5493f"), glass: this.material("#254c58"),
+      metal: this.material("#667b7e"), marking: this.material("#eef0dd"),
+      sign: this.label("costco"),
+    });
+  }
+
+  /** A prospective tile shows a complete standalone section before placement. */
+  getGhost(tile: ITile): TileModel {
+    const key = sceneryKey(tile);
+    const cached = this.ghosts.get(key);
+    if (cached) return cached;
+    const warehouse = this.createWarehouses(warehouseLayout([
+      { tile: canonicalTile(tile), position: { x: 0, y: 0 } },
+    ]));
+    warehouse.parts.forEach((part) => this.ghostGeometry.add(part.geometry));
+    const model = { parts: [...this.get(tile).parts, ...warehouse.parts] };
+    this.ghosts.set(key, model);
+    return model;
+  }
 
   private material(color: string): THREE.Material {
     let material = this.materials.get(color);
@@ -175,15 +212,15 @@ export class SceneryLibrary {
       new THREE.Euler(-Math.PI / 2, 0, 0),
     );
 
-    const building = (layout: BuildingLayout, restaurant = false) => {
+    const building = (layout: BuildingLayout) => {
       const {
         x,
         z,
         yaw = 0,
-        width = restaurant ? 0.36 : 0.3,
-        depth = restaurant ? 0.23 : 0.18,
+        width = 0.36,
+        depth = 0.23,
       } = layout;
-      const height = restaurant ? 0.105 : 0.15;
+      const height = 0.105;
       const local = (lx: number, ly: number, lz: number) =>
         new THREE.Vector3(
           x + lx * Math.cos(yaw) + lz * Math.sin(yaw),
@@ -210,7 +247,7 @@ export class SceneryLibrary {
         width,
         height,
         depth,
-        restaurant ? "#e9d6b7" : "#e4ddca",
+        "#e9d6b7",
       );
       block(
         0,
@@ -219,7 +256,7 @@ export class SceneryLibrary {
         width + 0.018,
         0.018,
         depth + 0.018,
-        restaurant ? "#c64032" : "#aeb8b4",
+        "#c64032",
       );
       block(
         0,
@@ -228,7 +265,7 @@ export class SceneryLibrary {
         width * 0.94,
         0.025,
         0.008,
-        restaurant ? "#bf3d32" : "#c5493f",
+        "#bf3d32",
       );
       for (const sign of [-1, 1]) {
         block(
@@ -253,7 +290,7 @@ export class SceneryLibrary {
       // Roof lettering remains legible from the fixed tabletop camera.
       add(
         new THREE.PlaneGeometry(width * 0.9, depth * 0.62),
-        this.label(restaurant ? "mcdonalds" : "costco"),
+        this.label("mcdonalds"),
         local(0, height + 0.032, 0),
         new THREE.Euler(-Math.PI / 2, 0, yaw),
       );
@@ -266,30 +303,9 @@ export class SceneryLibrary {
         0.036,
         "#8e9a97",
       );
-      if (!restaurant)
-        block(
-          width * 0.3,
-          height + 0.047,
-          -depth * 0.27,
-          0.031,
-          0.027,
-          0.027,
-          "#8e9a97",
-        );
     };
-    (
-      BUILDINGS[base.id] ??
-      base.costcoZones.map((zone) => {
-        const edge = zone.segments.find((part) => part !== "center");
-        return {
-          x: edge === "east" ? 0.34 : edge === "west" ? -0.34 : 0,
-          z: edge === "north" ? -0.34 : edge === "south" ? 0.34 : 0,
-        };
-      })
-    ).forEach((layout) => building(layout));
-
     if (base.hasMcDonalds) {
-      building({ x: -0.07, z: -0.075 }, true);
+      building({ x: -0.07, z: -0.075 });
       box(0.3, 0.14, -0.27, 0.016, 0.28, 0.016, "#e4d8b7");
       box(0.3, 0.24, -0.27, 0.14, 0.075, 0.025, "#bf3a2e");
       for (const x of [0.271, 0.329]) {
@@ -322,22 +338,22 @@ export class SceneryLibrary {
     }
 
     // Bonus pennants become gold roadside markers; the gas-station tile also gets a canopy.
-    base.costcoZones.forEach((zone, i) => {
+    base.costcoZones.forEach((zone) => {
       if (!zone.hasPennant) return;
-      const layout = (BUILDINGS[base.id] ?? [])[i] ?? { x: 0, z: 0 };
+      const [x, z] = PENNANTS[base.id] ?? [0.11, -0.03];
       box(
-        layout.x + 0.11,
+        x,
         0.23,
-        layout.z - 0.03,
+        z,
         0.008,
         0.14,
         0.008,
         "#b89a51",
       );
       box(
-        layout.x + 0.14,
+        x + 0.03,
         0.28,
-        layout.z - 0.03,
+        z,
         0.065,
         0.044,
         0.009,
@@ -376,20 +392,22 @@ export class SceneryLibrary {
     ];
     corners.forEach((corner, i) => {
       const [x, z] = CORNERS[corner];
+      const variation = (scenerySeed(base.id) + i * 137) >>> 0;
       if (
+        (i > 0 && variation % 5 === 0) ||
         zones.some((polygon) => insidePolygon([x, z], polygon)) ||
         roads.some(([rx, rz]) => Math.hypot(rx - x, rz - z) < 0.19)
       )
         return;
-      const treeX = x + (i % 2 ? 0.028 : -0.018);
-      const treeZ = z - 0.015;
+      const treeX = x + ((variation % 17) / 16 - 0.5) * 0.06;
+      const treeZ = z + (((variation >>> 4) % 17) / 16 - 0.5) * 0.06;
       add(
         new THREE.CylinderGeometry(0.01, 0.015, 0.09, 5),
         this.material("#826a4b"),
         new THREE.Vector3(treeX, 0.043, treeZ),
       );
       add(
-        new THREE.IcosahedronGeometry(0.062 + (i % 2) * 0.008, 1),
+        new THREE.IcosahedronGeometry(0.055 + (variation % 4) * 0.006, 1),
         this.material(i % 2 ? "#65934d" : "#477d50"),
         new THREE.Vector3(treeX, 0.12, treeZ),
       );
@@ -398,6 +416,16 @@ export class SceneryLibrary {
         this.material("#88a75a"),
         new THREE.Vector3(x - 0.065, 0.025, z + 0.027),
       );
+      if (variation % 3 === 0) {
+        const sapling: Point = [treeX - Math.sign(x) * 0.09, treeZ];
+        if (!zones.some((polygon) => insidePolygon(sapling, polygon)) &&
+          !roads.some(([rx, rz]) => Math.hypot(rx - sapling[0], rz - sapling[1]) < 0.15)) {
+          add(new THREE.CylinderGeometry(0.006, 0.01, 0.065, 5), this.material("#826a4b"),
+            new THREE.Vector3(sapling[0], 0.032, sapling[1]));
+          add(new THREE.IcosahedronGeometry(0.042, 1), this.material("#65934d"),
+            new THREE.Vector3(sapling[0], 0.088, sapling[1]));
+        }
+      }
     });
 
     const parts: SceneryPart[] = [];
@@ -416,10 +444,10 @@ export class SceneryLibrary {
     canvas.width = 512;
     canvas.height = 512;
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#91ac70";
+    ctx.fillStyle = "#83a365";
     ctx.fillRect(0, 0, 512, 512);
     // Deterministic, fine-grained grass texture; no runtime random scenery changes.
-    let seed = 177;
+    let seed = scenerySeed(tile.id);
     for (let i = 0; i < 2400; i++) {
       seed = (seed * 1664525 + 1013904223) >>> 0;
       const x = seed % 512;
@@ -427,6 +455,19 @@ export class SceneryLibrary {
       const y = seed % 512;
       ctx.fillStyle = i % 2 ? "#819e642c" : "#bfcb902c";
       ctx.fillRect(x, y, 2, 2);
+    }
+    // Soft meadow patches vary by tile type, fading before the matching edges.
+    for (let i = 0; i < 18; i++) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const x = 80 + seed % 352;
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const y = 80 + seed % 352;
+      for (let radius = 64; radius >= 16; radius -= 16) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = i % 2 ? "#547b4707" : "#c1c98107";
+        ctx.fill();
+      }
     }
     ctx.save();
     ctx.translate(256, 256);
@@ -462,25 +503,6 @@ export class SceneryLibrary {
       path(polygon, true);
       ctx.fillStyle = "#b6bbad";
       ctx.fill();
-      ctx.save();
-      path(polygon, true);
-      ctx.clip();
-      ctx.strokeStyle = "#deded0";
-      ctx.lineWidth = 0.007;
-      path(polygon, true);
-      ctx.stroke();
-      ctx.strokeStyle = "#eef0dd";
-      ctx.lineWidth = 0.004;
-      for (let y = -0.42; y < 0.5; y += 0.19) {
-        for (let x = -0.46; x < 0.49; x += 0.065) {
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x, y + 0.085);
-          ctx.lineTo(x + 0.052, y + 0.085);
-          ctx.stroke();
-        }
-      }
-      ctx.restore();
     });
     if (tile.hasMcDonalds) {
       ctx.fillStyle = "#b8b9a6";
@@ -547,6 +569,7 @@ export class SceneryLibrary {
 
   /** Release the canvas's geometry, materials, and textures on unmount. */
   dispose(): void {
+    this.ghostGeometry.forEach((geometry) => geometry.dispose());
     this.models.forEach((model) =>
       model.parts.forEach((part) => part.geometry.dispose()),
     );

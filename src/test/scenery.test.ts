@@ -20,7 +20,7 @@ describe("procedural scenery resources", () => {
     "builds finite geometry within the %s tile footprint",
     (_, tile) => {
       const library = new SceneryLibrary();
-      const model = library.get(tile);
+      const model = library.getGhost(tile);
       expect(model.parts.length).toBeGreaterThan(1);
       for (const part of model.parts) {
         const vertices = part.geometry.getAttribute("position");

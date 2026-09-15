@@ -66,17 +66,21 @@ export function roadPath(connection: string[]): Point[] {
   const ends = connection.filter((part) => part !== "center");
   const start = PORTALS[ends[0]] ?? PORTALS.center;
   const end = PORTALS[ends[1]] ?? PORTALS.center;
+  const straight = ends.length === 2 && start[0] === -end[0] && start[1] === -end[1];
   // A quadratic through the center produces tangent-aligned, seamless corners.
   return Array.from({ length: 25 }, (_, i) => {
     const t = i / 24;
+    // A gentle meander with zero displacement and tangent change at the edges.
+    const bend = straight && i > 0 && i < 24
+      ? 0.025 * Math.sin(2 * Math.PI * t) * Math.sin(Math.PI * t) ** 2 : 0;
     return [
-      (1 - t) ** 2 * start[0] + t ** 2 * end[0],
-      (1 - t) ** 2 * start[1] + t ** 2 * end[1],
+      (1 - t) ** 2 * start[0] + t ** 2 * end[0] - start[1] * 2 * bend,
+      (1 - t) ** 2 * start[1] + t ** 2 * end[1] + start[0] * 2 * bend,
     ] as Point;
   });
 }
 
-function hull(points: Point[]): Point[] {
+export function hull(points: Point[]): Point[] {
   const sorted = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const cross = (a: Point, b: Point, c: Point) =>
     (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
