@@ -1,3 +1,4 @@
+import { hasRiverBridge, nearRiver, paintRiver, restaurantPosition, tileRoadPath } from "./riverLayout";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { ITile } from "@/interfaces/ITile";
@@ -9,7 +10,6 @@ import {
   insidePolygon,
   Point,
   ROAD_WIDTH,
-  roadPath,
   sceneryKey,
   zonePolygon,
 } from "./tileLayout";
@@ -305,9 +305,11 @@ export class SceneryLibrary {
       );
     };
     if (base.hasMcDonalds) {
-      building({ x: -0.07, z: -0.075 });
-      box(0.3, 0.14, -0.27, 0.016, 0.28, 0.016, "#e4d8b7");
-      box(0.3, 0.24, -0.27, 0.14, 0.075, 0.025, "#bf3a2e");
+      const [rx, rz] = restaurantPosition(base);
+      building({ x: rx, z: rz, ...(base.river ? { width: 0.28, depth: 0.17 } : {}) });
+      const signZ = base.id === "river-lake" ? 0.04 : -0.33;
+      box(0.3, 0.14, base.river ? signZ : -0.27, 0.016, 0.28, 0.016, "#e4d8b7");
+      box(0.3, 0.24, base.river ? signZ : -0.27, 0.14, 0.075, 0.025, "#bf3a2e");
       for (const x of [0.271, 0.329]) {
         const arc = new THREE.EllipseCurve(
           x,
@@ -330,7 +332,7 @@ export class SceneryLibrary {
           add(
             geometry,
             this.material("#ffd35b"),
-            new THREE.Vector3((a.x + b.x) / 2, (a.y + b.y) / 2, -0.25),
+            new THREE.Vector3((a.x + b.x) / 2, (a.y + b.y) / 2, base.river ? signZ + 0.02 : -0.25),
             new THREE.Euler(0, 0, -Math.atan2(b.x - a.x, b.y - a.y)),
           );
         }
@@ -369,7 +371,7 @@ export class SceneryLibrary {
     }
 
     const zones = base.costcoZones.map((_, i) => zonePolygon(base, i));
-    const roads = base.roadConnections.flatMap(roadPath);
+    const roads = base.roadConnections.flatMap(connection => tileRoadPath(base, connection));
     (FIELD_FENCES[base.id] ?? []).forEach(([a, b]) => {
       const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
       const steps = Math.ceil(length / 0.065);
@@ -387,6 +389,40 @@ export class SceneryLibrary {
         box(x, 0.03, z, length / steps, 0.009, 0.008, "#af9d71", yaw);
       }
     });
+    if (hasRiverBridge(base)) {
+      const horizontal = base.id === "river-road-bridge";
+      const halfLength = horizontal ? 0.36 : 0.30;
+      const heightAt = (t: number) => 0.012 + 0.065 * Math.sin(Math.PI * t);
+      const vertices: number[] = [];
+      const indices: number[] = [];
+      for (let i = 0; i <= 16; i++) {
+        const t = i / 16;
+        const along = -halfLength + t * 2 * halfLength;
+        for (const side of [-1, 1]) vertices.push(horizontal ? along : side * ROAD_WIDTH / 2, heightAt(t), horizontal ? side * ROAD_WIDTH / 2 : along);
+        if (i < 16) { const k = i * 2; indices.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
+        if (i < 16) {
+          const next = -halfLength + (i + 1) / 16 * 2 * halfLength;
+          for (const side of [-1, 1]) {
+            const rail = ROAD_WIDTH / 2 + 0.012;
+            box(horizontal ? (along + next) / 2 : side * rail, heightAt((i + 0.5) / 16) + 0.035,
+              horizontal ? side * rail : (along + next) / 2,
+              horizontal ? next - along + 0.002 : 0.012, 0.027, horizontal ? 0.012 : next - along + 0.002, "#d8d5bd");
+          }
+          if (i % 3 === 0) box(horizontal ? along : 0, heightAt(t) + 0.002, horizontal ? 0 : along,
+            horizontal ? 0.035 : 0.004, 0.004, horizontal ? 0.004 : 0.035, "#f2d786");
+        }
+      }
+      const deck = new THREE.BufferGeometry();
+      deck.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+      deck.setAttribute("uv", new THREE.Float32BufferAttribute(new Array(vertices.length / 3 * 2).fill(0), 2));
+      deck.setIndex(indices);
+      deck.computeVertexNormals();
+      // The ribbon's winding depends on the road axis.
+      const material = this.material("#626c69");
+      material.side = THREE.DoubleSide;
+      add(deck, material, new THREE.Vector3());
+    }
+
     const corners = [
       ...new Set(base.fieldSegments.flatMap((segment) => segment.corners)),
     ];
@@ -395,6 +431,8 @@ export class SceneryLibrary {
       const variation = (scenerySeed(base.id) + i * 137) >>> 0;
       if (
         (i > 0 && variation % 5 === 0) ||
+        nearRiver(base, [x, z], 0.10) ||
+        (base.river && base.hasMcDonalds && Math.hypot(x - restaurantPosition(base)[0], z - restaurantPosition(base)[1]) < 0.28) ||
         zones.some((polygon) => insidePolygon([x, z], polygon)) ||
         roads.some(([rx, rz]) => Math.hypot(rx - x, rz - z) < 0.19)
       )
@@ -418,7 +456,7 @@ export class SceneryLibrary {
       );
       if (variation % 3 === 0) {
         const sapling: Point = [treeX - Math.sign(x) * 0.09, treeZ];
-        if (!zones.some((polygon) => insidePolygon(sapling, polygon)) &&
+        if (!nearRiver(base, sapling, 0.06) && !zones.some((polygon) => insidePolygon(sapling, polygon)) &&
           !roads.some(([rx, rz]) => Math.hypot(rx - sapling[0], rz - sapling[1]) < 0.15)) {
           add(new THREE.CylinderGeometry(0.006, 0.01, 0.065, 5), this.material("#826a4b"),
             new THREE.Vector3(sapling[0], 0.032, sapling[1]));
@@ -477,7 +515,7 @@ export class SceneryLibrary {
       points.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
       if (close) ctx.closePath();
     };
-    const roads = tile.roadConnections.map(roadPath);
+    const roads = tile.roadConnections.map(connection => tileRoadPath(tile, connection));
     const zones = tile.costcoZones.map((_, index) => zonePolygon(tile, index));
     const approaches = roads.filter((points) =>
       points[points.length - 1].every((coordinate) => coordinate === 0),
@@ -504,7 +542,7 @@ export class SceneryLibrary {
       ctx.fillStyle = "#b6bbad";
       ctx.fill();
     });
-    if (tile.hasMcDonalds) {
+    if (tile.hasMcDonalds && !tile.river) {
       ctx.fillStyle = "#b8b9a6";
       ctx.fillRect(-0.3, -0.25, 0.58, 0.51);
       ctx.strokeStyle = "#f4e4bf";
@@ -515,6 +553,11 @@ export class SceneryLibrary {
         ctx.lineTo(x, 0.235);
         ctx.stroke();
       }
+    }
+    if (tile.hasMcDonalds && tile.river) {
+      const [x, z] = restaurantPosition(tile);
+      ctx.fillStyle = "#b8b9a6";
+      ctx.fillRect(x - 0.18, z - 0.12, 0.36, 0.26);
     }
     roadLayer("#626c69", ROAD_WIDTH);
     ctx.lineWidth = 0.0035;
@@ -559,6 +602,7 @@ export class SceneryLibrary {
         ctx.stroke();
       });
     }
+    paintRiver(ctx, tile);
     ctx.restore();
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;

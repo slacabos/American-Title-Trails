@@ -3,6 +3,7 @@ import { BoardScene } from "./BoardScene";
 import { Game } from "@/game";
 import { Board } from "@/board";
 import { buildDeck, getStartTile } from "@/tileLibrary";
+import { buildRiverDeck, getRiverSource, getRiverLake } from "@/riverLibrary";
 import { GamePhase, GameState } from "@/types";
 import { positionKey } from "@/rendering/tileLayout";
 import { warehouseExamples } from "@/test/fixtures/warehouseExamples";
@@ -50,7 +51,7 @@ const meta: Meta<typeof BoardScene> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const ConnectedScenery: Story = {};
-export const FullDeck: Story = { args: { state: populatedState(52) } };
+export const FullDeck: Story = { args: { state: populatedState(Infinity) } };
 
 const warehouseBoard = new Board();
 warehouseExamples.forEach((example, i) => {
@@ -66,7 +67,7 @@ export const ConnectedWarehouses: Story = {
 const gallery = new Board();
 const unique = [
   ...new Map(
-    [getStartTile(), ...buildDeck()].map((tile) => [tile.id, tile]),
+    [getStartTile(), ...buildDeck(), getRiverSource(), ...buildRiverDeck(), getRiverLake()].map((tile) => [tile.id, tile]),
   ).values(),
 ];
 unique.forEach((tile, index) => {
@@ -91,7 +92,7 @@ export const AllTilesAndRotations: Story = {
     docs: {
       description: {
         story:
-          "All 16 tile types in library order. Each group of four shows 0°, 90°, 180°, and 270° clockwise rotations. The entire gallery shares one WebGL canvas.",
+          "All 28 land and river tile types in library order. Each group of four shows 0°, 90°, 180°, and 270° clockwise rotations. The entire gallery shares one WebGL canvas.",
       },
     },
   },

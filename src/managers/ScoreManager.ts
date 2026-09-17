@@ -4,6 +4,7 @@ import {
   ScoreBreakdown,
   ScoreCategory,
   TerrainType,
+  FieldCorner,
 } from "../types";
 import type { IBoard } from "../interfaces/IBoard";
 import { GAME_RULES } from "../constants/gameRules";
@@ -82,30 +83,22 @@ export class ScoreManager {
     // Score incomplete McDonald's features (1 point per tile in 3x3 area)
     this.scoreIncompleteMcDonaldsFeatures(players, board, scoreBreakdown);
 
-    // Score other incomplete features using simplified scoring
-    const claims = board.getFeatureClaims();
-    claims.forEach((claim) => {
-      // Skip field claims - farmers are scored separately
-      if (
-        claim.type === "costco" ||
-        claim.type === "field" ||
-        claim.type === "mcdonalds"
-      )
-        return;
-
-      const player = players.find((p) => claim.players.includes(p.id));
-      if (!player) return;
-
-      // Other features: simplified final scoring - 1 point per tile
-      const category = this.getIncompleteClaimCategory(claim.type);
-      this.awardPoints(
-        players,
-        player.id,
-        GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE,
-        category,
-        scoreBreakdown
-      );
-    });
+    // Count each connected road once, including bridges and source roads.
+    const roads = new Set<string>();
+    for (const claim of board.getFeatureClaims().filter(claim => claim.type === "road")) {
+      const [key, edge] = claim.edge.split(":");
+      const position = this.parsePositionKey(key);
+      const tile = board.getTile(position)?.tile;
+      const connection = tile?.roadConnections.find(connection => connection.includes(edge));
+      if (!connection) continue;
+      const feature = board.traceRoadFeature(position, connection, new Set());
+      const id = [...feature.edges].sort().join("|");
+      if (roads.has(id)) continue;
+      roads.add(id);
+      const claimants = board.getFeatureClaimants(feature);
+      for (const playerId of this.findMajorityHolders(this.countFollowersPerPlayer(claimants)))
+        this.awardPoints(players, playerId, feature.tiles.size * GAME_RULES.ROAD_POINTS_PER_TILE, "incomplete_road", scoreBreakdown);
+    }
 
     // Score farmer features (fields with farmers get points for adjacent completed Costcos)
     this.scoreFarmerFeatures(players, board, scoreBreakdown);
@@ -198,34 +191,17 @@ export class ScoreManager {
       pennants: number;
       edges: Set<string>;
     }> = [];
-    const processedTiles = new Set<string>();
-
-    // Iterate through all tiles to find Costco features
-    board.getAllTiles().forEach((tileRecord: any, positionKey: string) => {
-      if (processedTiles.has(positionKey)) return;
-
-      const position = this.parsePositionKey(positionKey);
-      tileRecord.tile.costcoZones.forEach((zone: any) => {
-        const visited = new Set<string>();
-        const feature = board.traceCostcoFeature(
-          position,
-          zone,
-          visited
-        );
-
-        // Only include if feature is incomplete
-        if (!board.isCostcoComplete(feature)) {
-          // Mark all tiles in this feature as processed
-          feature.tiles.forEach((tileKey: string) =>
-            processedTiles.add(tileKey)
-          );
-          allFeatures.push({
-            tiles: feature.tiles,
-            pennants: feature.pennants || 0,
-            edges: feature.edges,
-          });
-        }
-      });
+    const processed = new Set<string>();
+    board.getAllTiles().forEach(({ tile, position }) => {
+      for (const zone of tile.costcoZones) {
+        const feature = board.traceCostcoFeature(position, zone, new Set());
+        const id = [...feature.edges].sort().join("|");
+        if (processed.has(id)) continue;
+        processed.add(id);
+        if (!board.isCostcoComplete(feature)) allFeatures.push({
+          tiles: feature.tiles, edges: feature.edges, pennants: feature.pennants || 0,
+        });
+      }
     });
 
     return allFeatures;
@@ -293,7 +269,7 @@ export class ScoreManager {
 
       // Find the field segment that contains this corner
       const fieldSegment = tileRecord.tile.fieldSegments.find((fs) =>
-        fs.corners.includes(corner as any)
+        fs.corners.includes(corner as FieldCorner)
       );
       if (!fieldSegment) return;
 
@@ -305,7 +281,7 @@ export class ScoreManager {
       );
 
       // Create a unique key for this field feature
-      const fieldKey = Array.from(fieldFeature.tiles).sort().join("|");
+      const fieldKey = Array.from(fieldFeature.edges).sort().join("|");
       if (processedFields.has(fieldKey)) return;
       processedFields.add(fieldKey);
 
@@ -373,14 +349,4 @@ export class ScoreManager {
     }
   }
 
-  private getIncompleteClaimCategory(type: string): ScoreCategory | undefined {
-    switch (type) {
-      case "road":
-        return "incomplete_road";
-      case "mcdonalds":
-        return "incomplete_mcdonalds";
-      default:
-        return undefined;
-    }
-  }
 }

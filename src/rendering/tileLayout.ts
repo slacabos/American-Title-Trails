@@ -1,3 +1,4 @@
+import { restaurantPosition, tileRoadPath } from "./riverLayout";
 import type { ITile } from "@/interfaces/ITile";
 import type {
   ClaimableFeature,
@@ -56,6 +57,7 @@ export function sceneryKey(tile: ITile): string {
   return JSON.stringify([
     base.id,
     base.center,
+    base.river,
     base.roadConnections,
     base.costcoZones,
     base.fieldSegments,
@@ -103,6 +105,10 @@ export function hull(points: Point[]): Point[] {
 export function zonePolygon(tile: ITile, index: number): Point[] {
   const zone = tile.costcoZones[index];
   if (!zone) return [];
+  if (tile.id === "river-costco-bend") {
+    return hull([[-0.25, -0.5], [0.25, -0.5], [0.5, -0.25], [0.5, 0.25], [0, 0]])
+      .map(point => rotatePoint(point, tile.orientation));
+  }
   const edges = zone.segments.filter(
     (segment): segment is Direction => segment !== "center",
   );
@@ -152,7 +158,7 @@ export function insidePolygon([x, y]: Point, polygon: Point[]): boolean {
 export function featureAnchor(tile: ITile, feature: ClaimableFeature): Point {
   const index = Number(feature.identifier?.split("_")[1] ?? 0);
   if (feature.type === "road")
-    return roadPath(tile.roadConnections[index] ?? ["center"])[12];
+    return tileRoadPath(tile, tile.roadConnections[index] ?? ["center"])[12];
   if (feature.type === "field")
     return CORNERS[tile.fieldSegments[index]?.corners[0]] ?? [0, 0];
   if (feature.type === "costco") {
@@ -163,7 +169,7 @@ export function featureAnchor(tile: ITile, feature: ClaimableFeature): Point {
       ];
     return [first[0] * 0.78, first[1] * 0.78];
   }
-  return [0, 0];
+  return tile.hasMcDonalds ? restaurantPosition(tile) : [0, 0];
 }
 
 /** Stored claims contain a direction/corner, whereas claim buttons use feature indexes. */

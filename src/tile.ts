@@ -7,6 +7,7 @@ import {
   CostcoSegment,
   FieldSegment,
   FieldCorner,
+  RiverSegment,
 } from "./types";
 import { ITile } from "./interfaces/ITile";
 
@@ -16,6 +17,7 @@ const directionIndex = (direction: Direction): number =>
   DIRECTIONS.indexOf(direction);
 
 export class Tile implements ITile {
+  public readonly river?: RiverSegment;
   public readonly id: string;
   public readonly name: string;
   public readonly center: TerrainType;
@@ -36,6 +38,7 @@ export class Tile implements ITile {
   constructor({
     id,
     name,
+    river,
     edges,
     center = "field" as TerrainType,
     roadConnections = [],
@@ -43,6 +46,7 @@ export class Tile implements ITile {
     fieldSegments = [],
     isStart = false,
   }: TileDefinition) {
+    this.river = river && { kind: river.kind, edges: [...river.edges] };
     this.id = id;
     this.name = name;
     this.center = center;
@@ -56,6 +60,7 @@ export class Tile implements ITile {
     this.fieldSegments = fieldSegments.map((field) => ({
       id: field.id,
       corners: [...field.corners],
+      adjacentCostcoZones: field.adjacentCostcoZones && [...field.adjacentCostcoZones],
     }));
     this.isStart = isStart;
     this.orientation = 0;
@@ -92,6 +97,7 @@ export class Tile implements ITile {
     const rotateFieldSegments = (segments: FieldSegment[]): FieldSegment[] =>
       segments.map((field) => ({
         id: field.id,
+        adjacentCostcoZones: field.adjacentCostcoZones && [...field.adjacentCostcoZones],
         corners: field.corners.map((corner) => {
           const index = CORNER_ROTATION.indexOf(corner);
           return CORNER_ROTATION[(index + normalized) % 4];
@@ -108,6 +114,7 @@ export class Tile implements ITile {
         west: rotatedEdges[3],
       } as TileEdges,
       center: this.center,
+      river: this.river && { kind: this.river.kind, edges: this.river.edges.map(edge => rotateDirection(edge, normalized) as Direction) },
       roadConnections: rotateCollection(this.roadConnections),
       costcoZones: rotateCostcoZones(this.costcoZones),
       fieldSegments: rotateFieldSegments(this.fieldSegments),
@@ -129,6 +136,7 @@ export class Tile implements ITile {
         west: this.edges[3],
       } as TileEdges,
       center: this.center,
+      river: this.river,
       roadConnections: this.roadConnections,
       costcoZones: this.costcoZones,
       fieldSegments: this.fieldSegments,

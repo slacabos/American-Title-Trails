@@ -1,3 +1,4 @@
+import { tileRoadPath } from "@/rendering/riverLayout";
 import React, {
   createContext,
   useContext,
@@ -17,7 +18,6 @@ import {
   CORNERS,
   featureAnchor,
   Point,
-  roadPath,
   sceneryKey,
   zonePolygon,
 } from "@/rendering/tileLayout";
@@ -208,7 +208,7 @@ export function CellOutline({
   fill?: boolean;
 }) {
   return (
-    <group position={[x, 0.01, z]}>
+    <group name={fill ? "legal-placement" : "tile-outline"} position={[x, 0.01, z]}>
       {fill && (
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[0.96, 0.96]} />
@@ -290,7 +290,7 @@ export function FeatureHighlight({
         <HighlightPolygon points={zonePolygon(tile, index)} />
       )}
       {feature.type === "road" &&
-        roadPath(tile.roadConnections[index] ?? ["center"])
+        tileRoadPath(tile, tile.roadConnections[index] ?? ["center"])
           .filter((_, i) => i % 2 === 0)
           .map(([px, pz], i) => (
             <mesh

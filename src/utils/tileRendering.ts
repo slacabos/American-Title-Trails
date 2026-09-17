@@ -1,3 +1,4 @@
+import { renderRiverTile } from "../rendering/riverCanvas";
 import type { ITile } from "../interfaces";
 import { CostcoSegment } from "../types";
 import { TILE_COLORS } from "../constants/colors";
@@ -21,6 +22,7 @@ export const renderTileToCanvas = (
   tile: ITile,
   size: number
 ) => {
+  if (tile.river) { renderRiverTile(ctx, tile, size); return; }
   // Clear and draw background
   drawTileBackground(ctx, size);
 

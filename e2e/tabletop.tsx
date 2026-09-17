@@ -83,6 +83,9 @@ Object.assign(window, {
       const state = game.getState();
       return {
         count: state.board.getAllTiles().size,
+        drawStage: state.drawStage,
+        tileId: state.currentTile?.id,
+        riverCount: [...state.board.getAllTiles().values()].filter(record => record.tile.river).length,
         phase: state.phase,
         orientation: state.currentTile?.orientation,
         legal: boardSnapshot(state).legal,
@@ -104,6 +107,14 @@ Object.assign(window, {
         x: rect.left + ((point.x + 1) / 2) * rect.width,
         y: rect.top + ((1 - point.y) / 2) * rect.height,
       };
+    },
+    renderedLegal: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
+      const positions: Position[] = [];
+      _roots.get(canvas)!.store.getState().scene.traverse(object => {
+        if (object.name === "legal-placement") positions.push({ x: object.position.x, y: object.position.z });
+      });
+      return positions;
     },
     stats: () => {
       const canvas = document.querySelector<HTMLCanvasElement>(

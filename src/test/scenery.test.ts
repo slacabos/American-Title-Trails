@@ -1,10 +1,11 @@
+import { buildRiverDeck, getRiverLake, getRiverSource } from "@/riverLibrary";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SceneryLibrary } from "@/rendering/scenery";
 import { buildDeck, getStartTile } from "@/tileLibrary";
 
 const tiles = [
   ...new Map(
-    [getStartTile(), ...buildDeck()].map((tile) => [tile.id, tile]),
+    [getStartTile(), ...buildDeck(), getRiverSource(), ...buildRiverDeck(), getRiverLake()].map((tile) => [tile.id, tile]),
   ).values(),
 ];
 beforeEach(() => {

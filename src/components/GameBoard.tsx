@@ -1,3 +1,4 @@
+import useTranslations from "@/hooks/useTranslations";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   PlayerDefinition,
@@ -22,6 +23,7 @@ interface GameBoardProps {
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
+  const { t } = useTranslations();
   const [game, setGame] = useState<Game | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const gameRef = useRef<Game | null>(null);
@@ -134,7 +136,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         addLog(`${result.completedFeatures.length} features completed!`);
       }
     } else {
-      addLog(`Failed to place tile: ${result.message}`);
+      addLog(`Failed to place tile: ${result.message?.startsWith("river") ? t(`messages.${result.message}`) : result.message}`);
     }
   };
 

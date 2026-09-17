@@ -98,7 +98,7 @@ export class TilePlacementEvaluator {
     }
 
     // Evaluate each factor
-    const completionScore = this.evaluateCompletion(board, rotatedTile, position);
+    const completionScore = this.evaluateCompletion(board, rotatedTile, position, currentPlayerId, allPlayers);
     const adjacencyScore = this.evaluateAdjacency(board, position);
     const costcoScore = this.evaluateCostcoPreference(rotatedTile);
     const extensionScore = this.evaluateExtension(
@@ -182,13 +182,25 @@ export class TilePlacementEvaluator {
   private evaluateCompletion(
     board: IBoard,
     tile: ITile,
-    position: Position
+    position: Position,
+    currentPlayerId: string,
+    allPlayers: PlayerState[],
   ): number {
     const preview = board.previewPlacement(tile, position);
     if (!preview) return 0;
 
     return preview.completed.reduce((total, feature) => {
-      return total + feature.points;
+      const counts = new Map<string, number>();
+      for (const id of feature.claimedBy ?? []) counts.set(id, (counts.get(id) ?? 0) + 1);
+      if (counts.size) {
+        const majority = Math.max(...counts.values());
+        const ours = counts.get(currentPlayerId) ?? 0;
+        return total + (ours === majority ? feature.points : -feature.points);
+      }
+      // Only an unoccupied feature on the new tile can be claimed this turn.
+      const canClaim = allPlayers.find(player => player.id === currentPlayerId)?.followers;
+      const onNewTile = feature.tiles.has(`${position.x},${position.y}`);
+      return total + (canClaim && onNewTile ? feature.points : 0);
     }, 0);
   }
 
@@ -231,7 +243,7 @@ export class TilePlacementEvaluator {
         const ourClaims = claims.filter(
           (claim) =>
             claim.players.includes(currentPlayerId) &&
-            claim.edge.startsWith(`${neighborPos.x},${neighborPos.y}`)
+            claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`
         );
 
         if (ourClaims.length > 0) {
@@ -271,7 +283,7 @@ export class TilePlacementEvaluator {
         const opponentClaims = claims.filter(
           (claim) =>
             claim.players.some((p) => opponentIds.includes(p)) &&
-            claim.edge.startsWith(`${neighborPos.x},${neighborPos.y}`)
+            claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`
         );
 
         if (opponentClaims.length > 0) {

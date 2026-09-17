@@ -2,7 +2,7 @@ import type { ITile, IBoard } from "./interfaces";
 
 export type Direction = "north" | "east" | "south" | "west";
 
-export type TerrainType = "road" | "field" | "costco" | "mcdonalds" | "mixed";
+export type TerrainType = "road" | "field" | "costco" | "mcdonalds" | "mixed" | "river";
 
 export type FollowerType = "standard" | "farmer";
 
@@ -11,6 +11,7 @@ export type FieldCorner = "nw" | "ne" | "sw" | "se";
 export interface FieldSegment {
   id: string;
   corners: FieldCorner[];
+  adjacentCostcoZones?: string[];
 }
 
 export interface Position {
@@ -32,7 +33,13 @@ export interface CostcoSegment {
   shape?: "curved" | "straight" | "complex"; // Shape type for rendering
 }
 
+export interface RiverSegment {
+  kind: "source" | "segment" | "lake";
+  edges: Direction[];
+}
+
 export interface TileDefinition {
+  river?: RiverSegment;
   id: string;
   name: string;
   edges: TileEdges;
@@ -147,6 +154,7 @@ export enum GamePhase {
 }
 
 export interface GameState {
+  drawStage: "river" | "land";
   board: IBoard;
   players: PlayerState[];
   currentPlayerIndex: number;

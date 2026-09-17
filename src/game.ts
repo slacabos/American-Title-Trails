@@ -1,5 +1,7 @@
+import { buildRiverDeck, getRiverLake, getRiverSource } from "./riverLibrary";
+import { riverPlacementError } from "./riverRules";
 import { Board } from "./board";
-import { buildDeck, getStartTile } from "./tileLibrary";
+import { buildDeck } from "./tileLibrary";
 import {
   PlayerDefinition,
   GameOptions,
@@ -32,6 +34,7 @@ export type { GameState, PlayerState, TilePlacementResult } from "./types";
 
 export class Game {
   private state: GameState;
+  private pendingCompleted: CompletedFeature[] = [];
   private onStateChange?: (state: GameState) => void;
   private readonly scoreManager: ScoreManager;
   private readonly turnManager: TurnManager;
@@ -47,7 +50,7 @@ export class Game {
     // Initialize managers
     this.scoreManager = new ScoreManager();
     this.turnManager = new TurnManager(options.startingPlayer || 0);
-    this.tileManager = new TileManager(shuffle(buildDeck(), this.rng));
+    this.tileManager = new TileManager([...shuffle(buildDeck(), this.rng), getRiverLake(), ...shuffle(buildRiverDeck(), this.rng)]);
     this.featureClaimManager = new FeatureClaimManager();
     this.playerManager = new PlayerManager(playerConfigs);
 
@@ -66,6 +69,7 @@ export class Game {
 
     this.state = {
       board: new Board(),
+      drawStage: "river",
       players,
       currentPlayerIndex: this.turnManager.getCurrentPlayerIndex(),
       tileDeck: this.tileManager.getTileDeck(),
@@ -77,7 +81,7 @@ export class Game {
     };
 
     // Place the starting tile
-    const startTile = getStartTile();
+    const startTile = getRiverSource();
     this.state.board.placeTile(startTile, { x: 0, y: 0 });
 
     this.tileManager.drawNextTile();
@@ -158,6 +162,9 @@ export class Game {
       };
     }
 
+    const riverError = riverPlacementError(this.state.board.getAllTiles(), rotatedTile, position);
+    if (riverError) return { success: false, completedFeatures: [], message: riverError };
+
     // Check if placement is valid
     if (!this.state.board.canPlace(rotatedTile, position)) {
       return {
@@ -179,11 +186,8 @@ export class Game {
       this.tileManager.discardCurrentTile();
       this.syncTileState();
 
-      // Score completed features
-      this.scoreCompletedFeatures(result.completed);
-
-      // Return followers from completed features
-      this.state.board.returnFollowersFromCompletedFeatures(result.completed);
+      // Claims must resolve before completed features are scored.
+      this.pendingCompleted = result.completed;
 
       // Check if there are claimable features
       const claimableFeatures =
@@ -302,8 +306,18 @@ export class Game {
   }
 
   private endTurn(): void {
+    const completed = this.pendingCompleted.map(feature => ({
+      ...feature,
+      claimedBy: this.state.board.getFeatureClaimants({ ...feature, edges: feature.edges ?? new Set() }),
+    }));
+    this.pendingCompleted = [];
+    this.scoreCompletedFeatures(completed);
+    for (const feature of completed)
+      for (const playerId of feature.claimedBy) this.playerManager.increaseFollowerCount(playerId);
+    this.state.board.returnFollowersFromCompletedFeatures(completed);
     // Draw next tile using TileManager
     const hasNextTile = this.tileManager.drawNextTile();
+    this.state.drawStage = this.tileManager.getCurrentTile()?.river ? "river" : "land";
     this.syncTileState();
 
     // Use TurnManager to handle turn completion

@@ -15,13 +15,16 @@ The Vite dev server runs at http://localhost:3000 and opens automatically.
 
 - Local multiplayer with 2-5 players.
 - AI opponents with easy, medium, hard, and expert difficulty.
-- 16 tile types, 52 tiles in the deck, plus a starting tile.
+- A 12-tile River opening, followed by the existing 51 land tiles (63 tiles total).
+- Curving water, lakeside restaurants, and road bridges in both 2D and 3D.
 - Tile rotation with live placement validation.
 - Feature claiming for roads, Costcos, McDonald's, and fields (farmers).
 - Farmers stay on the board and score at game end.
 - Real-time scoreboard, activity log, and turn/tile stats.
 - Zoom, pan, and hover previews on the board canvas.
 - In-app Help modal backed by markdown content.
+
+See [River rules and implementation](docs/river.md) for the opening sequence and publisher references.
 
 ## AI difficulty modes
 
@@ -34,7 +37,7 @@ For the full architecture, scoring formulas, weight tables, and extension guide,
 
 ## How to play (quick)
 
-1. Place a tile on a valid highlighted position.
+1. Extend the river from its preplaced source through 10 shuffled tiles to the lake, then place land tiles on valid highlighted spaces.
 2. Optionally claim a feature with a follower.
 3. Completed features score immediately; farmers score at game end.
 

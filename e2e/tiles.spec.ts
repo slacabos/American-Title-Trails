@@ -13,7 +13,7 @@ declare global {
 for (const occlude of [false, true]) {
   test(`every claimed feature stays visible ${occlude ? "behind opaque and transparent objects" : "on all tile scenery"}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1220, height: 1300 });
-    for (let group = 0; group < 4; group++) {
+    for (let group = 0; group < 7; group++) {
       await page.goto(`/e2e/tiles.html?page=${group}&markers${occlude ? "&occlude" : ""}`);
       await expect(page.locator("canvas")).toHaveCount(4);
       await expect.poll(() => page.evaluate(() => window.tileSceneryTest.rendered())).toBe(true);
@@ -41,11 +41,11 @@ test("junctions have uninterrupted asphalt and the gas-station driveway enters t
   for (const pixel of pixels) expect(pixel).toEqual([98, 108, 105, 255]);
 });
 
-test("all 16 tile types render in every orientation", async ({ page }, testInfo) => {
+test("all 28 tile types render in every orientation", async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1220, height: 1300 });
-  for (let group = 0; group < 4; group++) {
+  for (let group = 0; group < 7; group++) {
     await page.goto(`/e2e/tiles.html?page=${group}`);
     await expect(page.locator("h2")).toHaveCount(4);
     await expect(page.locator("canvas")).toHaveCount(4);
@@ -59,10 +59,30 @@ test("all 16 tile types render in every orientation", async ({ page }, testInfo)
 test("feature highlights tolerate stale selections and empty polygons on every tile and rotation", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  for (let group = 0; group < 4; group++) {
+  for (let group = 0; group < 7; group++) {
     await page.goto(`/e2e/tiles.html?page=${group}&highlights`);
     await expect(page.locator("canvas")).toHaveCount(4);
     await expect.poll(() => page.evaluate(() => window.tileSceneryTest.rendered())).toBe(true);
+  }
+  expect(errors).toEqual([]);
+});
+
+
+test("all river tiles render in classic view with water in every orientation", async ({ page }, testInfo) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.setViewportSize({ width: 1220, height: 1300 });
+  for (let group = 4; group < 7; group++) {
+    await page.goto(`/e2e/tiles.html?page=${group}&classic`);
+    await expect(page.locator("canvas")).toHaveCount(16);
+    const waterCounts = await page.locator("canvas").evaluateAll(canvases => canvases.map(canvas => {
+      const pixels = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data;
+      let count = 0;
+      for (let i = 0; i < pixels.length; i += 4) if (pixels[i + 2] > pixels[i] + 35 && pixels[i + 1] > pixels[i] + 25) count++;
+      return count;
+    }));
+    expect(waterCounts.every(count => count > 150)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`river-classic-${group}.png`), fullPage: true });
   }
   expect(errors).toEqual([]);
 });

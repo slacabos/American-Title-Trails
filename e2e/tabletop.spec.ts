@@ -6,6 +6,9 @@ declare global {
     tabletopTest: {
       state: () => {
         count: number;
+        drawStage: "river" | "land";
+        tileId?: string;
+        riverCount: number;
         phase: string;
         orientation: number;
         legal: Position[];
@@ -14,6 +17,7 @@ declare global {
         over: boolean;
       };
       point: (position: Position) => Position;
+      renderedLegal: () => Position[];
       stats: () => {
         calls: number;
         triangles: number;
@@ -47,11 +51,15 @@ async function ready(page: Page, suffix = "") {
 async function legalPoint(page: Page) {
   for (let i = 0; i < 4; i++) {
     const legal = await page.evaluate(() => window.tabletopTest.state().legal);
-    if (legal.length)
+    if (legal.length) {
+      // Demand frames can belong to an earlier orientation. Wait for the actual
+      // legal-cell geometry to reach the scene before clicking its projection.
+      await expect.poll(() => page.evaluate(() => window.tabletopTest.renderedLegal())).toEqual(legal);
       return page.evaluate(
         (position) => window.tabletopTest.point(position),
         legal[0],
       );
+    }
     const frame = await page.evaluate(() => window.tabletopTest.stats().frame);
     await page
       .getByRole("button", { name: "Rotate tile", exact: true })
@@ -101,11 +109,19 @@ test("a preview context failure keeps the board and game in 3D", async ({ page }
   await expect(page.getByTestId("board-3d")).toBeVisible();
 });
 
-test("placement and claiming reuse the same preview canvas across turns", async ({ page }) => {
+test("placement and claiming reuse the same preview canvas across turns", async ({ page }, testInfo) => {
   await ready(page);
   const canvas = await page.locator(".tabletop-tile-preview canvas").elementHandle();
   expect(canvas).not.toBeNull();
   for (let turn = 0; turn < 20; turn++) {
+    const state = await page.evaluate(() => window.tabletopTest.state());
+    expect(state.drawStage).toBe(turn < 11 ? "river" : "land");
+    if (turn === 10) expect(state.tileId).toBe("river-lake");
+    if (turn === 11) {
+      expect(state.riverCount).toBe(12);
+      await page.screenshot({ path: testInfo.outputPath("completed-river-3d.png"), fullPage: true });
+
+    }
     await expect.poll(() => page.evaluate(() => window.tabletopTest.previewFrame())).toBeGreaterThan(0);
     const boardFrame = await page.evaluate(() => window.tabletopTest.stats().frame);
     await page.getByRole("button", { name: "Fit board", exact: true }).click();

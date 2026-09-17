@@ -96,6 +96,12 @@ export function BoardView({
           ))}
         </div>
       </div>
+      <p className="board-controls-hint" data-testid="draw-stage" aria-live="polite">
+        {state.drawStage === "river" ? t("board.riverOpening", {
+          remaining: state.tileDeck.filter(tile => tile.river).length + (state.currentTile?.river ? 1 : 0),
+        }) : t("board.landStage")}
+      </p>
+      {state.drawStage === "river" && <p className="board-controls-hint">{t("board.riverHint")}</p>}
       {unavailable && (
         <p className="board-graphics-notice" role="status">
           {t("board.unavailable")}

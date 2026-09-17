@@ -26,8 +26,19 @@ Score the most points by strategically placing tiles and claiming completed feat
 
 ### Starting the Game
 
-- The game begins with a starting tile (Route 66 Crossroads) placed in the center
-- Players are randomly assigned turn order
+- Every game opens with the River: its source is already placed in the center, flowing south.
+- Players take turns placing 10 shuffled river tiles, then the lake. The regular land deck follows.
+- The source receives no follower. The lake is a normal turn, including the option to claim its McDonald’s or field.
+
+### Building the River
+
+- Each river tile must extend the open end of the river. All touching edges must match.
+- Two consecutive bends cannot turn in the same direction. A bend also cannot send the river back toward the source (north).
+- Rotate the tile until a green placement appears. The opening counter shows how many river tiles remain.
+- Water cannot be claimed and scores no points. Roads, Costcos, McDonald’s, and fields score normally.
+- Rivers and roads divide fields. A bridge connects the road across water; it does not join the fields underneath.
+- Farmers score only completed Costcos bordering their connected field. Banks can reconnect around the source or lake.
+- This uses the current base-game River set. Gardens are decorative; River II branches and abbot rules are not included.
 
 ---
 
@@ -51,7 +62,7 @@ Each turn consists of up to 3 phases:
 
 ### 3. Scoring Phase 📊 (Automatic)
 
-- Completed features are scored instantly
+- After you claim a feature or skip claiming, completed features are scored
 - Followers return to your supply when features complete
 
 ---

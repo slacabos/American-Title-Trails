@@ -35,7 +35,8 @@
     "startGame": "Start Game",
     "howToPlay": "📖 How to Play",
     "readyToPlay": "🎮 Ready to Play!",
-    "configureHint": "Configure your game settings and click Start Game."
+    "configureHint": "Configure your game settings and click Start Game.",
+    "riverOpening": "Every game begins with a river. Take turns building from its source to the lake, then continue with the land tiles."
   },
   "game": {
     "loading": "Loading game...",
@@ -131,7 +132,12 @@
     "tileRotated": "Tile rotated",
     "claimedFeature": "{playerName} claimed {type}{identifier}",
     "failedToClaim": "Failed to claim feature",
-    "skippedClaiming": "{playerName} skipped claiming"
+    "skippedClaiming": "{playerName} skipped claiming",
+    "riverContinue": "Continue the open river end before placing land tiles.",
+    "riverUTurn": "Two consecutive river bends cannot turn in the same direction.",
+    "riverBackwards": "The river cannot flow back toward its source.",
+    "riverStart": "The river source is placed only at the start of the game.",
+    "riverFinished": "The river has already ended at the lake."
   },
   "errors": {
     "notInPlacementPhase": "Not in tile placement phase",
@@ -361,6 +367,9 @@
     "cancel": "Cancel",
     "tabletop": "TABLETOP VIEW",
     "tilesOne": "1 tile",
-    "legalOne": "1 place to build"
+    "legalOne": "1 place to build",
+    "riverOpening": "Build the river · {remaining} river tiles to place",
+    "riverHint": "Continue the open river end. Consecutive bends cannot turn the same way, and the river cannot turn back toward its source. Followers claim land features only.",
+    "landStage": "The river is complete. Continue building with land tiles."
   }
 }

@@ -1,8 +1,9 @@
+import { tileRoadPath } from "./riverLayout";
 import type { ITile } from "@/interfaces/ITile";
 import type { Direction, TileRecord } from "@/types";
 import { DELTAS, DIRECTIONS, OPPOSITE } from "@/directions";
 import {
-  canonicalTile, hull, Point, PORTALS, positionKey, roadPath, rotatePoint,
+  canonicalTile, hull, Point, PORTALS, positionKey, rotatePoint,
   sceneryKey, zonePolygon,
 } from "./tileLayout";
 
@@ -74,8 +75,8 @@ export function warehouseFootprint(tile: ITile, index: number): Point[] {
   }
   if (zone.segments.includes("center")) {
     // Leave the gas canopy and its driveway outside the warehouse footprint.
-    const center: Point = base.id === "costco-road" ? [0.14, -0.14] : [0, 0];
-    const radius = base.id === "costco-road" ? 0.075 : 0.13;
+    const center: Point = (base.id === "costco-road" || base.id === "river-costco-bend") ? [0.14, -0.14] : [0, 0];
+    const radius = (base.id === "costco-road" || base.id === "river-costco-bend") ? 0.075 : 0.13;
     for (const x of [-radius, radius])
       for (const z of [-radius, radius]) points.push([center[0] + x, center[1] + z]);
   }
@@ -129,7 +130,7 @@ export function warehouseLayout(records: TileRecord[]): WarehouseComplex[] {
       key: node.key, position: node.position, joined, roof: roof.map(world), paving: paving.map(world),
       walls: perimeter(roof, joined, node.position),
       curbs: perimeter(paving, joined, node.position),
-      roads: node.tile.roadConnections.flatMap(roadPath).map(world),
+      roads: node.tile.roadConnections.flatMap(connection => tileRoadPath(node.tile, connection)).map(world),
     });
   }
   const visited = new Set<string>();

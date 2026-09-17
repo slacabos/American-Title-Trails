@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { TileRenderer } from "./TileRenderer";
 import { getStartTile, buildDeck } from "../tileLibrary";
+import { buildRiverDeck, getRiverSource, getRiverLake } from "../riverLibrary";
 import { Tile } from "../tile";
 
 // Get all available tiles
@@ -665,4 +666,16 @@ export const TileDistribution: Story = {
   parameters: {
     layout: "fullscreen",
   },
+};
+
+
+export const RiverTiles: Story = {
+  render: () => <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+    {[getRiverSource(), ...buildRiverDeck(), getRiverLake()].flatMap(tile =>
+      [0, 1, 2, 3].map(rotation => <figure key={`${tile.id}-${rotation}`}>
+        <TileRenderer tile={tile.rotate(rotation)} size={160} />
+        <figcaption>{tile.name} · {rotation * 90}°</figcaption>
+      </figure>))}
+  </div>,
+  parameters: { layout: "fullscreen" },
 };

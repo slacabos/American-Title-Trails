@@ -225,24 +225,28 @@ Dynamic threshold based on game progress:
 
 ### Expert — `ExpertAI`
 
-Extends `StrategicAI` with no new logic, just more aggressive tuning:
+Extends `StrategicAI` with stronger heuristics and a bounded scoring comparison:
 
 - Deeper search (depth 3, 600ms budget).
-- Lower `defensiveWeight` (1.5 vs 2.0) — less penalty for helping opponents,
-  more focus on own scoring.
-- All claim threshold and meeple modifier logic is inherited from
-  `StrategicAI`.
+- Higher `defensiveWeight` (3.2 vs 1.0) increases the weight of ownership-aware defensive decisions.
+- Claim threshold and meeple modifier logic is inherited from `StrategicAI`.
+- A shortlist of up to 12 placements is simulated through claiming and completion. Expert compares the resulting guaranteed scores for itself and opponents, including farmers on connected riverbanks, without changing the live board or consulting hidden draws.
+- Nearby restaurant followers, including diagonal neighbors, contribute to the positional evaluation even before the restaurant is completed.
+
+Both profiles inspect a temporary board after each candidate placement to value the claim they could actually make. This includes field boundaries at rivers and existing ownership. The depth setting scales that claim-value heuristic; it does not inspect hidden future draws.
+
+Completed features bypass normal claiming thresholds because their followers return immediately. Near the end, spare followers can claim guaranteed points without meeting the normal long-term investment threshold.
 
 ## Weight comparison
 
 | Weight             | Default (medium) | Hard | Expert |
 | ------------------ | ---------------- | ---- | ------ |
-| `completion`       | 6                | 8    | 12     |
+| `completion`       | 6                | 9    | 13     |
 | `adjacency`        | 1                | 1.5  | 2.2    |
 | `costcoPreference` | 2                | 3    | 5      |
-| `extensionBonus`   | 3                | 5    | 7      |
-| `blockingBonus`    | 2                | 4    | 5.5    |
-| `centerBonus`      | 0.5              | 0.3  | 0.6    |
+| `extensionBonus`   | 3                | 5    | 8      |
+| `blockingBonus`    | 2                | 4    | 6.5    |
+| `centerBonus`      | 0.5              | 0.4  | 0.6    |
 
 The expert profile pushes completion and extension weights roughly 2x above
 the medium baseline. The hard profile sits in between, with a notably lower
@@ -254,8 +258,8 @@ the medium baseline. The hard profile sits in between, with a notably lower
 | --------------------- | ---- | ------ |
 | `searchDepth`         | 2    | 3      |
 | `maxSearchTimeMs`     | 400  | 600    |
-| `defensiveWeight`     | 2.0  | 1.5    |
-| `claimThresholdScale` | 1    | 1      |
+| `defensiveWeight`     | 1.0  | 3.2    |
+| `claimThresholdScale` | 0.6  | 0.4    |
 
 ## Testing
 

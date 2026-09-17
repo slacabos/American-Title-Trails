@@ -11,8 +11,6 @@ import type {
   TerrainType,
   Feature,
   FieldSegment,
-  Direction,
-  CostcoSegment,
 } from "../../types";
 import { GAME_RULES } from "../../constants/gameRules";
 
@@ -20,6 +18,7 @@ import { GAME_RULES } from "../../constants/gameRules";
  * Result of analyzing a feature's value.
  */
 export interface FeatureValueEstimate {
+  isComplete?: boolean;
   currentPoints: number;
   potentialPoints: number;
   completionChance: number;
@@ -31,12 +30,6 @@ export interface FeatureValueEstimate {
  */
 export class FeatureAnalyzer {
   private readonly board: IBoard;
-  private static readonly OPPOSITE: Record<Direction, Direction> = {
-    north: "south",
-    east: "west",
-    south: "north",
-    west: "east",
-  };
 
   constructor(board: IBoard) {
     this.board = board;
@@ -87,7 +80,7 @@ export class FeatureAnalyzer {
 
     const totalValue = currentPoints * completionChance + potentialPoints * (1 - completionChance) * 0.3;
 
-    return { currentPoints, potentialPoints, completionChance, totalValue };
+    return { isComplete, currentPoints, potentialPoints, completionChance, totalValue };
   }
 
   /**
@@ -119,11 +112,12 @@ export class FeatureAnalyzer {
 
     // Roads are easier to complete than Costcos
     const openEnds = this.countRoadOpenEnds(feature);
+    const isComplete = openEnds === 0;
     const completionChance = openEnds === 0 ? 1.0 : Math.max(0.2, 1.0 - openEnds * 0.2);
 
     const totalValue = currentPoints * completionChance + potentialPoints * (1 - completionChance) * 0.4;
 
-    return { currentPoints, potentialPoints, completionChance, totalValue };
+    return { isComplete, currentPoints, potentialPoints, completionChance, totalValue };
   }
 
   /**
@@ -158,7 +152,7 @@ export class FeatureAnalyzer {
       currentPoints * completionChance +
       potentialPoints * (1 - completionChance) * 0.5;
 
-    return { currentPoints, potentialPoints, completionChance, totalValue };
+    return { isComplete: filledCount === 8, currentPoints, potentialPoints, completionChance, totalValue };
   }
 
   /**
@@ -328,44 +322,20 @@ export class FeatureAnalyzer {
 
   private collectAdjacentCostcoFeatures(fieldFeature: Feature): Set<Feature> {
     const unique = new Map<string, Feature>();
-    const directions: Direction[] = ["north", "east", "south", "west"];
-
-    const addFeature = (feature: Feature): void => {
-      const id = Array.from(feature.tiles).sort().join("|");
-      if (!unique.has(id)) {
-        unique.set(id, feature);
-      }
-    };
-
-    fieldFeature.tiles.forEach((tileKey) => {
+    for (const tileKey of fieldFeature.tiles) {
       const position = this.parsePositionKey(tileKey);
-      const tileRecord = this.board.getTile(position);
-      if (!tileRecord) return;
-
-      directions.forEach((direction) => {
-        const neighborPos = this.getNeighborPosition(position, direction);
-        const neighbor = this.board.getTile(neighborPos);
-        if (!neighbor) return;
-
-        neighbor.tile.costcoZones.forEach((zone: CostcoSegment) => {
-          const oppositeDir = FeatureAnalyzer.OPPOSITE[direction];
-          if (zone.segments.includes(oppositeDir)) {
-            const feature = this.board.traceCostcoFeature(
-              neighborPos,
-              zone,
-              new Set()
-            );
-            addFeature(feature);
-          }
-        });
-      });
-
-      tileRecord.tile.costcoZones.forEach((zone: CostcoSegment) => {
-        const feature = this.board.traceCostcoFeature(position, zone, new Set());
-        addFeature(feature);
-      });
-    });
-
+      const tile = this.board.getTile(position)?.tile;
+      if (!tile) continue;
+      for (const field of tile.fieldSegments) {
+        if (!field.corners.some(corner => fieldFeature.edges.has(`${tileKey}:${corner}`))) continue;
+        for (const zoneId of field.adjacentCostcoZones ?? []) {
+          const zone = tile.costcoZones.find(zone => zone.id === zoneId);
+          if (!zone) continue;
+          const feature = this.board.traceCostcoFeature(position, zone, new Set());
+          unique.set([...feature.edges].sort().join("|"), feature);
+        }
+      }
+    }
     return new Set(unique.values());
   }
 }
