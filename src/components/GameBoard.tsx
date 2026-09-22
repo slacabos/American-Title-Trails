@@ -1,3 +1,4 @@
+import useTranslations from "@/hooks/useTranslations";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   PlayerDefinition,
@@ -5,10 +6,11 @@ import {
   TerrainType,
   GameState,
   ClaimableFeature,
+  CompletedFeature,
 } from "../types";
 import { Game, GamePhase } from "../game";
-import BoardCanvas from "./BoardCanvas";
-import TileRenderer from "./TileRenderer";
+import { BoardView, CurrentTilePreview } from "./BoardView";
+import { readRenderMode, saveRenderMode, RenderMode } from "@/rendering/renderMode";
 import HelpModal from "./HelpModal";
 import FollowerDetails from "./FollowerDetails";
 import GameOverPanel from "./GameOverPanel";
@@ -22,12 +24,25 @@ interface GameBoardProps {
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
+  const { t } = useTranslations();
   const [game, setGame] = useState<Game | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const gameRef = useRef<Game | null>(null);
   const logIdRef = useRef(0);
   const [logs, setLogs] = useState<{ id: number; message: string }[]>([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [renderMode, setRenderMode] = useState<RenderMode>(readRenderMode);
+  const [graphicsUnavailable, setGraphicsUnavailable] = useState(false);
+  const [highlightedFeature, setHighlightedFeature] = useState<ClaimableFeature>();
+  const handleGraphicsUnavailable = useCallback(() => {
+    setGraphicsUnavailable(true);
+    setRenderMode("2d");
+  }, []);
+  const handleRenderMode = (mode: RenderMode) => {
+    setRenderMode(mode);
+    setGraphicsUnavailable(false);
+    saveRenderMode(mode);
+  };
   const [isGameOverCollapsed, setIsGameOverCollapsed] = useState(false);
   const [claimableFeatures, setClaimableFeatures] = useState<
     ClaimableFeature[]
@@ -64,18 +79,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const currentPlayerIsAI = gameState?.players?.[currentPlayerIndex ?? 0]?.isAI;
 
   useEffect(() => {
-    // Early return if game not initialized or not AI's turn
-    if (!gameRef.current || !currentPlayerIsAI || isGameOver) return;
-
-    // Set timeout for AI move with slight delay for UX
-    const timer = setTimeout(() => {
-      gameRef.current?.processAITurn();
-    }, GAME_RULES.AI_MOVE_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [currentPlayerIsAI, currentPlayerIndex, phase, isGameOver]);
-
-  useEffect(() => {
     if (gameState?.isGameOver) {
       setIsGameOverCollapsed(false);
     }
@@ -93,8 +96,39 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     ]);
   }, []);
 
+  const logCompletions = useCallback((features: CompletedFeature[]) => {
+    features.filter(feature => feature.type === "costco").forEach(feature =>
+      addLog(t("messages.costcoCompleted", { points: feature.points }))
+    );
+    const others = features.filter(feature => feature.type !== "costco").length;
+    if (others) addLog(t("messages.featuresCompleted", { count: others }));
+  }, [addLog, t]);
+
+  useEffect(() => {
+    if (!gameRef.current || !currentPlayerIsAI || isGameOver) return;
+    const timer = setTimeout(() => {
+      const currentGame = gameRef.current;
+      if (!currentGame) return;
+      const playerName = currentGame.getCurrentPlayer().name;
+      const action = currentGame.processAITurn();
+      if (action?.type === "placed" && action.result.success) {
+        logCompletions(action.result.completedFeatures);
+      } else if (action?.type === "claimed") {
+        addLog(t("messages.claimedFeature", {
+          playerName,
+          type: action.feature.type,
+          identifier: action.feature.displayName ? ` (${action.feature.displayName})` : "",
+        }));
+      }
+    }, GAME_RULES.AI_MOVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [currentPlayerIsAI, currentPlayerIndex, phase, isGameOver, addLog, logCompletions, t]);
+
   const updateClaimableFeatures = useCallback(
     (gameInstance: Game, state: GameState) => {
+      // Claiming/skipping unmounts the hovered or focused button without
+      // necessarily firing mouseleave/blur. Never carry its selection forward.
+      setHighlightedFeature(undefined);
       if (state.phase === GamePhase.CLAIM_FEATURE) {
         const features = gameInstance.getClaimableFeaturesForCurrentTurn();
         setClaimableFeatures(features);
@@ -106,7 +140,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   );
 
   const handleTilePlace = (position: Position) => {
-    if (!game || !gameState) return;
+    if (!game || !gameState || gameState.phase !== GamePhase.PLACE_TILE || gameState.isGameOver || gameState.players[gameState.currentPlayerIndex]?.isAI) return;
 
     const result = game.placeTile(position);
     if (result.success) {
@@ -115,11 +149,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           gameState.players[gameState.currentPlayerIndex].name
         } placed tile at (${position.x}, ${position.y})`
       );
-      if (result.completedFeatures.length > 0) {
-        addLog(`${result.completedFeatures.length} features completed!`);
-      }
+      logCompletions(result.completedFeatures);
     } else {
-      addLog(`Failed to place tile: ${result.message}`);
+      addLog(`Failed to place tile: ${result.message?.startsWith("river") ? t(`messages.${result.message}`) : result.message}`);
     }
   };
 
@@ -140,12 +172,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const handleClaimFeature = (type: TerrainType, identifier?: string) => {
     if (!game || !gameState) return;
 
+    const displayName = claimableFeatures.find(feature => feature.type === type && feature.identifier === identifier)?.displayName;
     const success = game.claimFeature(type, identifier);
     if (success) {
       addLog(
         `${
           gameState.players[gameState.currentPlayerIndex].name
-        } claimed ${type}${identifier ? ` (${identifier})` : ""}`
+        } claimed ${type}${displayName ? ` (${displayName})` : ""}`
       );
     } else {
       addLog("Failed to claim feature");
@@ -225,22 +258,16 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
   return (
     <>
-      <div className="relative bg-card backdrop-blur-sm border border-border rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
-        <BoardCanvas
-          board={gameState.board}
-          currentTile={gameState.currentTile}
+      <div className="game-board-panel relative bg-card backdrop-blur-sm border border-border rounded-2xl p-4 shadow-2xl flex flex-col min-w-0">
+        <BoardView
+          state={gameState}
+          mode={renderMode}
+          onModeChange={handleRenderMode}
           onTilePlace={handleTilePlace}
-          showValidPlacements={gameState.phase === GamePhase.PLACE_TILE}
-          gameState={gameState}
+          onUnavailable={handleGraphicsUnavailable}
+          unavailable={graphicsUnavailable}
+          highlightedFeature={highlightedFeature}
         />
-
-        {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
-          <div className="mt-2 text-xs opacity-70 text-center leading-tight font-game">
-            💡 Click green areas to place • Wheel to zoom • Drag to pan
-            <br />
-            R to rotate • Shift+R counter-clockwise • ? for help
-          </div>
-        )}
 
         {isCurrentPlayerAI && !gameState.isGameOver && (
           <div className="mt-2 text-xs text-center leading-tight font-game animate-pulse">
@@ -263,6 +290,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
               {claimableFeatures.map((feature, index) => (
                 <Button
                   key={index}
+                  onMouseEnter={() => setHighlightedFeature(feature)}
+                  onMouseLeave={() => setHighlightedFeature(undefined)}
+                  onFocus={() => setHighlightedFeature(feature)}
+                  onBlur={() => setHighlightedFeature(undefined)}
                   onClick={() =>
                     handleClaimFeature(feature.type, feature.identifier)
                   }
@@ -304,49 +335,47 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           <h2 className="m-0 mb-3 text-sm text-accent font-game">
             Current Tile
           </h2>
-          {gameState.currentTile ? (
-            <div className="bg-muted/30 rounded-xl p-4 flex flex-col items-center gap-3">
-              <TileRenderer
-                tile={gameState.currentTile}
-                size={96}
-                className="preview-tile border-2 border-game-blue bg-game-bg-primary"
-              />
-              <div className="text-center text-xxs leading-tight font-game">
-                <strong>{gameState.currentTile.name}</strong>
-                <div className="opacity-80 mt-1">
-                  Phase: {gameState.phase.replace("_", " ")}
-                </div>
-              </div>
-              {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
-                <div className="flex flex-col gap-2 w-full mt-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      onClick={handleRotateClockwise}
-                      disabled={!gameState.currentTile}
-                      className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
-                      title="Rotate Clockwise"
-                      style={{ fontSize: "32px" }}
-                    >
-                      ⟳
-                    </Button>
-                    <Button
-                      onClick={handleRotateCounterClockwise}
-                      disabled={!gameState.currentTile}
-                      className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
-                      title="Rotate Counter-Clockwise"
-                      style={{ fontSize: "32px" }}
-                    >
-                      ⟲
-                    </Button>
+          <div className="bg-muted/30 rounded-xl p-4 flex flex-col items-center gap-3">
+            <CurrentTilePreview tile={gameState.currentTile} mode={renderMode} />
+            {gameState.currentTile ? (
+              <>
+                <div className="text-center text-xxs leading-tight font-game">
+                  <strong>{gameState.currentTile.name}</strong>
+                  <div className="opacity-80 mt-1">
+                    Phase: {gameState.phase.replace("_", " ")}
                   </div>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center text-xxs opacity-60 font-game">
-              No current tile
-            </div>
-          )}
+                {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
+                  <div className="flex flex-col gap-2 w-full mt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={handleRotateClockwise}
+                        disabled={!gameState.currentTile}
+                        className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
+                        title="Rotate Clockwise"
+                        style={{ fontSize: "32px" }}
+                      >
+                        ⟳
+                      </Button>
+                      <Button
+                        onClick={handleRotateCounterClockwise}
+                        disabled={!gameState.currentTile}
+                        className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
+                        title="Rotate Counter-Clockwise"
+                        style={{ fontSize: "32px" }}
+                      >
+                        ⟲
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center text-xxs opacity-60 font-game">
+                No current tile
+              </div>
+            )}
+          </div>
         </section>
 
         {showHelp && (

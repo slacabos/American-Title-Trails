@@ -103,6 +103,15 @@ export class SimpleAI implements AIStrategy {
         feature.identifier
       );
 
+      if (estimate.isComplete && estimate.currentPoints > 0) {
+        const score = 1000 + estimate.currentPoints;
+        if (score > bestScore) {
+          bestScore = score;
+          bestClaim = { ...feature, score, shouldClaim: true };
+        }
+        continue;
+      }
+
       // Apply feature-specific scoring
       let score = estimate.totalValue;
 

@@ -142,6 +142,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
               ))}
             </div>
 
+            <p className="text-sm text-muted-foreground">{t("setup.riverOpening")}</p>
             <Button
               onClick={handleStartGame}
               variant="default"

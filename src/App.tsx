@@ -19,8 +19,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-1 grid grid-cols-[minmax(640px,1fr)_360px] gap-8 p-6 w-full min-w-fit max-w-[1200px] mx-auto">
+    <div className="app-shell min-h-screen flex flex-col">
+      <main className="game-layout">
         {gameStarted ? (
           <ErrorBoundary onReset={handleResetGame}>
             <GameBoard players={players} onReset={handleResetGame} />

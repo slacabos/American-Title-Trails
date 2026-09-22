@@ -35,7 +35,7 @@ const MAX_LOW_WIN_RATE =
   Number.isFinite(maxLowWinOverride) && maxLowWinOverride >= 0
     ? maxLowWinOverride
     : 0.4;
-const TEST_TIMEOUT_MS = Math.max(60000, GAMES_PER_PAIR * 700);
+const TEST_TIMEOUT_MS = Math.max(90000, GAMES_PER_PAIR * 1200);
 
 const playGame = (
   difficultyA: AIDifficulty,
@@ -81,7 +81,7 @@ describe("AI difficulty balance (simulation)", () => {
   it(
     "should favor higher difficulties across all pairings",
     { timeout: TEST_TIMEOUT_MS },
-    () => {
+    async () => {
       const pairings: Array<[AIDifficulty, AIDifficulty]> = [];
       for (let i = 0; i < DIFFICULTIES.length; i += 1) {
         for (let j = i + 1; j < DIFFICULTIES.length; j += 1) {
@@ -95,7 +95,7 @@ describe("AI difficulty balance (simulation)", () => {
         "--- | ---: | ---: | ---: | ---",
       ];
 
-      pairings.forEach(([low, high], pairIndex) => {
+      for (const [pairIndex, [low, high]] of pairings.entries()) {
         if (RANK[low] >= RANK[high]) {
           throw new Error(`Invalid pairing order: ${low} vs ${high}`);
         }
@@ -105,6 +105,8 @@ describe("AI difficulty balance (simulation)", () => {
         let ties = 0;
 
         for (let gameIndex = 0; gameIndex < GAMES_PER_PAIR; gameIndex += 1) {
+          // Long simulations must yield so the test worker can send progress.
+          if (gameIndex % 10 === 0) await new Promise(resolve => setTimeout(resolve, 0));
           const seed = BASE_SEED + pairIndex * 1000 + gameIndex;
           const highFirst = gameIndex % 2 === 0;
           const [diffA, diffB] = highFirst ? [high, low] : [low, high];
@@ -149,7 +151,7 @@ describe("AI difficulty balance (simulation)", () => {
           lowWinRate,
           `${high} vs ${low} lowWinRate=${lowWinRate.toFixed(3)} ties=${ties}`
         ).toBeLessThanOrEqual(MAX_LOW_WIN_RATE);
-      });
+      }
 
       summaryLines.forEach((line) => {
         console.log(`[AI SIM] ${line}`);

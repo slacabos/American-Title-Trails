@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Game, GamePhase } from "../game";
 import { PlayerDefinition } from "../types";
-import { getStartTile } from "../tileLibrary";
+import { buildDeck } from "../tileLibrary";
+import { getRiverSource } from "../riverLibrary";
 
 describe("Game", () => {
   let game: Game;
@@ -35,14 +36,14 @@ describe("Game", () => {
       const state = game.getState();
       const tileRecord = state.board.getTile({ x: 0, y: 0 });
       expect(tileRecord).toBeDefined();
-      expect(tileRecord?.tile).toEqual(getStartTile());
+      expect(tileRecord?.tile).toEqual(getRiverSource());
     });
 
     it("should draw initial current tile", () => {
       const state = game.getState();
       expect(state.currentTile).toBeDefined();
       // After drawing one tile for the current player, deck should be smaller than original
-      expect(state.tileDeck.length).toBeLessThan(51);
+      expect(state.tileDeck.length).toBe(buildDeck().length + 10);
     });
 
     it("should initialize players with correct follower count", () => {
@@ -69,7 +70,7 @@ describe("Game", () => {
       const result = game.placeTile({ x: 10, y: 10 }, 0);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("Invalid tile placement");
+      expect(result.message).toBe("riverContinue");
       expect(game.getState().phase).toBe(GamePhase.PLACE_TILE); // Should remain in same phase
     });
 

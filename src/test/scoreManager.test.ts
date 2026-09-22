@@ -274,6 +274,7 @@ describe("ScoreManager", () => {
             return {
               tile: {
                 fieldSegments: [{ corners: ["nw"] }],
+                roadConnections: [["north", "center"]],
               },
             };
           }
@@ -284,6 +285,9 @@ describe("ScoreManager", () => {
 
           return undefined;
         },
+        traceRoadFeature: () => ({
+          type: "road", tiles: new Set(["0,0"]), edges: new Set(["0,0:north"]), isComplete: false,
+        }),
         traceFieldFeature: () => ({
           type: "field",
           tiles: new Set(["0,0"]),

@@ -5,7 +5,10 @@
  * Considers defensive play and follower management.
  */
 
-import type { Position, PlayerState } from "../types";
+import { Board } from "../board";
+import { ScoreManager } from "../managers/ScoreManager";
+import { FeatureClaimManager } from "../managers/FeatureClaimManager";
+import type { Position, PlayerState, GameState, ClaimableFeature } from "../types";
 import type { IBoard, ITile } from "../interfaces";
 import type {
   AIStrategy,
@@ -19,7 +22,7 @@ import {
   TilePlacementEvaluator,
   FeatureAnalyzer,
 } from "./evaluators";
-import type { EvaluationWeights } from "./evaluators";
+import type { EvaluationWeights, FeatureValueEstimate } from "./evaluators";
 import type { RNG } from "../utils/rng";
 
 /**
@@ -50,12 +53,12 @@ export class StrategicAI implements AIStrategy {
   constructor(options: StrategicAIOptions = {}) {
     // Enhanced weights for strategic play
     const strategicWeights: Partial<EvaluationWeights> = {
-      completion: 4.5,
-      adjacency: 1.0,
-      costcoPreference: 1.9,
-      extensionBonus: 2.2,
-      blockingBonus: 1.6,
-      centerBonus: 0.2,
+      completion: 9,
+      adjacency: 1.5,
+      costcoPreference: 3,
+      extensionBonus: 5,
+      blockingBonus: 4,
+      centerBonus: 0.4,
       ...options.weights,
     };
 
@@ -63,7 +66,7 @@ export class StrategicAI implements AIStrategy {
     this.searchDepth = options.searchDepth ?? 2;
     this.maxSearchTimeMs = options.maxSearchTimeMs ?? 400;
     this.defensiveWeight = options.defensiveWeight ?? 1.0;
-    this.claimThresholdScale = options.claimThresholdScale ?? 1.7;
+    this.claimThresholdScale = options.claimThresholdScale ?? 0.6;
   }
 
   /**
@@ -104,7 +107,8 @@ export class StrategicAI implements AIStrategy {
           currentTile.rotate(score.rotation),
           score.position,
           currentPlayer,
-          allPlayers
+          allPlayers,
+          context.gameState,
         );
       }
 
@@ -134,7 +138,7 @@ export class StrategicAI implements AIStrategy {
       gameState
     );
 
-    if (currentPlayer.followers <= followerThreshold) {
+    if (currentPlayer.followers === 0) {
       return null;
     }
 
@@ -161,6 +165,17 @@ export class StrategicAI implements AIStrategy {
         feature.identifier
       );
 
+      // A completed feature pays now and immediately returns its follower.
+      if (estimate.isComplete && estimate.currentPoints > 0) {
+        const score = 1000 + estimate.currentPoints;
+        if (score > bestScore) {
+          bestScore = score;
+          bestClaim = { ...feature, score, shouldClaim: true };
+        }
+        continue;
+      }
+      if (currentPlayer.followers <= followerThreshold) continue;
+
       let score = estimate.totalValue;
 
       // Strategic scoring adjustments
@@ -174,7 +189,10 @@ export class StrategicAI implements AIStrategy {
 
       const baseThreshold =
         thresholds[feature.type as keyof typeof thresholds] || 4;
-      const threshold = baseThreshold * this.claimThresholdScale;
+      const remainingTurns = Math.ceil((gameState.tileDeck.length + 1) / context.allPlayers.length);
+      const useRemainingSupply = gameState.drawStage === "land" && remainingTurns <= currentPlayer.followers;
+      if (useRemainingSupply) score = Math.max(score, estimate.currentPoints);
+      const threshold = useRemainingSupply ? 0.01 : baseThreshold * this.claimThresholdScale;
 
       if (score > bestScore && score >= threshold) {
         bestScore = score;
@@ -259,7 +277,7 @@ export class StrategicAI implements AIStrategy {
         const opponentClaimsNearby = claims.filter(
           (claim) =>
             claim.players.some((p) => opponentIds.includes(p)) &&
-            claim.edge.startsWith(`${neighborPos.x},${neighborPos.y}`)
+            claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`
         );
 
         for (const claim of opponentClaimsNearby) {
@@ -283,7 +301,8 @@ export class StrategicAI implements AIStrategy {
     tile: ITile,
     position: Position,
     currentPlayer: PlayerState,
-    _allPlayers: PlayerState[]
+    allPlayers: PlayerState[],
+    gameState: GameState,
   ): number {
     if (this.searchDepth < 1) return 0;
 
@@ -309,6 +328,36 @@ export class StrategicAI implements AIStrategy {
       currentPlayer.id
     );
     lookAheadScore += futurePotential * 0.2;
+
+    // Compare the actual claim available after placement, including separate
+    // riverbanks. A nearby store is worthless if its feature is already owned.
+    if (currentPlayer.followers > 0) {
+      const future = new Board(board);
+      future.placeTile(tile, position);
+      const claimableFeatures = new FeatureClaimManager().getClaimableFeatures(tile)
+        .filter(feature => future.canClaimFeature(feature.type, position, feature.identifier));
+      const claim = this.evaluateMeeplePlacement({
+        board: future, currentTile: tile, currentPlayer, allPlayers,
+        gameState, validPlacements: [], claimableFeatures,
+      }, position);
+      if (claim) {
+        const value = new FeatureAnalyzer(future).estimateFeatureValue(claim.type, position, claim.identifier);
+        // Immediate completions are already included in the placement score.
+        if (!value.isComplete) lookAheadScore += Math.min(value.totalValue, 30) * this.searchDepth;
+      }
+    }
+
+    if (this.searchDepth >= 3) {
+      // Nearby restaurant followers gain a guaranteed point even when the
+      // restaurant remains unfinished. Include diagonals and ownership.
+      for (const claim of board.getFeatureClaims()) {
+        if (claim.type !== "mcdonalds") continue;
+        const [x, y] = claim.edge.split(":")[0].split(",").map(Number);
+        if (Math.abs(x - position.x) > 1 || Math.abs(y - position.y) > 1) continue;
+        if (preview.completed.some(feature => feature.type === "mcdonalds" && feature.tiles.has(claim.edge))) continue;
+        lookAheadScore += claim.players.includes(currentPlayer.id) ? 3 : -3;
+      }
+    }
 
     return lookAheadScore;
   }
@@ -369,7 +418,7 @@ export class StrategicAI implements AIStrategy {
    */
   private calculateFollowerThreshold(
     _player: PlayerState,
-    gameState: any
+    gameState: GameState
   ): number {
     const totalTiles = 72;
     const tilesRemaining = gameState.tileDeck?.length ?? 0;
@@ -394,9 +443,9 @@ export class StrategicAI implements AIStrategy {
    */
   private applyStrategicMeepleModifiers(
     score: number,
-    feature: any,
-    estimate: any,
-    gameState: any,
+    feature: ClaimableFeature,
+    estimate: FeatureValueEstimate,
+    gameState: GameState,
     player: PlayerState
   ): number {
     let adjustedScore = score;
@@ -480,6 +529,38 @@ export class StrategicAI implements AIStrategy {
 export class ExpertAI extends StrategicAI {
   public readonly difficulty: AIDifficulty = "expert";
 
+  /** Compare guaranteed scores after the claim and completion phases as well
+   * as the heuristic. This catches farmer gains across connected riverbanks. */
+  override evaluateTilePlacements(context: AIContext): TilePlacement[] {
+    const candidates = super.evaluateTilePlacements(context);
+    const scorer = new ScoreManager();
+    const baseline = context.allPlayers.map(player => ({ ...player, score: 0 }));
+    scorer.calculateFinalScores(baseline, context.board);
+    const baseScores = new Map(baseline.map(player => [player.id, player.score]));
+    // The heuristic shortlist bounds the cost without consulting hidden draws.
+    return candidates.slice(0, 12).map(candidate => {
+      const board = new Board(context.board);
+      const tile = context.currentTile.rotate(candidate.rotation);
+      const { completed } = board.placeTile(tile, candidate.position);
+      const claimableFeatures = new FeatureClaimManager().getClaimableFeatures(tile)
+        .filter(feature => board.canClaimFeature(feature.type, candidate.position, feature.identifier));
+      const claim = this.evaluateMeeplePlacement({ ...context, board, currentTile: tile, claimableFeatures }, candidate.position);
+      if (claim) board.claimFeature(claim.type, candidate.position, claim.identifier, context.currentPlayer.id);
+      const scored = completed.map(feature => ({ ...feature, claimedBy: board.getFeatureClaimants(feature) }));
+      const players = context.allPlayers.map(player => ({ ...player, score: 0 }));
+      scorer.scoreCompletedFeatures(scored, players);
+      board.returnFollowersFromCompletedFeatures(scored);
+      scorer.calculateFinalScores(players, board);
+      let ours = 0, opponents = 0;
+      for (const player of players) {
+        const gain = player.score - (baseScores.get(player.id) ?? 0);
+        if (player.id === context.currentPlayer.id) ours = gain;
+        else opponents = Math.max(opponents, gain);
+      }
+      return { ...candidate, score: (ours - opponents) * 10 + candidate.score * 0.15 };
+    }).sort((a, b) => b.score - a.score);
+  }
+
   constructor(options: StrategicAIOptions = {}) {
     super({
       weights: {
@@ -494,7 +575,7 @@ export class ExpertAI extends StrategicAI {
       searchDepth: options.searchDepth ?? 3,
       maxSearchTimeMs: options.maxSearchTimeMs ?? 600,
       defensiveWeight: options.defensiveWeight ?? 3.2,
-      claimThresholdScale: options.claimThresholdScale ?? 0.9,
+      claimThresholdScale: options.claimThresholdScale ?? 0.4,
       rng: options.rng,
     });
   }

@@ -35,7 +35,8 @@
     "startGame": "Start Game",
     "howToPlay": "📖 How to Play",
     "readyToPlay": "🎮 Ready to Play!",
-    "configureHint": "Configure your game settings and click Start Game."
+    "configureHint": "Configure your game settings and click Start Game.",
+    "riverOpening": "Every game begins with a river. Take turns building from its source to the lake, then continue with the land tiles."
   },
   "game": {
     "loading": "Loading game...",
@@ -127,11 +128,17 @@
     "failedToStart": "Failed to start game. Please try again.",
     "placedTile": "{playerName} placed tile at ({x}, {y})",
     "featuresCompleted": "{count} features completed!",
+    "costcoCompleted": "Costco complete! Worth {points} points if claimed.",
     "failedToPlace": "Failed to place tile: {message}",
     "tileRotated": "Tile rotated",
     "claimedFeature": "{playerName} claimed {type}{identifier}",
     "failedToClaim": "Failed to claim feature",
-    "skippedClaiming": "{playerName} skipped claiming"
+    "skippedClaiming": "{playerName} skipped claiming",
+    "riverContinue": "Continue the open river end before placing land tiles.",
+    "riverUTurn": "Two consecutive river bends cannot turn in the same direction.",
+    "riverBackwards": "The river cannot flow back toward its source.",
+    "riverStart": "The river source is placed only at the start of the game.",
+    "riverFinished": "The river has already ended at the lake."
   },
   "errors": {
     "notInPlacementPhase": "Not in tile placement phase",
@@ -209,11 +216,11 @@
       "title": "🎮 Controls & Interface",
       "boardInteraction": "Board Interaction",
       "zoom": "Zoom:",
-      "zoomDesc": "Mouse wheel to zoom in/out (25% - 400%)",
+      "zoomDesc": "Scroll or pinch to zoom. Fit board restores automatic framing.",
       "pan": "Pan:",
-      "panDesc": "Click and drag to move around the board",
+      "panDesc": "Drag to move around the board",
       "tilePlacement": "Tile Placement:",
-      "tilePlacementDesc": "Click on green highlighted areas to place tiles",
+      "tilePlacementDesc": "Click a green space to place. On touchscreens, tap to preview, then confirm.",
 
       "gameInterface": "Game Interface",
       "currentTileDisplay": "Current Tile Display:",
@@ -339,5 +346,35 @@
       "title": "🗺️ Have fun building your American landscape!",
       "description": "The game combines strategic thinking with tactical tile placement for an engaging multiplayer experience. Each game creates a unique map of roads, shopping centers, and restaurants across the American countryside."
     }
+  },
+  "board": {
+    "eyebrow": "American Tile Trails",
+    "title": "Build your corner of America",
+    "view": "Board view",
+    "3d": "3D scenery",
+    "2d": "2D classic",
+    "loading": "Setting the tabletop…",
+    "unavailable": "3D is unavailable on this device. Your game continues in 2D.",
+    "previewUnavailable": "3D tile preview is unavailable.",
+    "hint3d": "Click a green space to place · Drag to pan · Scroll / pinch to zoom · Touch: tap, then confirm · R / Shift+R to rotate",
+    "hint2d": "Click a green space to place · Drag to pan · Scroll to zoom · R / Shift+R to rotate",
+    "cameraControls": "Camera controls",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fit": "Fit board",
+    "tiles": "{count} tiles",
+    "legal": "{count} places to build",
+    "place": "Place tile",
+    "cancel": "Cancel",
+    "tabletop": "TABLETOP VIEW",
+    "tilesOne": "1 tile",
+    "legalOne": "1 place to build",
+    "riverOpening": "Build the river · {remaining} river tiles to place",
+    "riverHint": "Continue the open river end. Consecutive bends cannot turn the same way, and the river cannot turn back toward its source. Followers claim land features only.",
+    "landStage": "The river is complete. Continue building with land tiles.",
+    "costcoNone": "No completed Costcos yet · gold checks will mark them",
+    "costcoCompleteCount": "Completed Costcos: {count} · gold checks on the board",
+    "costcoJustCompletedOne": "Costco completed this turn · look for the gold check",
+    "costcoJustCompletedMany": "{count} Costcos completed this turn · look for the gold checks"
   }
 }

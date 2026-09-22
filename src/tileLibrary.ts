@@ -267,6 +267,23 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
 ];
 
+const FIELD_COSTCO_ADJACENCY: Record<string, string[][]> = {
+  "starter-proper": [[]],
+  "costco-straight": [["shopping-strip"], ["shopping-strip"]],
+  "costco-corner": [["plaza-corner"], ["plaza-corner"]],
+  "costco-road": [["main-plaza"]],
+  "costco-cap": [["store-front"]],
+  "road-costco-split": [[]],
+  "costco-complex-l": [["main-complex"]],
+  "costco-peninsula": [["business-park"], ["business-park"]],
+  "costco-separate-dual": [["north-outlet"], ["south-outlet"]],
+  "costco-bridge": [["shopping-bridge"], ["shopping-bridge"]],
+};
+for (const tile of TILE_LIBRARY)
+  tile.fieldSegments?.forEach((field, i) => {
+    field.adjacentCostcoZones = FIELD_COSTCO_ADJACENCY[tile.id]?.[i] ?? [];
+  });
+
 // Add quantity property for deck building
 const TILE_QUANTITIES: Record<string, number> = {
   "starter-proper": 1,

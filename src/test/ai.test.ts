@@ -435,6 +435,22 @@ describe("Game AI Integration", () => {
   });
 
   describe("AI vs AI game completion", () => {
+    it("makes visible claims throughout a seeded easy game", () => {
+      const game = new Game([
+        { id: "a", name: "A", isAI: true, aiDifficulty: "easy" },
+        { id: "b", name: "B", isAI: true, aiDifficulty: "easy" },
+      ], { seed: 404 });
+      let claims = 0;
+      let steps = 0;
+      while (!game.getState().isGameOver && steps++ < 200) {
+        const action = game.processAITurn();
+        if (action?.type === "claimed") claims++;
+      }
+      expect(game.getState().isGameOver).toBe(true);
+      expect(claims).toBeGreaterThanOrEqual(10);
+      expect(game.getState().players.some(player => player.score > 0)).toBe(true);
+    });
+
     it("should complete an AI vs AI game without errors", () => {
       const playerConfigs: PlayerDefinition[] = [
         {

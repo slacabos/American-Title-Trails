@@ -1,3 +1,4 @@
+import { riverPlacementError } from "./riverRules";
 import { DIRECTIONS, DELTAS, OPPOSITE } from "./directions";
 import { GAME_RULES } from "./constants/gameRules";
 import {
@@ -46,9 +47,11 @@ export class Board implements IBoard {
   public readonly tiles: Map<string, TileRecord>;
   private readonly featureClaims: Map<string, FeatureClaim>;
 
-  constructor() {
-    this.tiles = new Map();
-    this.featureClaims = new Map();
+  constructor(source?: IBoard) {
+    this.tiles = new Map(source?.getAllTiles());
+    this.featureClaims = new Map(source?.getFeatureClaims().map(claim => [
+      claim.edge, { ...claim, players: [...claim.players] },
+    ]));
   }
 
   isEmpty(): boolean {
@@ -114,6 +117,7 @@ export class Board implements IBoard {
   }
 
   canPlace(tile: ITile, position: Position): boolean {
+    if (riverPlacementError(this.tiles, tile, position)) return false;
     if (!this.isEmpty() && this.getTile(position)) {
       return false;
     }
@@ -189,23 +193,14 @@ export class Board implements IBoard {
       }
     });
 
-    // Check McDonalds
-    if (placedTile.center === "mcdonalds") {
-      if (this.isMcDonaldsComplete(placedPosition)) {
-        const claimedBy = this.getFeatureClaimants({
-          type: "mcdonalds",
-          tiles: new Set([positionKey(placedPosition)]),
-          edges: new Set([positionKey(placedPosition)]),
-          isComplete: true,
-        });
-        completed.push({
-          type: "mcdonalds",
-          tiles: new Set([positionKey(placedPosition)]),
-          edges: new Set([positionKey(placedPosition)]),
-          isComplete: true,
-          claimedBy,
-          points: GAME_RULES.MCDONALDS_MAX_SCORE,
-        });
+    // The new tile can complete any monastery in its surrounding 3x3 area.
+    for (let x = placedPosition.x - 1; x <= placedPosition.x + 1; x++) {
+      for (let y = placedPosition.y - 1; y <= placedPosition.y + 1; y++) {
+        const position = { x, y };
+        if (!this.getTile(position)?.tile.hasMcDonalds || !this.isMcDonaldsComplete(position)) continue;
+        const key = positionKey(position);
+        const feature = { type: "mcdonalds" as const, tiles: new Set([key]), edges: new Set([key]), isComplete: true };
+        completed.push({ ...feature, claimedBy: this.getFeatureClaimants(feature), points: GAME_RULES.MCDONALDS_MAX_SCORE });
       }
     }
 
@@ -255,7 +250,7 @@ export class Board implements IBoard {
       const { position, segments } = queue.shift()!;
       const posKey = positionKey(position);
 
-      if (feature.tiles.has(posKey)) continue;
+      if (segments.every(segment => visited.has(`${posKey}:${segment}`))) continue;
       feature.tiles.add(posKey);
 
       const tile = this.getTile(position)?.tile;
@@ -331,7 +326,7 @@ export class Board implements IBoard {
       const { position, zone: currentZone } = queue.shift()!;
       const posKey = positionKey(position);
 
-      if (feature.tiles.has(posKey)) continue;
+      if (visited.has(`${posKey}:${currentZone.id}`)) continue;
       feature.tiles.add(posKey);
 
       const tile = this.getTile(position)?.tile;
@@ -434,6 +429,7 @@ export class Board implements IBoard {
         const adjacentDirections = Board.CORNER_ADJACENCIES[corner];
 
         adjacentDirections.forEach((direction) => {
+          if (tile.getEdge(direction) === "costco") return;
           const neighborPos = addDelta(position, direction);
           const neighbor = this.getTile(neighborPos);
           if (!neighbor) return;
@@ -463,46 +459,18 @@ export class Board implements IBoard {
   public findAdjacentCostcos(fieldFeature: Feature): Set<string> {
     const adjacentCostcos = new Set<string>();
 
-    // For each tile in the field feature, check for adjacent Costco tiles
-    fieldFeature.tiles.forEach((tileKey) => {
-      const position = parsePositionKey(tileKey);
-      const tileRecord = this.getTile(position);
-      if (!tileRecord) return;
-
-      // Check all neighboring tiles for Costco zones
-      DIRECTIONS.forEach((direction) => {
-        const neighborPos = addDelta(position, direction);
-        const neighbor = this.getTile(neighborPos);
-        if (!neighbor) return;
-
-        // Check if neighbor has Costco zones
-        neighbor.tile.costcoZones.forEach((zone) => {
-          // Only count if the Costco zone touches this edge
-          const oppositeDir = OPPOSITE[direction];
-          if (zone.segments.includes(oppositeDir)) {
-            // Trace the full Costco feature to get a unique identifier
-            const costcoFeature = this.traceCostcoFeature(neighborPos, zone, new Set());
-
-            // Only count completed Costcos
-            if (this.isCostcoComplete(costcoFeature)) {
-              // Use sorted tile keys as unique identifier
-              const costcoId = Array.from(costcoFeature.tiles).sort().join("|");
-              adjacentCostcos.add(costcoId);
-            }
-          }
-        });
-      });
-
-      // Also check if the current tile has Costco zones that are adjacent to the field
-      tileRecord.tile.costcoZones.forEach((zone) => {
-        // A Costco is adjacent to a field on the same tile if they share edge proximity
-        // For simplicity, we consider any Costco on the same tile as potentially adjacent
-        const costcoFeature = this.traceCostcoFeature(position, zone, new Set());
-        if (this.isCostcoComplete(costcoFeature)) {
-          const costcoId = Array.from(costcoFeature.tiles).sort().join("|");
-          adjacentCostcos.add(costcoId);
+    fieldFeature.tiles.forEach(tileKey => {
+      const record = this.tiles.get(tileKey);
+      if (!record) return;
+      for (const field of record.tile.fieldSegments) {
+        if (!field.corners.some(corner => fieldFeature.edges.has(`${tileKey}:${corner}`))) continue;
+        for (const zoneId of field.adjacentCostcoZones ?? []) {
+          const zone = record.tile.costcoZones.find(zone => zone.id === zoneId);
+          if (!zone) continue;
+          const feature = this.traceCostcoFeature(record.position, zone, new Set());
+          if (this.isCostcoComplete(feature)) adjacentCostcos.add([...feature.edges].sort().join("|"));
         }
-      });
+      }
     });
 
     return adjacentCostcos;
@@ -635,6 +603,7 @@ export class Board implements IBoard {
         feature = this.traceFieldFeature(position, fieldSegment, new Set());
       }
     } else if (type === "mcdonalds") {
+      if (!tileRecord.tile.hasMcDonalds) return false;
       const edge = positionKey(position);
       const existingClaim = this.featureClaims.get(edge);
       return !existingClaim || existingClaim.players.length === 0;
@@ -727,12 +696,8 @@ export class Board implements IBoard {
       return null;
     }
 
-    // Create a temporary board state to analyze completion
-    const tempBoard = new Board();
-    tempBoard.tiles.clear();
-    this.tiles.forEach((record, key) => {
-      tempBoard.tiles.set(key, record);
-    });
+    // Preserve both topology and ownership without mutating the live board.
+    const tempBoard = new Board(this);
 
     // Place tile temporarily
     tempBoard.tiles.set(positionKey(position), { position, tile });

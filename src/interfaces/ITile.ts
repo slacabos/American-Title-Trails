@@ -1,4 +1,4 @@
-import { Direction, TerrainType, CostcoSegment, FieldSegment } from "../types";
+import { Direction, TerrainType, CostcoSegment, FieldSegment, RiverSegment } from "../types";
 
 /**
  * ITile interface defines the contract for tile objects in American Tile Trails.
@@ -8,6 +8,7 @@ import { Direction, TerrainType, CostcoSegment, FieldSegment } from "../types";
  * between the Tile class and type definitions.
  */
 export interface ITile {
+  readonly river?: RiverSegment;
   /**
    * Unique identifier for the tile type (e.g., "road-straight", "costco-2").
    */
