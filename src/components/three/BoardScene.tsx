@@ -64,7 +64,7 @@ function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }
   }, []);
   useEffect(() => () => texture.dispose(), [texture]);
   return (
-    <sprite name="completed-costco-marker" position={[center.x, 0.54, center.y]} scale={[0.42, 0.42, 1]} renderOrder={20}>
+    <sprite name="completed-costco-marker" position={[center.x, 0.54, center.y]} scale={[0.22, 0.22, 1]} renderOrder={20}>
       <spriteMaterial map={texture} transparent depthTest={false} depthWrite={false} />
     </sprite>
   );

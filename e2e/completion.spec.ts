@@ -10,6 +10,10 @@ test("completed Costcos stay identifiable in both board views", async ({ page },
   const count = Number((await completed.textContent())?.match(/\d+/)?.[0]);
   await expect.poll(() => page.evaluate(() => window.tabletopTest.completedMarkers())).toBe(count);
   await page.screenshot({ path: testInfo.outputPath("finished-costcos-3d.png"), fullPage: true });
+  for (let zoom = 0; zoom < 4; zoom++) {
+    await page.getByRole("button", { name: "Zoom in" }).click();
+  }
+  await page.screenshot({ path: testInfo.outputPath("finished-costcos-3d-close.png"), fullPage: true });
 
   await page.getByRole("button", { name: "2D classic" }).click();
   await expect(page.locator(".board-canvas-container")).toBeVisible();
