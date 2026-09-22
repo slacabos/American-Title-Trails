@@ -18,6 +18,7 @@ declare global {
       };
       point: (position: Position) => Position;
       renderedLegal: () => Position[];
+      completedMarkers: () => number;
       stats: () => {
         calls: number;
         triangles: number;

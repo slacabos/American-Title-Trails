@@ -16,6 +16,7 @@ import type {
 } from "./AIStrategy";
 import { GAME_RULES } from "../constants/gameRules";
 import type { RNG } from "../utils/rng";
+import { FeatureAnalyzer } from "./evaluators";
 
 /**
  * Configuration options for RandomAI.
@@ -71,7 +72,7 @@ export class RandomAI implements AIStrategy {
     context: AIContext,
     _placedPosition: Position
   ): MeeplePlacement | null {
-    const { currentPlayer, claimableFeatures } = context;
+    const { board, currentPlayer, claimableFeatures } = context;
 
     // Need at least one follower to claim
     if (currentPlayer.followers <= 0) {
@@ -82,14 +83,28 @@ export class RandomAI implements AIStrategy {
       return null;
     }
 
-    // Random chance to claim
+    // A finished feature scores immediately and returns its follower, so even
+    // the beginner AI should never pass up those points.
+    const analyzer = new FeatureAnalyzer(board);
+    const completed = claimableFeatures.find(feature =>
+      feature.type !== "field" &&
+      analyzer.estimateFeatureValue(feature.type, _placedPosition, feature.identifier).isComplete
+    );
+    if (completed) return { ...completed, score: 1, shouldClaim: true };
+
+    // Keep one follower available; farmers tend to remain on the board until
+    // the end and make random claiming feel especially passive later on.
+    if (currentPlayer.followers <= 1) return null;
+
+    // Random chance to claim an unfinished feature.
     if (this.rng() > this.claimChance) {
       return null;
     }
 
-    // Pick a random claimable feature
-    const randomIndex = Math.floor(this.rng() * claimableFeatures.length);
-    const feature = claimableFeatures[randomIndex];
+    const candidates = claimableFeatures.filter(feature => feature.type !== "field");
+    if (!candidates.length) return null;
+    const randomIndex = Math.floor(this.rng() * candidates.length);
+    const feature = candidates[randomIndex];
 
     return {
       type: feature.type,

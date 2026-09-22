@@ -128,6 +128,7 @@
     "failedToStart": "Failed to start game. Please try again.",
     "placedTile": "{playerName} placed tile at ({x}, {y})",
     "featuresCompleted": "{count} features completed!",
+    "costcoCompleted": "Costco complete! Worth {points} points if claimed.",
     "failedToPlace": "Failed to place tile: {message}",
     "tileRotated": "Tile rotated",
     "claimedFeature": "{playerName} claimed {type}{identifier}",
@@ -370,6 +371,10 @@
     "legalOne": "1 place to build",
     "riverOpening": "Build the river · {remaining} river tiles to place",
     "riverHint": "Continue the open river end. Consecutive bends cannot turn the same way, and the river cannot turn back toward its source. Followers claim land features only.",
-    "landStage": "The river is complete. Continue building with land tiles."
+    "landStage": "The river is complete. Continue building with land tiles.",
+    "costcoNone": "No completed Costcos yet · gold checks will mark them",
+    "costcoCompleteCount": "Completed Costcos: {count} · gold checks on the board",
+    "costcoJustCompletedOne": "Costco completed this turn · look for the gold check",
+    "costcoJustCompletedMany": "{count} Costcos completed this turn · look for the gold checks"
   }
 }

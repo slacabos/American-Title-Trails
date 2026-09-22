@@ -166,6 +166,7 @@ export interface GameState {
   winner?: string;
   turnNumber: number;
   lastPlacedPosition?: Position;
+  lastCompletedFeatures?: CompletedFeature[];
   scoreBreakdown: ScoreBreakdown;
 }
 

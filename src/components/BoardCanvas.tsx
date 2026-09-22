@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import type { ITile, IBoard } from "../interfaces";
 import { Position, TileRecord, GameState } from "../types";
-import { featureAnchor, resolveClaim } from "@/rendering/tileLayout";
+import { featureAnchor, resolveClaim, zonePolygon } from "@/rendering/tileLayout";
 import { UI_COLORS } from "../constants/colors";
 import { renderTileToCanvas } from "../utils/tileRendering";
+import type { CompletedCostco } from "@/rendering/completedCostcos";
 
 // Both renderers resolve the engine's stored direction/corner claims identically.
 const renderFollowerDots = (
@@ -38,6 +39,7 @@ interface BoardCanvasProps {
   showGrid?: boolean;
   showValidPlacements?: boolean;
   gameState?: GameState;
+  completedCostcos?: CompletedCostco[];
 }
 
 interface CanvasState {
@@ -63,6 +65,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
   showGrid = true,
   showValidPlacements = true,
   gameState,
+  completedCostcos = [],
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -253,18 +256,54 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
         const tileCanvas = getCachedTile(record.tile);
         ctx.drawImage(tileCanvas, x, y, scaledTileSize, scaledTileSize);
 
-        // Draw follower dots for claimed features
-        if (gameState) {
-          renderFollowerDots(
-            ctx,
-            record,
-            x,
-            y,
-            scaledTileSize,
-            gameState,
-            board
-          );
-        }
+      }
+    });
+
+    // A warm tint unites the paved areas of a finished store, while a single
+    // check mark identifies the whole connected Costco rather than each tile.
+    completedCostcos.forEach(completed => {
+      ctx.save();
+      ctx.fillStyle = "rgba(245, 187, 57, 0.27)";
+      for (const { record, index } of completed.zones) {
+        const polygon = zonePolygon(record.tile, index);
+        if (polygon.length < 3) continue;
+        const { x, y } = boardToScreen(record.position.x, record.position.y);
+        ctx.beginPath();
+        polygon.forEach(([px, py], i) => {
+          const screenX = x + (px + 0.5) * scaledTileSize;
+          const screenY = y + (py + 0.5) * scaledTileSize;
+          if (i === 0) ctx.moveTo(screenX, screenY);
+          else ctx.lineTo(screenX, screenY);
+        });
+        ctx.closePath();
+        ctx.fill();
+      }
+      const { x, y } = boardToScreen(completed.center.x, completed.center.y);
+      const cx = x + scaledTileSize / 2;
+      const cy = y + scaledTileSize / 2;
+      const radius = Math.max(8, scaledTileSize * 0.17);
+      ctx.shadowColor = "rgba(67, 44, 15, 0.55)";
+      ctx.shadowBlur = radius * 0.6;
+      ctx.fillStyle = "#f4bf4f";
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "#5f421b";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = "#3b2a12";
+      ctx.font = `bold ${Math.round(radius * 1.45)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("✓", cx, cy + 1);
+      ctx.restore();
+    });
+
+    if (gameState) board.getAllTiles().forEach(record => {
+      const { x, y } = boardToScreen(record.position.x, record.position.y);
+      if (x + scaledTileSize >= 0 && x <= width && y + scaledTileSize >= 0 && y <= height) {
+        renderFollowerDots(ctx, record, x, y, scaledTileSize, gameState, board);
       }
     });
 
@@ -309,6 +348,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     showValidPlacements,
     boardToScreen,
     gameState,
+    completedCostcos,
     getCachedTile,
   ]);
 

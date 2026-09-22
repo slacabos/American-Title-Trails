@@ -30,12 +30,44 @@ import {
 } from "./Scenery";
 import { useTranslations } from "@/hooks/useTranslations";
 import { PlacementGrid } from "./PlacementGrid";
+import type { CompletedCostco } from "@/rendering/completedCostcos";
 
 export interface BoardSceneProps {
   state: GameState;
   onTilePlace: (position: Position) => void;
   onUnavailable: () => void;
   highlightedFeature?: ClaimableFeature;
+  completedCostcos?: CompletedCostco[];
+}
+
+function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 160;
+    canvas.height = 160;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#f4bf4f";
+    ctx.beginPath();
+    ctx.arc(80, 80, 73, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#62461e";
+    ctx.lineWidth = 9;
+    ctx.stroke();
+    ctx.fillStyle = "#352a17";
+    ctx.font = "bold 100px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("✓", 80, 86);
+    const result = new THREE.CanvasTexture(canvas);
+    result.colorSpace = THREE.SRGBColorSpace;
+    return result;
+  }, []);
+  useEffect(() => () => texture.dispose(), [texture]);
+  return (
+    <sprite name="completed-costco-marker" position={[center.x, 0.54, center.y]} scale={[0.42, 0.42, 1]} renderOrder={20}>
+      <spriteMaterial map={texture} transparent depthTest={false} depthWrite={false} />
+    </sprite>
+  );
 }
 interface CameraActions {
   fit: () => void;
@@ -261,6 +293,7 @@ export function BoardScene({
   onTilePlace,
   onUnavailable,
   highlightedFeature,
+  completedCostcos = [],
 }: BoardSceneProps) {
   const { t } = useTranslations();
   const snapshot = useMemo(() => boardSnapshot(state), [state]);
@@ -364,6 +397,9 @@ export function BoardScene({
             });
           }),
         )}
+        {completedCostcos.map((completed, index) => (
+          <CompletedCostcoMarker key={`${completed.center.x},${completed.center.y},${index}`} center={completed.center} />
+        ))}
         {last && (
           <CellOutline
             x={last.position.x}

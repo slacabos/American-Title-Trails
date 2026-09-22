@@ -32,6 +32,11 @@ import { AIFactory, AIStrategy, AIContext } from "./ai";
 export { GamePhase } from "./types";
 export type { GameState, PlayerState, TilePlacementResult } from "./types";
 
+export type AIAction =
+  | { type: "placed"; position: Position; result: TilePlacementResult }
+  | { type: "claimed"; feature: ClaimableFeature }
+  | { type: "skipped" };
+
 export class Game {
   private state: GameState;
   private pendingCompleted: CompletedFeature[] = [];
@@ -181,6 +186,7 @@ export class Game {
       // Track the position where this tile was placed
       this.turnManager.setLastPlacedPosition(position);
       this.state.lastPlacedPosition = position;
+      this.state.lastCompletedFeatures = result.completed;
 
       // Discard the current tile
       this.tileManager.discardCurrentTile();
@@ -362,7 +368,7 @@ export class Game {
     this.notifyStateChange();
   }
 
-  public processAITurn(): void {
+  public processAITurn(): AIAction | undefined {
     const currentPlayer = this.getCurrentPlayer();
     if (!currentPlayer.isAI) {
       return;
@@ -379,8 +385,7 @@ export class Game {
     const aiStrategy = this.aiStrategies.get(currentPlayer.id);
     if (!aiStrategy) {
       // Fallback to simple logic if no strategy (shouldn't happen)
-      this.processAITurnFallback();
-      return;
+      return this.processAITurnFallback();
     }
 
     if (this.state.phase === GamePhase.PLACE_TILE) {
@@ -406,9 +411,9 @@ export class Game {
       // Get evaluated placements from AI strategy
       const tilePlacements = aiStrategy.evaluateTilePlacements(context);
 
-      if (tilePlacements.length > 0) {
-        const best = tilePlacements[0];
-        this.placeTile(best.position, best.rotation);
+      const best = tilePlacements[0];
+      if (best) {
+        return { type: "placed", position: best.position, result: this.placeTile(best.position, best.rotation) };
       } else {
         this.discardCurrentTileAndEndTurn();
       }
@@ -446,17 +451,24 @@ export class Game {
       );
 
       if (meeplePlacement && meeplePlacement.shouldClaim) {
-        this.claimFeature(meeplePlacement.type, meeplePlacement.identifier);
-      } else {
-        this.skipClaim();
+        if (this.claimFeature(meeplePlacement.type, meeplePlacement.identifier)) {
+          return {
+            type: "claimed",
+            feature: claimableFeatures.find(feature =>
+              feature.type === meeplePlacement.type && feature.identifier === meeplePlacement.identifier
+            ) ?? meeplePlacement,
+          };
+        }
       }
+      this.skipClaim();
+      return { type: "skipped" };
     }
   }
 
   /**
    * Fallback AI logic if no strategy is available.
    */
-  private processAITurnFallback(): void {
+  private processAITurnFallback(): AIAction | undefined {
     const currentPlayer = this.getCurrentPlayer();
     const currentTile = this.tileManager.getCurrentTile();
 
@@ -465,21 +477,16 @@ export class Game {
 
       // Try all candidate positions with all rotations
       const candidates = this.state.board.getPlacementCandidates();
-      let placed = false;
       for (const position of candidates) {
         for (let rotation = 0; rotation < GAME_RULES.TILE_ROTATIONS; rotation++) {
           const rotatedTile = currentTile.rotate(rotation);
           if (this.state.board.canPlace(rotatedTile, position)) {
-            this.placeTile(position, rotation);
-            placed = true;
-            break;
+            const result = this.placeTile(position, rotation);
+            return { type: "placed", position, result };
           }
         }
-        if (placed) break;
       }
-      if (!placed) {
-        this.discardCurrentTileAndEndTurn();
-      }
+      this.discardCurrentTileAndEndTurn();
     } else if (this.state.phase === GamePhase.CLAIM_FEATURE) {
       if (currentPlayer.followers > GAME_RULES.AI_CLAIM_THRESHOLD) {
         const lastPosition = this.getLastPlacedTilePosition();
@@ -489,13 +496,15 @@ export class Game {
             const claimable =
               this.featureClaimManager.getClaimableFeatures(placedTile);
             if (claimable.length > 0) {
-              this.claimFeature(claimable[0].type, claimable[0].identifier);
-              return;
+              if (this.claimFeature(claimable[0].type, claimable[0].identifier)) {
+                return { type: "claimed", feature: claimable[0] };
+              }
             }
           }
         }
       }
       this.skipClaim();
+      return { type: "skipped" };
     }
   }
 

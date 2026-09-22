@@ -6,6 +6,7 @@ import {
   TerrainType,
   GameState,
   ClaimableFeature,
+  CompletedFeature,
 } from "../types";
 import { Game, GamePhase } from "../game";
 import { BoardView, CurrentTilePreview } from "./BoardView";
@@ -78,18 +79,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const currentPlayerIsAI = gameState?.players?.[currentPlayerIndex ?? 0]?.isAI;
 
   useEffect(() => {
-    // Early return if game not initialized or not AI's turn
-    if (!gameRef.current || !currentPlayerIsAI || isGameOver) return;
-
-    // Set timeout for AI move with slight delay for UX
-    const timer = setTimeout(() => {
-      gameRef.current?.processAITurn();
-    }, GAME_RULES.AI_MOVE_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [currentPlayerIsAI, currentPlayerIndex, phase, isGameOver]);
-
-  useEffect(() => {
     if (gameState?.isGameOver) {
       setIsGameOverCollapsed(false);
     }
@@ -106,6 +95,34 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       ...prev.slice(0, 19),
     ]);
   }, []);
+
+  const logCompletions = useCallback((features: CompletedFeature[]) => {
+    features.filter(feature => feature.type === "costco").forEach(feature =>
+      addLog(t("messages.costcoCompleted", { points: feature.points }))
+    );
+    const others = features.filter(feature => feature.type !== "costco").length;
+    if (others) addLog(t("messages.featuresCompleted", { count: others }));
+  }, [addLog, t]);
+
+  useEffect(() => {
+    if (!gameRef.current || !currentPlayerIsAI || isGameOver) return;
+    const timer = setTimeout(() => {
+      const currentGame = gameRef.current;
+      if (!currentGame) return;
+      const playerName = currentGame.getCurrentPlayer().name;
+      const action = currentGame.processAITurn();
+      if (action?.type === "placed" && action.result.success) {
+        logCompletions(action.result.completedFeatures);
+      } else if (action?.type === "claimed") {
+        addLog(t("messages.claimedFeature", {
+          playerName,
+          type: action.feature.type,
+          identifier: action.feature.displayName ? ` (${action.feature.displayName})` : "",
+        }));
+      }
+    }, GAME_RULES.AI_MOVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [currentPlayerIsAI, currentPlayerIndex, phase, isGameOver, addLog, logCompletions, t]);
 
   const updateClaimableFeatures = useCallback(
     (gameInstance: Game, state: GameState) => {
@@ -132,9 +149,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           gameState.players[gameState.currentPlayerIndex].name
         } placed tile at (${position.x}, ${position.y})`
       );
-      if (result.completedFeatures.length > 0) {
-        addLog(`${result.completedFeatures.length} features completed!`);
-      }
+      logCompletions(result.completedFeatures);
     } else {
       addLog(`Failed to place tile: ${result.message?.startsWith("river") ? t(`messages.${result.message}`) : result.message}`);
     }
@@ -157,12 +172,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const handleClaimFeature = (type: TerrainType, identifier?: string) => {
     if (!game || !gameState) return;
 
+    const displayName = claimableFeatures.find(feature => feature.type === type && feature.identifier === identifier)?.displayName;
     const success = game.claimFeature(type, identifier);
     if (success) {
       addLog(
         `${
           gameState.players[gameState.currentPlayerIndex].name
-        } claimed ${type}${identifier ? ` (${identifier})` : ""}`
+        } claimed ${type}${displayName ? ` (${displayName})` : ""}`
       );
     } else {
       addLog("Failed to claim feature");

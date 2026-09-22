@@ -7,6 +7,8 @@ import { buildRiverDeck, getRiverSource, getRiverLake } from "@/riverLibrary";
 import { GamePhase, GameState } from "@/types";
 import { positionKey } from "@/rendering/tileLayout";
 import { warehouseExamples } from "@/test/fixtures/warehouseExamples";
+import { completedCostcos } from "@/rendering/completedCostcos";
+import { Tile } from "@/tile";
 
 function populatedState(count: number): GameState {
   const game = new Game(
@@ -62,6 +64,22 @@ warehouseExamples.forEach((example, i) => {
 });
 export const ConnectedWarehouses: Story = {
   args: { state: { ...populatedState(1), board: warehouseBoard, lastPlacedPosition: undefined } },
+};
+
+const finishedBoard = new Board();
+const finishCap = (id: string, direction: "east" | "west") => new Tile({
+  id, name: id,
+  edges: { north: "field", east: direction === "east" ? "costco" : "field", south: "field", west: direction === "west" ? "costco" : "field" },
+  center: "field", roadConnections: [],
+  costcoZones: [{ id: "shop", segments: [direction] }],
+});
+finishedBoard.placeTile(finishCap("east-cap", "east"), { x: 0, y: 0 });
+finishedBoard.placeTile(finishCap("west-cap", "west"), { x: 1, y: 0 });
+export const CompletedCostco: Story = {
+  args: {
+    state: { ...populatedState(1), board: finishedBoard, lastPlacedPosition: { x: 1, y: 0 } },
+    completedCostcos: completedCostcos(finishedBoard),
+  },
 };
 
 const gallery = new Board();

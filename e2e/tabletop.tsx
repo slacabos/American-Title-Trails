@@ -116,6 +116,14 @@ Object.assign(window, {
       });
       return positions;
     },
+    completedMarkers: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
+      let count = 0;
+      _roots.get(canvas)!.store.getState().scene.traverse(object => {
+        if (object.name === "completed-costco-marker") count++;
+      });
+      return count;
+    },
     stats: () => {
       const canvas = document.querySelector<HTMLCanvasElement>(
         '[data-testid="board-3d"] canvas',

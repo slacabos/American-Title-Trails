@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useCallback, useState } from "react";
+import React, { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import type { ClaimableFeature, GameState, Position } from "@/types";
 import { GamePhase } from "@/types";
 import type { ITile } from "@/interfaces/ITile";
@@ -6,6 +6,7 @@ import BoardCanvas from "./BoardCanvas";
 import TileRenderer from "./TileRenderer";
 import type { RenderMode } from "@/rendering/renderMode";
 import { useTranslations } from "@/hooks/useTranslations";
+import { completedCostcos } from "@/rendering/completedCostcos";
 
 const BoardScene = lazy(() =>
   import("./three/BoardScene").then((module) => ({
@@ -63,6 +64,12 @@ export function BoardView({
     state.phase === GamePhase.PLACE_TILE &&
     !state.isGameOver &&
     !state.players[state.currentPlayerIndex]?.isAI;
+  const tileCount = state.board.getAllTiles().size;
+  const finishedCostcos = useMemo(
+    () => tileCount ? completedCostcos(state.board) : [],
+    [state.board, tileCount],
+  );
+  const justCompletedCostcos = state.lastCompletedFeatures?.filter(feature => feature.type === "costco") ?? [];
   const flat = (
     <BoardCanvas
       board={state.board}
@@ -70,6 +77,7 @@ export function BoardView({
       currentTile={canPlace ? state.currentTile : undefined}
       onTilePlace={canPlace ? onTilePlace : undefined}
       showValidPlacements={canPlace}
+      completedCostcos={finishedCostcos}
     />
   );
   return (
@@ -102,6 +110,19 @@ export function BoardView({
         }) : t("board.landStage")}
       </p>
       {state.drawStage === "river" && <p className="board-controls-hint">{t("board.riverHint")}</p>}
+      <p className="board-controls-hint" aria-live="polite">
+        {justCompletedCostcos.length > 0
+          ? t(
+            justCompletedCostcos.length === 1
+              ? "board.costcoJustCompletedOne"
+              : "board.costcoJustCompletedMany",
+            { count: justCompletedCostcos.length },
+          )
+          : t(
+            finishedCostcos.length ? "board.costcoCompleteCount" : "board.costcoNone",
+            { count: finishedCostcos.length },
+          )}
+      </p>
       {unavailable && (
         <p className="board-graphics-notice" role="status">
           {t("board.unavailable")}
@@ -122,6 +143,7 @@ export function BoardView({
                 onTilePlace={onTilePlace}
                 onUnavailable={onUnavailable}
                 highlightedFeature={highlightedFeature}
+                completedCostcos={finishedCostcos}
               />
             </Suspense>
           </GraphicsBoundary>
