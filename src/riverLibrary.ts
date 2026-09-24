@@ -45,7 +45,7 @@ export const RIVER_TILES: TileDefinition[] = [
   define("river-meander", "Meandering River", ["north", "south"], {
     fieldSegments: [field("field-0", ["nw", "sw"]), field("field-1", ["ne", "se"])],
   }),
-  define("river-bend", "Woodland River Bend", ["north", "west"], {
+  define("river-bend", "Picnic River Bend", ["north", "west"], {
     fieldSegments: [field("field-0", ["nw"]), field("field-1", ["ne", "sw", "se"])],
   }),
   define("river-mcdonalds", "Riverside McDonald's", ["west", "east"], {

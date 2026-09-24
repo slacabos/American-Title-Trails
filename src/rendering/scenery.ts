@@ -3,6 +3,10 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { ITile } from "@/interfaces/ITile";
 import { buildWarehouses } from "./warehouseGeometry";
+import { GLOW_COLOR, PaintBatch, place, type PropBuilder } from "./paint";
+import { buildLandmark, LANDMARKS } from "./landmarks";
+
+const NIGHT_GLOW = 1.1;
 import { WarehouseComplex, warehouseLayout } from "./warehouseLayout";
 import {
   canonicalTile,
@@ -93,10 +97,24 @@ export class SceneryLibrary {
     }
     return buildWarehouses(layout, {
       roof, wall: this.material("#e4ddca"), trim: this.material("#d9d4be"),
-      fascia: this.material("#c5493f"), glass: this.material("#254c58"),
+      fascia: this.material("#c5493f"), glass: this.warehouseGlass(),
       metal: this.material("#667b7e"), marking: this.material("#eef0dd"),
       sign: this.label("costco"),
     });
+  }
+
+  private warehouseGlass(): THREE.Material {
+    let material = this.materials.get("warehouse-glass");
+    if (!material) {
+      material = new THREE.MeshStandardMaterial({
+        color: "#254c58",
+        roughness: 0.6,
+        emissive: GLOW_COLOR,
+        emissiveIntensity: this.night ? NIGHT_GLOW : 0,
+      });
+      this.materials.set("warehouse-glass", material);
+    }
+    return material;
   }
 
   /** A prospective tile shows a complete standalone section before placement. */
@@ -120,6 +138,42 @@ export class SceneryLibrary {
       this.materials.set(color, material);
     }
     return material;
+  }
+
+  /** One vertex-coloured material shared by every painted prop. */
+  private paintMaterial(): THREE.Material {
+    let material = this.materials.get("paint");
+    if (!material) {
+      material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.87 });
+      this.materials.set("paint", material);
+    }
+    return material;
+  }
+
+  /** Painted windows and lamps that light up at night. */
+  private glowMaterial(): THREE.MeshStandardMaterial {
+    let material = this.materials.get("glow") as THREE.MeshStandardMaterial | undefined;
+    if (!material) {
+      material = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        roughness: 0.6,
+        emissive: GLOW_COLOR,
+        emissiveIntensity: this.night ? NIGHT_GLOW : 0,
+      });
+      this.materials.set("glow", material);
+    }
+    return material;
+  }
+
+  private night = false;
+
+  /** Windows, lamps and warehouse glass glow after dark. */
+  setNight(night: boolean): void {
+    this.night = night;
+    for (const key of ["glow", "warehouse-glass"]) {
+      const material = this.materials.get(key) as THREE.MeshStandardMaterial | undefined;
+      if (material) material.emissiveIntensity = night ? NIGHT_GLOW : 0;
+    }
   }
 
   private label(kind: "costco" | "mcdonalds"): THREE.Material {
@@ -163,23 +217,27 @@ export class SceneryLibrary {
     if (cached) return cached;
     const base = canonicalTile(tile);
     const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
+    const paint = new PaintBatch();
+    const glow = new PaintBatch();
+    // Textured or special materials (ground, labels, bridge deck) keep their own batch.
     const add = (
       geometry: THREE.BufferGeometry,
       material: THREE.Material,
       position: THREE.Vector3,
       rotation = new THREE.Euler(),
     ) => {
-      geometry.applyMatrix4(
-        new THREE.Matrix4().compose(
-          position,
-          new THREE.Quaternion().setFromEuler(rotation),
-          new THREE.Vector3(1, 1, 1),
-        ),
-      );
+      place(geometry, position, rotation);
       const list = batches.get(material) ?? [];
       list.push(geometry);
       batches.set(material, list);
     };
+    const shape = (
+      geometry: THREE.BufferGeometry,
+      color: string,
+      position: THREE.Vector3,
+      rotation = new THREE.Euler(),
+      lit = false,
+    ) => (lit ? glow : paint).add(place(geometry, position, rotation), color);
     const box = (
       x: number,
       y: number,
@@ -189,13 +247,17 @@ export class SceneryLibrary {
       d: number,
       color: string,
       yaw = 0,
+      lit = false,
     ) =>
-      add(
+      shape(
         new THREE.BoxGeometry(w, h, d),
-        this.material(color),
+        color,
         new THREE.Vector3(x, y, z),
         new THREE.Euler(0, yaw, 0),
+        lit,
       );
+    const props: PropBuilder = { box, shape };
+    (LANDMARKS[base.id] ?? []).forEach((landmark) => buildLandmark(props, landmark));
 
     box(0, -0.047, 0, 0.994, 0.084, 0.994, "#ad9171");
     box(0, -0.012, 0, 0.998, 0.012, 0.998, "#d1c6a0");
@@ -235,9 +297,10 @@ export class SceneryLibrary {
         h: number,
         d: number,
         color: string,
+        lit = false,
       ) => {
         const p = local(lx, ly, lz);
-        box(p.x, p.y, p.z, w, h, d, color, yaw);
+        box(p.x, p.y, p.z, w, h, d, color, yaw, lit);
       };
       block(0, 0.008, 0, width + 0.025, 0.016, depth + 0.025, "#d9d4be");
       block(
@@ -276,6 +339,7 @@ export class SceneryLibrary {
           height * 0.37,
           0.008,
           "#466b73",
+          true,
         );
       }
       block(
@@ -286,6 +350,7 @@ export class SceneryLibrary {
         height * 0.41,
         0.011,
         "#254c58",
+        true,
       );
       // Roof lettering remains legible from the fixed tabletop camera.
       add(
@@ -329,9 +394,9 @@ export class SceneryLibrary {
             a.distanceTo(b) + 0.003,
             0.01,
           );
-          add(
+          shape(
             geometry,
-            this.material("#ffd35b"),
+            "#ffd35b",
             new THREE.Vector3((a.x + b.x) / 2, (a.y + b.y) / 2, base.river ? signZ + 0.02 : -0.25),
             new THREE.Euler(0, 0, -Math.atan2(b.x - a.x, b.y - a.y)),
           );
@@ -418,8 +483,11 @@ export class SceneryLibrary {
       deck.setIndex(indices);
       deck.computeVertexNormals();
       // The ribbon's winding depends on the road axis.
-      const material = this.material("#626c69");
-      material.side = THREE.DoubleSide;
+      let material = this.materials.get("bridge-deck");
+      if (!material) {
+        material = new THREE.MeshStandardMaterial({ color: "#626c69", roughness: 0.87, side: THREE.DoubleSide });
+        this.materials.set("bridge-deck", material);
+      }
       add(deck, material, new THREE.Vector3());
     }
 
@@ -439,28 +507,28 @@ export class SceneryLibrary {
         return;
       const treeX = x + ((variation % 17) / 16 - 0.5) * 0.06;
       const treeZ = z + (((variation >>> 4) % 17) / 16 - 0.5) * 0.06;
-      add(
+      shape(
         new THREE.CylinderGeometry(0.01, 0.015, 0.09, 5),
-        this.material("#826a4b"),
+        "#826a4b",
         new THREE.Vector3(treeX, 0.043, treeZ),
       );
-      add(
+      shape(
         new THREE.IcosahedronGeometry(0.055 + (variation % 4) * 0.006, 1),
-        this.material(i % 2 ? "#65934d" : "#477d50"),
+        i % 2 ? "#65934d" : "#477d50",
         new THREE.Vector3(treeX, 0.12, treeZ),
       );
-      add(
+      shape(
         new THREE.IcosahedronGeometry(0.035, 0),
-        this.material("#88a75a"),
+        "#88a75a",
         new THREE.Vector3(x - 0.065, 0.025, z + 0.027),
       );
       if (variation % 3 === 0) {
         const sapling: Point = [treeX - Math.sign(x) * 0.09, treeZ];
         if (!nearRiver(base, sapling, 0.06) && !zones.some((polygon) => insidePolygon(sapling, polygon)) &&
           !roads.some(([rx, rz]) => Math.hypot(rx - sapling[0], rz - sapling[1]) < 0.15)) {
-          add(new THREE.CylinderGeometry(0.006, 0.01, 0.065, 5), this.material("#826a4b"),
+          shape(new THREE.CylinderGeometry(0.006, 0.01, 0.065, 5), "#826a4b",
             new THREE.Vector3(sapling[0], 0.032, sapling[1]));
-          add(new THREE.IcosahedronGeometry(0.042, 1), this.material("#65934d"),
+          shape(new THREE.IcosahedronGeometry(0.042, 1), "#65934d",
             new THREE.Vector3(sapling[0], 0.088, sapling[1]));
         }
       }
@@ -472,6 +540,10 @@ export class SceneryLibrary {
       geometries.forEach((source) => source.dispose());
       if (geometry) parts.push({ geometry, material });
     }
+    const painted = paint.build();
+    if (painted) parts.push({ geometry: painted, material: this.paintMaterial() });
+    const lit = glow.build();
+    if (lit) parts.push({ geometry: lit, material: this.glowMaterial() });
     const model = { parts };
     this.models.set(key, model);
     return model;
@@ -552,6 +624,19 @@ export class SceneryLibrary {
         ctx.moveTo(x, 0.145);
         ctx.lineTo(x, 0.235);
         ctx.stroke();
+      }
+      // Drive-thru lane past the menu board, with direction arrows.
+      ctx.fillStyle = "#9d9f94";
+      ctx.fillRect(0.135, -0.24, 0.05, 0.36);
+      ctx.fillStyle = "#f4e4bf";
+      for (const z of [0.06, -0.12]) {
+        ctx.beginPath();
+        ctx.moveTo(0.16, z - 0.03);
+        ctx.lineTo(0.147, z);
+        ctx.lineTo(0.173, z);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(0.156, z, 0.008, 0.028);
       }
     }
     if (tile.hasMcDonalds && tile.river) {

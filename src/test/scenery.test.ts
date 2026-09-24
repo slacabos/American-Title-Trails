@@ -2,6 +2,7 @@ import { buildRiverDeck, getRiverLake, getRiverSource } from "@/riverLibrary";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SceneryLibrary } from "@/rendering/scenery";
 import { buildDeck, getStartTile } from "@/tileLibrary";
+import { LANDMARK_RADIUS, LANDMARKS, landmarkConflict } from "@/rendering/landmarks";
 
 const tiles = [
   ...new Map(
@@ -51,4 +52,24 @@ describe("procedural scenery resources", () => {
     library.dispose();
     expect(disposed).toHaveBeenCalledTimes(model.parts.length);
   });
+});
+
+describe("landmarks", () => {
+  it("rejects spots on a road or a follower spot", () => {
+    const road = tiles.find((tile) => tile.id === "straight-road")!;
+    expect(landmarkConflict(road, [0, 0], 0.05)).toBe("road");
+    expect(landmarkConflict(road, [0.3, -0.3], 0.05)).toBe("follower field");
+  });
+
+  it.each(tiles.map((tile) => [tile.id, tile] as const))(
+    "%s landmarks stay clear of roads, lots, water and follower spots",
+    (_, tile) => {
+      for (const landmark of LANDMARKS[tile.id] ?? []) {
+        expect(
+          landmarkConflict(tile, landmark.at, LANDMARK_RADIUS[landmark.kind]),
+          `${landmark.kind} at ${landmark.at}`,
+        ).toBeUndefined();
+      }
+    },
+  );
 });

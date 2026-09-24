@@ -21,7 +21,7 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "straight-road",
-    name: "Desert Highway",
+    name: "Billboard Highway",
     edges: { north: "road", east: "field", south: "road", west: "field" },
     center: "field",
     roadConnections: [["north", "south"]],
@@ -45,7 +45,7 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "road-end",
-    name: "Dead End Street",
+    name: "Cul-de-Sac",
     edges: { north: "road", east: "field", south: "field", west: "field" },
     center: "field",
     roadConnections: [["north", "center"]],
@@ -54,7 +54,7 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "three-way-road",
-    name: "Urban Cloverleaf",
+    name: "Farm Road Junction",
     edges: { north: "road", east: "road", south: "field", west: "road" },
     center: "road",
     roadConnections: [
@@ -141,7 +141,7 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "mcdonalds-abbey",
-    name: "Roadside McDonalds",
+    name: "Drive-Thru McDonald's",
     edges: { north: "field", east: "field", south: "field", west: "field" },
     center: "mcdonalds",
     roadConnections: [],
@@ -150,7 +150,7 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "road-costco-split",
-    name: "Downtown Shopping District",
+    name: "Twin Costco Corner",
     edges: { north: "costco", east: "road", south: "road", west: "costco" },
     center: "mixed",
     roadConnections: [["east", "south", "center"]],
@@ -188,7 +188,7 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "costco-peninsula",
-    name: "Costco Business Park",
+    name: "Edge-of-Town Costco",
     edges: { north: "field", east: "costco", south: "field", west: "field" },
     center: "costco",
     roadConnections: [],
@@ -248,7 +248,7 @@ const TILE_LIBRARY: TileDefinition[] = [
   },
   {
     id: "costco-bridge",
-    name: "Costco Shopping Bridge",
+    name: "Costco Long Warehouse",
     edges: { north: "field", east: "costco", south: "field", west: "costco" },
     center: "costco",
     roadConnections: [],
