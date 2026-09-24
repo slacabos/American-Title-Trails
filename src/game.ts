@@ -75,6 +75,8 @@ export class Game {
     this.state = {
       board: new Board(),
       drawStage: "river",
+      // Drawn from Math.random so a seeded game's rules stay reproducible.
+      sceneSeed: options.seed ?? Math.floor(Math.random() * 2 ** 31),
       players,
       currentPlayerIndex: this.turnManager.getCurrentPlayerIndex(),
       tileDeck: this.tileManager.getTileDeck(),

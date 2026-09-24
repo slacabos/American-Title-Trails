@@ -358,7 +358,7 @@ export function BoardScene({
         </mesh>
         <PlacementGrid bounds={bounds} />
         <SceneryProvider>
-          <Scenery records={snapshot.tiles} />
+          <Scenery records={snapshot.tiles} seed={state.sceneSeed} />
           {snapshot.legal.map((position) => (
             <CellOutline
               key={positionKey(position)}

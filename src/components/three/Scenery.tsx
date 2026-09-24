@@ -14,10 +14,10 @@ import { warehouseLayout, warehouseLayoutKey } from "@/rendering/warehouseLayout
 import type { ITile } from "@/interfaces/ITile";
 import type { ClaimableFeature, TileRecord } from "@/types";
 import { SceneryLibrary, SceneryPart } from "@/rendering/scenery";
-import { dominantRegion, regionWeights } from "@/rendering/regions";
-import { hash01, type Species, speciesFor, vegetationSpots, worldSpot } from "@/rendering/vegetation";
+import { cornerWeights } from "@/rendering/regions";
+import { writeRegionAttributes } from "@/rendering/groundShader";
+import { type PlantInstances, plantInstances } from "@/rendering/vegetation";
 import {
-  canonicalTile,
   CORNERS,
   featureAnchor,
   Point,
@@ -40,15 +40,23 @@ export function SceneryProvider({ children }: { children: React.ReactNode }) {
 function Instances({
   part,
   records,
+  seed,
 }: {
   part: SceneryPart;
   records: TileRecord[];
+  seed?: number;
 }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
+    if (part.material.userData.regional) {
+      writeRegionAttributes(
+        part.geometry,
+        records.map(({ position, tile }) => cornerWeights(position, tile.orientation, seed)),
+      );
+    }
     const matrix = new THREE.Matrix4();
     records.forEach(({ position, tile }, index) => {
       matrix.makeRotationY((-tile.orientation * Math.PI) / 2);
@@ -60,7 +68,7 @@ function Instances({
     // Instance matrices change outside React's mesh props. Demand rendering
     // needs an explicit frame when an existing tile moves or rotates.
     invalidate();
-  }, [records, invalidate]);
+  }, [records, invalidate, part, seed]);
   // R3F disposes each instance buffer. Geometry/material arguments belong to the
   // library and are not declaratively attached children, so they stay shared.
   return (
@@ -71,47 +79,6 @@ function Instances({
       receiveShadow
     />
   );
-}
-
-interface PlantInstances {
-  species: Species;
-  matrices: THREE.Matrix4[];
-  colors: THREE.Color[];
-}
-
-// The alternate crown tint that meadow trees used before they were instanced.
-const DARK_CROWN = new THREE.Color("#477d50");
-const LIGHT_CROWN = new THREE.Color("#65934d");
-const DARK_TINT = new THREE.Color(
-  DARK_CROWN.r / LIGHT_CROWN.r,
-  DARK_CROWN.g / LIGHT_CROWN.g,
-  DARK_CROWN.b / LIGHT_CROWN.b,
-);
-const WHITE = new THREE.Color(1, 1, 1);
-
-/** Group every plant on the board by species, with a world transform each. */
-export function plantInstances(records: TileRecord[], seed?: number): PlantInstances[] {
-  const groups = new Map<Species, PlantInstances>();
-  for (const { tile, position } of records) {
-    const base = canonicalTile(tile);
-    for (const spot of vegetationSpots(base)) {
-      const [x, z] = worldSpot(position, tile.orientation, spot);
-      const region = dominantRegion(regionWeights(x, z, seed));
-      const species = speciesFor(region, spot.kind);
-      const group = groups.get(species) ?? { species, matrices: [], colors: [] };
-      const yaw = hash01(x, z, 1) * Math.PI * 2;
-      group.matrices.push(
-        new THREE.Matrix4().compose(
-          new THREE.Vector3(x, 0, z),
-          new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0)),
-          new THREE.Vector3(spot.scale, spot.scale, spot.scale),
-        ),
-      );
-      group.colors.push(species === "round" && spot.kind === "tree" && spot.variant % 2 === 0 ? DARK_TINT : WHITE);
-      groups.set(species, group);
-    }
-  }
-  return [...groups.values()];
 }
 
 function PlantMesh({ plants }: { plants: PlantInstances }) {
@@ -174,6 +141,7 @@ export function Scenery({ records, seed }: { records: TileRecord[]; seed?: numbe
               key={`${i}-${tiles.length}`}
               part={part}
               records={tiles}
+              seed={seed}
             />
           ))}
         </group>

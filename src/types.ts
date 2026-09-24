@@ -155,6 +155,8 @@ export enum GamePhase {
 
 export interface GameState {
   drawStage: "river" | "land";
+  /** Seeds scenery only (regional landscapes); never affects game rules. */
+  sceneSeed: number;
   board: IBoard;
   players: PlayerState[];
   currentPlayerIndex: number;

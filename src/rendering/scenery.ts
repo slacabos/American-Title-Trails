@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { ITile } from "@/interfaces/ITile";
 import { buildWarehouses } from "./warehouseGeometry";
+import { makeRegional } from "./groundShader";
 import { GLOW_COLOR, PaintBatch, place, type PropBuilder } from "./paint";
 import { buildLandmark, LANDMARKS } from "./landmarks";
 import { buildSpecies, type Species, speciesFor, vegetationSpots } from "./vegetation";
@@ -283,11 +284,12 @@ export class SceneryLibrary {
 
     box(0, -0.047, 0, 0.994, 0.084, 0.994, "#ad9171");
     box(0, -0.012, 0, 0.998, 0.012, 0.998, "#d1c6a0");
-    const groundTexture = this.ground(base);
+    const groundTextures = this.ground(base);
     const groundMaterial = new THREE.MeshStandardMaterial({
-      map: groundTexture,
+      map: groundTextures.map,
       roughness: 1,
     });
+    makeRegional(groundMaterial, groundTextures.mask);
     this.materials.set(`ground-${key}`, groundMaterial);
     add(
       new THREE.PlaneGeometry(1, 1),
@@ -528,7 +530,7 @@ export class SceneryLibrary {
     return model;
   }
 
-  private ground(tile: ITile): THREE.Texture {
+  private ground(tile: ITile): { map: THREE.Texture; mask: THREE.Texture } {
     const canvas = document.createElement("canvas");
     canvas.width = 512;
     canvas.height = 512;
@@ -558,121 +560,23 @@ export class SceneryLibrary {
         ctx.fill();
       }
     }
-    ctx.save();
-    ctx.translate(256, 256);
-    ctx.scale(512, 512);
-    const path = (points: Point[], close = false) => {
-      ctx.beginPath();
-      points.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-      if (close) ctx.closePath();
-    };
-    const roads = tile.roadConnections.map(connection => tileRoadPath(tile, connection));
-    const zones = tile.costcoZones.map((_, index) => zonePolygon(tile, index));
-    const approaches = roads.filter((points) =>
-      points[points.length - 1].every((coordinate) => coordinate === 0),
-    );
-    const junction = approaches.length > 1;
-    const roadLayer = (color: string, width: number) => {
-      ctx.lineWidth = width;
-      ctx.strokeStyle = color;
-      roads.forEach((points) => {
-        path(points);
-        ctx.stroke();
-      });
-    };
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    // Paint the network one layer at a time so branch caps cannot create
-    // curbs across an intersection. Parking covers shoulders at entrances;
-    // the asphalt is painted last to form a driveway into the lot.
-    roadLayer("#d3c298", ROAD_WIDTH + 0.058);
-    roadLayer("#ddd8bd", ROAD_WIDTH + 0.016);
-    tile.costcoZones.forEach((_, index) => {
-      const polygon = zonePolygon(tile, index);
-      path(polygon, true);
-      ctx.fillStyle = "#b6bbad";
-      ctx.fill();
-    });
-    if (tile.hasMcDonalds && !tile.river) {
-      ctx.fillStyle = "#b8b9a6";
-      ctx.fillRect(-0.3, -0.25, 0.58, 0.51);
-      ctx.strokeStyle = "#f4e4bf";
-      ctx.lineWidth = 0.006;
-      for (let x = -0.26; x < 0.26; x += 0.085) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0.145);
-        ctx.lineTo(x, 0.235);
-        ctx.stroke();
-      }
-      // Drive-thru lane past the menu board, with direction arrows.
-      ctx.fillStyle = "#9d9f94";
-      ctx.fillRect(0.135, -0.24, 0.05, 0.36);
-      ctx.fillStyle = "#f4e4bf";
-      for (const z of [0.06, -0.12]) {
-        ctx.beginPath();
-        ctx.moveTo(0.16, z - 0.03);
-        ctx.lineTo(0.147, z);
-        ctx.lineTo(0.173, z);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillRect(0.156, z, 0.008, 0.028);
-      }
-    }
-    if (tile.hasMcDonalds && tile.river) {
-      const [x, z] = restaurantPosition(tile);
-      ctx.fillStyle = "#b8b9a6";
-      ctx.fillRect(x - 0.18, z - 0.12, 0.36, 0.26);
-    }
-    roadLayer("#626c69", ROAD_WIDTH);
-    ctx.lineWidth = 0.0035;
-    ctx.strokeStyle = "#f2d786";
-    ctx.setLineDash([0.036, 0.025]);
-    roads.forEach((points) => {
-      const terminates = approaches.includes(points);
-      let drawing = false;
-      ctx.beginPath();
-      for (const [x, z] of points) {
-        const clearCenter =
-          terminates && Math.hypot(x, z) < (junction ? ROAD_WIDTH : 0.06);
-        const inParking = zones.some((polygon) =>
-          insidePolygon([x, z], polygon),
-        );
-        if (clearCenter || inParking) {
-          drawing = false;
-          continue;
-        }
-        if (drawing) ctx.lineTo(x, z);
-        else ctx.moveTo(x, z);
-        drawing = true;
-      }
-      ctx.stroke();
-    });
-    ctx.setLineDash([]);
-    if (junction) {
-      // Stop lines sit in each inbound lane, leaving the shared junction clear.
-      ctx.lineCap = "butt";
-      ctx.lineWidth = 0.012;
-      ctx.strokeStyle = "#f4efda";
-      approaches.forEach((points) => {
-        const [x, z] = points[0].map((coordinate) => coordinate * 2);
-        const distance = ROAD_WIDTH * 0.85;
-        path([
-          [x * distance + z * 0.012, z * distance - x * 0.012],
-          [
-            x * distance + z * ROAD_WIDTH * 0.44,
-            z * distance - x * ROAD_WIDTH * 0.44,
-          ],
-        ]);
-        ctx.stroke();
-      });
-    }
-    paintRiver(ctx, tile);
-    ctx.restore();
+    paintFeatures(ctx, tile, 512);
+    // White where regional landscapes may recolour the ground; black under
+    // roads, lots, water and painted markings, which keep their colours.
+    const maskCanvas = document.createElement("canvas");
+    maskCanvas.width = maskCanvas.height = 256;
+    const maskCtx = maskCanvas.getContext("2d")!;
+    maskCtx.fillStyle = "#ffffff";
+    maskCtx.fillRect(0, 0, 256, 256);
+    maskCtx.fillStyle = maskCtx.strokeStyle = "#000000";
+    paintFeatures(inkOnly(maskCtx), tile, 256);
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 4;
+    const mask = new THREE.CanvasTexture(maskCanvas);
     this.textures.add(texture);
-    return texture;
+    this.textures.add(mask);
+    return { map: texture, mask };
   }
 
   /** Release the canvas's geometry, materials, and textures on unmount. */
@@ -685,4 +589,132 @@ export class SceneryLibrary {
     this.materials.forEach((material) => material.dispose());
     this.textures.forEach((texture) => texture.dispose());
   }
+}
+
+/** Roads, lots, markings and water, in tile units centred on the canvas. */
+function paintFeatures(ctx: CanvasRenderingContext2D, tile: ITile, size: number): void {
+  ctx.save();
+  ctx.translate(size / 2, size / 2);
+  ctx.scale(size, size);
+  const path = (points: Point[], close = false) => {
+    ctx.beginPath();
+    points.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    if (close) ctx.closePath();
+  };
+  const roads = tile.roadConnections.map(connection => tileRoadPath(tile, connection));
+  const zones = tile.costcoZones.map((_, index) => zonePolygon(tile, index));
+  const approaches = roads.filter((points) =>
+    points[points.length - 1].every((coordinate) => coordinate === 0),
+  );
+  const junction = approaches.length > 1;
+  const roadLayer = (color: string, width: number) => {
+    ctx.lineWidth = width;
+    ctx.strokeStyle = color;
+    roads.forEach((points) => {
+      path(points);
+      ctx.stroke();
+    });
+  };
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  // Paint the network one layer at a time so branch caps cannot create
+  // curbs across an intersection. Parking covers shoulders at entrances;
+  // the asphalt is painted last to form a driveway into the lot.
+  roadLayer("#d3c298", ROAD_WIDTH + 0.058);
+  roadLayer("#ddd8bd", ROAD_WIDTH + 0.016);
+  tile.costcoZones.forEach((_, index) => {
+    const polygon = zonePolygon(tile, index);
+    path(polygon, true);
+    ctx.fillStyle = "#b6bbad";
+    ctx.fill();
+  });
+  if (tile.hasMcDonalds && !tile.river) {
+    ctx.fillStyle = "#b8b9a6";
+    ctx.fillRect(-0.3, -0.25, 0.58, 0.51);
+    ctx.strokeStyle = "#f4e4bf";
+    ctx.lineWidth = 0.006;
+    for (let x = -0.26; x < 0.26; x += 0.085) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0.145);
+      ctx.lineTo(x, 0.235);
+      ctx.stroke();
+    }
+    // Drive-thru lane past the menu board, with direction arrows.
+    ctx.fillStyle = "#9d9f94";
+    ctx.fillRect(0.135, -0.24, 0.05, 0.36);
+    ctx.fillStyle = "#f4e4bf";
+    for (const z of [0.06, -0.12]) {
+      ctx.beginPath();
+      ctx.moveTo(0.16, z - 0.03);
+      ctx.lineTo(0.147, z);
+      ctx.lineTo(0.173, z);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillRect(0.156, z, 0.008, 0.028);
+    }
+  }
+  if (tile.hasMcDonalds && tile.river) {
+    const [x, z] = restaurantPosition(tile);
+    ctx.fillStyle = "#b8b9a6";
+    ctx.fillRect(x - 0.18, z - 0.12, 0.36, 0.26);
+  }
+  roadLayer("#626c69", ROAD_WIDTH);
+  ctx.lineWidth = 0.0035;
+  ctx.strokeStyle = "#f2d786";
+  ctx.setLineDash([0.036, 0.025]);
+  roads.forEach((points) => {
+    const terminates = approaches.includes(points);
+    let drawing = false;
+    ctx.beginPath();
+    for (const [x, z] of points) {
+      const clearCenter =
+        terminates && Math.hypot(x, z) < (junction ? ROAD_WIDTH : 0.06);
+      const inParking = zones.some((polygon) =>
+        insidePolygon([x, z], polygon),
+      );
+      if (clearCenter || inParking) {
+        drawing = false;
+        continue;
+      }
+      if (drawing) ctx.lineTo(x, z);
+      else ctx.moveTo(x, z);
+      drawing = true;
+    }
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  if (junction) {
+    // Stop lines sit in each inbound lane, leaving the shared junction clear.
+    ctx.lineCap = "butt";
+    ctx.lineWidth = 0.012;
+    ctx.strokeStyle = "#f4efda";
+    approaches.forEach((points) => {
+      const [x, z] = points[0].map((coordinate) => coordinate * 2);
+      const distance = ROAD_WIDTH * 0.85;
+      path([
+        [x * distance + z * 0.012, z * distance - x * 0.012],
+        [
+          x * distance + z * ROAD_WIDTH * 0.44,
+          z * distance - x * ROAD_WIDTH * 0.44,
+        ],
+      ]);
+      ctx.stroke();
+    });
+  }
+  paintRiver(ctx, tile);
+  ctx.restore();
+}
+
+/** A view of a context that ignores colour changes, so everything paints in its current ink. */
+function inkOnly(ctx: CanvasRenderingContext2D): CanvasRenderingContext2D {
+  return new Proxy(ctx, {
+    get(target, property) {
+      const value = Reflect.get(target, property, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+    set(target, property, value) {
+      if (property === "fillStyle" || property === "strokeStyle") return true;
+      return Reflect.set(target, property, value, target);
+    },
+  });
 }
