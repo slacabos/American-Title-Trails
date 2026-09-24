@@ -119,10 +119,12 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     [tileSize]
   );
 
-  // Auto-fit: zoom and center to keep all tiles visible with 2-tile padding
+  // Auto-fit: zoom and center to keep all tiles visible with 2-tile padding.
+  // Refit once the canvas has its real size, since it can mount at 300x150.
   const tileCount = board.getAllTiles().size;
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
-    if (tileCount === 0) return;
+    if (tileCount === 0 || canvasSize.width === 0) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -149,7 +151,7 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
       offsetX,
       offsetY,
     }));
-  }, [tileCount, board, tileSize]);
+  }, [tileCount, board, tileSize, canvasSize]);
 
   // Update valid placements when board or current tile changes
   useEffect(() => {
@@ -361,6 +363,11 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     const rect = container.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
+    setCanvasSize((prev) =>
+      prev.width === rect.width && prev.height === rect.height
+        ? prev
+        : { width: rect.width, height: rect.height }
+    );
 
     // Center the board on initial render
     if (!initialCenterRef.current) {
@@ -511,11 +518,12 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
         }}
       />
 
-      {/* Controls overlay */}
-      <div className="absolute top-2.5 right-2.5 bg-[rgba(13,27,42,0.9)] text-[#f1faee] p-2 rounded text-xs border border-[rgba(69,123,157,0.5)] shadow-lg">
-        <div>Zoom: {Math.round(canvasState.scale * 100)}%</div>
-        <div>Tiles: {board.getAllTiles().size}</div>
-        {currentTile && <div>Valid placements: {validPlacements.length}</div>}
+      {/* Same pill position and styling as the 3D camera controls */}
+      <div className="board-pill" data-testid="board-2d-info">
+        <span className="board-pill-status">
+          Zoom {Math.round(canvasState.scale * 100)}% · Tiles {board.getAllTiles().size}
+          {currentTile && ` · ${validPlacements.length} places to build`}
+        </span>
       </div>
     </div>
   );

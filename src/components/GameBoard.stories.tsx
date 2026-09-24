@@ -6,13 +6,6 @@ const meta: Meta<typeof GameBoard> = {
   title: "Game/Playable Board",
   component: GameBoard,
   parameters: { layout: "fullscreen" },
-  decorators: [
-    (Story) => (
-      <div className="game-layout">
-        <Story />
-      </div>
-    ),
-  ],
   args: {
     players: [
       { id: "blue", name: "Blue", color: "#457da1" },
@@ -41,8 +34,8 @@ export const SceneryGame: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await canvas.findByTestId("board-3d");
-    await userEvent.click(canvas.getByTitle("Rotate Clockwise"));
-    await userEvent.click(canvas.getByTitle("Rotate Counter-Clockwise"));
+    await userEvent.click(canvas.getByTitle("Rotate clockwise (R)"));
+    await userEvent.click(canvas.getByTitle("Rotate counter-clockwise (Shift+R)"));
     await userEvent.keyboard("r");
     await userEvent.keyboard("{Shift>}r{/Shift}");
     await userEvent.click(canvas.getByRole("button", { name: "2D classic" }));

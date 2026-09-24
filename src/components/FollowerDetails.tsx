@@ -1,15 +1,16 @@
 import React from "react";
+import { Hamburger, Route, Store, Wheat, type LucideIcon } from "lucide-react";
 import type { FollowerBreakdown } from "../utils/followerUtils";
 
 interface FollowerDetailsProps {
   breakdown: FollowerBreakdown;
 }
 
-const FEATURE_ICONS: Record<keyof FollowerBreakdown["byFeature"], string> = {
-  road: "🛣️",
-  costco: "🏪",
-  mcdonalds: "🍔",
-  field: "🌾",
+const FEATURE_ICONS: Record<keyof FollowerBreakdown["byFeature"], LucideIcon> = {
+  road: Route,
+  costco: Store,
+  mcdonalds: Hamburger,
+  field: Wheat,
 };
 
 const FollowerDetails: React.FC<FollowerDetailsProps> = ({ breakdown }) => {
@@ -21,21 +22,17 @@ const FollowerDetails: React.FC<FollowerDetailsProps> = ({ breakdown }) => {
     }));
 
   return (
-    <span className="text-xs opacity-80 font-game">
+    <span className="follower-details inline-flex items-center gap-1.5">
       {breakdown.remaining} free
-      {placedFeatures.length > 0 && (
-        <>
-          {" ("}
-          {placedFeatures.map(({ type, count }, index) => (
-            <span key={type}>
-              {FEATURE_ICONS[type]}
-              {count}
-              {index < placedFeatures.length - 1 && " "}
-            </span>
-          ))}
-          {")"}
-        </>
-      )}
+      {placedFeatures.map(({ type, count }) => {
+        const Icon = FEATURE_ICONS[type];
+        return (
+          <span key={type} className="inline-flex items-center gap-0.5" title={type}>
+            <Icon size={12} aria-label={type} />
+            {count}
+          </span>
+        );
+      })}
     </span>
   );
 };

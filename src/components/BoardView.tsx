@@ -7,6 +7,7 @@ import TileRenderer from "./TileRenderer";
 import type { RenderMode } from "@/rendering/renderMode";
 import { useTranslations } from "@/hooks/useTranslations";
 import { completedCostcos } from "@/rendering/completedCostcos";
+import { TriangleAlert, X } from "lucide-react";
 
 const BoardScene = lazy(() =>
   import("./three/BoardScene").then((module) => ({
@@ -43,20 +44,25 @@ export class GraphicsBoundary extends React.Component<
 interface BoardViewProps {
   state: GameState;
   mode: RenderMode;
-  onModeChange: (mode: RenderMode) => void;
   onTilePlace: (position: Position) => void;
   onUnavailable: () => void;
-  unavailable: boolean;
   highlightedFeature?: ClaimableFeature;
 }
 
+function useCompletedCostcos(state: GameState) {
+  const tileCount = state.board.getAllTiles().size;
+  return useMemo(
+    () => tileCount ? completedCostcos(state.board) : [],
+    [state.board, tileCount],
+  );
+}
+
+/** The board itself: the 3D tabletop, or the 2D canvas as its fallback. */
 export function BoardView({
   state,
   mode,
-  onModeChange,
   onTilePlace,
   onUnavailable,
-  unavailable,
   highlightedFeature,
 }: BoardViewProps) {
   const { t } = useTranslations();
@@ -64,12 +70,7 @@ export function BoardView({
     state.phase === GamePhase.PLACE_TILE &&
     !state.isGameOver &&
     !state.players[state.currentPlayerIndex]?.isAI;
-  const tileCount = state.board.getAllTiles().size;
-  const finishedCostcos = useMemo(
-    () => tileCount ? completedCostcos(state.board) : [],
-    [state.board, tileCount],
-  );
-  const justCompletedCostcos = state.lastCompletedFeatures?.filter(feature => feature.type === "costco") ?? [];
+  const finishedCostcos = useCompletedCostcos(state);
   const flat = (
     <BoardCanvas
       board={state.board}
@@ -81,36 +82,96 @@ export function BoardView({
     />
   );
   return (
-    <>
-      <div className="board-view-header">
-        <div>
-          <span className="board-view-eyebrow">{t("board.eyebrow")}</span>
-          <h2>{t("board.title")}</h2>
-        </div>
-        <div
-          className="board-view-switch"
-          role="group"
-          aria-label={t("board.view")}
+    <div className="board-viewport">
+      {mode === "3d" ? (
+        <GraphicsBoundary onUnavailable={onUnavailable} fallback={flat}>
+          <Suspense
+            fallback={
+              <div className="tabletop-loading" role="status">
+                {t("board.loading")}
+              </div>
+            }
+          >
+            <BoardScene
+              state={state}
+              onTilePlace={onTilePlace}
+              onUnavailable={onUnavailable}
+              highlightedFeature={highlightedFeature}
+              completedCostcos={finishedCostcos}
+            />
+          </Suspense>
+        </GraphicsBoundary>
+      ) : (
+        flat
+      )}
+    </div>
+  );
+}
+
+export function ViewToggle({
+  mode,
+  onModeChange,
+}: {
+  mode: RenderMode;
+  onModeChange: (mode: RenderMode) => void;
+}) {
+  const { t } = useTranslations();
+  return (
+    <div className="board-view-switch" role="group" aria-label={t("board.view")}>
+      {(["3d", "2d"] as const).map((view) => (
+        <button
+          key={view}
+          type="button"
+          aria-pressed={mode === view}
+          onClick={() => onModeChange(view)}
         >
-          {(["3d", "2d"] as const).map((view) => (
-            <button
-              key={view}
-              type="button"
-              aria-pressed={mode === view}
-              onClick={() => onModeChange(view)}
-            >
-              {t(`board.${view}`)}
-            </button>
-          ))}
-        </div>
-      </div>
-      <p className="board-controls-hint" data-testid="draw-stage" aria-live="polite">
-        {state.drawStage === "river" ? t("board.riverOpening", {
+          {t(`board.${view}`)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Draw stage and Costco progress, plus the 3D-unavailable notice. */
+export function BoardStatus({
+  state,
+  unavailable,
+  onDismissUnavailable,
+  className = "",
+}: {
+  state: GameState;
+  unavailable?: boolean;
+  onDismissUnavailable?: () => void;
+  className?: string;
+}) {
+  const { t } = useTranslations();
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const finishedCostcos = useCompletedCostcos(state);
+  const justCompletedCostcos = state.lastCompletedFeatures?.filter(feature => feature.type === "costco") ?? [];
+  const river = state.drawStage === "river";
+  return (
+    <div className={`board-status ${className}`}>
+      <div data-testid="draw-stage" aria-live="polite">
+        {river ? t("board.riverOpening", {
           remaining: state.tileDeck.filter(tile => tile.river).length + (state.currentTile?.river ? 1 : 0),
         }) : t("board.landStage")}
-      </p>
-      {state.drawStage === "river" && <p className="board-controls-hint">{t("board.riverHint")}</p>}
-      <p className="board-controls-hint" aria-live="polite">
+        {river && (
+          <button
+            type="button"
+            className="board-status-toggle"
+            aria-expanded={rulesOpen}
+            onClick={() => setRulesOpen(open => !open)}
+          >
+            {t(rulesOpen ? "board.hideRules" : "board.showRules")}
+          </button>
+        )}
+      </div>
+      {river && (
+        <div className="board-status-sub" data-collapsible="true" data-open={rulesOpen}>
+          {t("board.riverHint")}
+        </div>
+      )}
+      <div className="board-status-sub" aria-live="polite">
         {justCompletedCostcos.length > 0
           ? t(
             justCompletedCostcos.length === 1
@@ -122,39 +183,19 @@ export function BoardView({
             finishedCostcos.length ? "board.costcoCompleteCount" : "board.costcoNone",
             { count: finishedCostcos.length },
           )}
-      </p>
-      {unavailable && (
-        <p className="board-graphics-notice" role="status">
-          {t("board.unavailable")}
-        </p>
-      )}
-      <div className="board-viewport">
-        {mode === "3d" ? (
-          <GraphicsBoundary onUnavailable={onUnavailable} fallback={flat}>
-            <Suspense
-              fallback={
-                <div className="tabletop-loading" role="status">
-                  {t("board.loading")}
-                </div>
-              }
-            >
-              <BoardScene
-                state={state}
-                onTilePlace={onTilePlace}
-                onUnavailable={onUnavailable}
-                highlightedFeature={highlightedFeature}
-                completedCostcos={finishedCostcos}
-              />
-            </Suspense>
-          </GraphicsBoundary>
-        ) : (
-          flat
-        )}
       </div>
-      <p className="board-controls-hint">
-        {t(mode === "3d" ? "board.hint3d" : "board.hint2d")}
-      </p>
-    </>
+      {unavailable && (
+        <div className="board-status-notice" role="status">
+          <TriangleAlert size={14} aria-hidden="true" />
+          <span>{t("board.unavailable")}</span>
+          {onDismissUnavailable && (
+            <button type="button" aria-label={t("board.dismiss")} onClick={onDismissUnavailable}>
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

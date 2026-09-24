@@ -18,6 +18,8 @@ vi.mock("@/game", async (importOriginal) => {
 // Exercise the real game and claim controls without requiring WebGL in jsdom.
 vi.mock("@/components/BoardView", () => ({
   CurrentTilePreview: () => null,
+  BoardStatus: () => null,
+  ViewToggle: () => null,
   BoardView: ({ state, highlightedFeature, onTilePlace }: ComponentProps<typeof BoardView>) => {
     const position = boardSnapshot(state).legal[0];
     return <div>
@@ -34,7 +36,7 @@ const players = [
 
 function placeTile() {
   for (let rotation = 0; rotation < 4 && screen.getByRole("button", { name: "Place test tile" }).hasAttribute("disabled"); rotation++) {
-    fireEvent.click(screen.getByTitle("Rotate Clockwise"));
+    fireEvent.click(screen.getByTitle("Rotate clockwise (R)"));
   }
   expect(screen.getByRole("button", { name: "Place test tile" })).toBeEnabled();
   fireEvent.click(screen.getByRole("button", { name: "Place test tile" }));
@@ -46,8 +48,8 @@ describe("claim highlight lifetime", () => {
     let button: HTMLElement | undefined;
     for (let turn = 0; turn < 20 && !button; turn++) {
       placeTile();
-      button = screen.queryAllByRole("button", { name: /^Claim costco/ })[0];
-      if (!button) fireEvent.click(screen.getByRole("button", { name: /Skip Claiming/ }));
+      button = screen.queryAllByRole("button", { name: /^Claim costco/i })[0];
+      if (!button) fireEvent.click(screen.getByRole("button", { name: /^Skip/ }));
     }
     expect(button).toBeDefined();
     fireEvent.mouseEnter(button!);

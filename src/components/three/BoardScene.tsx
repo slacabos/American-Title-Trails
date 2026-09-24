@@ -8,6 +8,7 @@ import React, {
 import { Canvas, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { Minus, Plus } from "lucide-react";
 import type { ClaimableFeature, GameState, Position } from "@/types";
 import type { ITile } from "@/interfaces/ITile";
 import { GamePhase } from "@/types";
@@ -419,19 +420,28 @@ export function BoardScene({
           )}
       </Canvas>
       <div className="tabletop-compass" aria-hidden="true">
-        <span>N ↗</span>
-        <span>{t("board.tabletop")}</span>
+        {t("board.compass")}↗
       </div>
       <div
-        className="tabletop-camera-controls"
+        className="board-pill tabletop-camera-controls"
+        role="group"
         aria-label={t("board.cameraControls")}
       >
+        <span className="board-pill-status">
+          {t(snapshot.tiles.length === 1 ? "board.tilesOne" : "board.tiles", {
+            count: snapshot.tiles.length,
+          })}
+          {snapshot.canPlace
+            ? ` · ${t(snapshot.legal.length === 1 ? "board.legalOne" : "board.legal", { count: snapshot.legal.length })}`
+            : ""}
+        </span>
+        <span className="board-pill-divider" aria-hidden="true" />
         <button
           type="button"
           aria-label={t("board.zoomOut")}
           onClick={() => actions.current?.zoom(1 / 1.2)}
         >
-          −
+          <Minus size={16} aria-hidden="true" />
         </button>
         <button type="button" onClick={() => actions.current?.fit()}>
           {t("board.fit")}
@@ -441,16 +451,8 @@ export function BoardScene({
           aria-label={t("board.zoomIn")}
           onClick={() => actions.current?.zoom(1.2)}
         >
-          +
+          <Plus size={16} aria-hidden="true" />
         </button>
-      </div>
-      <div className="tabletop-status">
-        {t(snapshot.tiles.length === 1 ? "board.tilesOne" : "board.tiles", {
-          count: snapshot.tiles.length,
-        })}
-        {snapshot.canPlace
-          ? ` · ${t(snapshot.legal.length === 1 ? "board.legalOne" : "board.legal", { count: snapshot.legal.length })}`
-          : ""}
       </div>
       {selected && snapshot.canPlace && (
         <div className="tabletop-confirm">

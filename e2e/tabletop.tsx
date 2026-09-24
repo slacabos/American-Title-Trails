@@ -4,7 +4,7 @@ import { _roots } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { Game } from "../src/game";
 import { GamePhase, Position } from "../src/types";
-import { BoardView, CurrentTilePreview } from "../src/components/BoardView";
+import { BoardStatus, BoardView, CurrentTilePreview, ViewToggle } from "../src/components/BoardView";
 import { boardSnapshot } from "../src/rendering/tileLayout";
 import {
   readRenderMode,
@@ -37,19 +37,27 @@ function Harness() {
     setUnavailable(true);
   }, []);
   return (
-    <div className="game-layout">
-      <div className="game-board-panel">
-        <BoardView
-          state={state}
-          mode={mode}
-          onModeChange={(value) => {
-            setMode(value);
-            saveRenderMode(value);
-          }}
-          onUnavailable={fallback}
-          unavailable={unavailable}
-          onTilePlace={(position) => game.placeTile(position)}
-        />
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 260px", gap: 12, padding: 12 }}>
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+          <BoardStatus className="hud-panel" state={state} unavailable={unavailable} />
+          <ViewToggle
+            mode={mode}
+            onModeChange={(value) => {
+              setMode(value);
+              setUnavailable(false);
+              saveRenderMode(value);
+            }}
+          />
+        </div>
+        <div style={{ position: "relative", height: "64vh", minHeight: 420 }}>
+          <BoardView
+            state={state}
+            mode={mode}
+            onUnavailable={fallback}
+            onTilePlace={(position) => game.placeTile(position)}
+          />
+        </div>
       </div>
       <aside>
         <CurrentTilePreview tile={state.currentTile} mode={mode} />
@@ -119,7 +127,8 @@ Object.assign(window, {
     completedMarkers: () => {
       const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
       let count = 0;
-      _roots.get(canvas)!.store.getState().scene.traverse(object => {
+      // The canvas can appear before its root registers; let polls retry.
+      _roots.get(canvas)?.store.getState().scene.traverse(object => {
         if (object.name === "completed-costco-marker") count++;
       });
       return count;

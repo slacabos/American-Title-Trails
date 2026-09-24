@@ -32,14 +32,16 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       return (
-        <div className="col-span-2 flex flex-col items-center justify-center gap-4 p-12 bg-card border border-border rounded-2xl shadow-2xl">
-          <h2 className="text-lg text-accent font-game">Something went wrong</h2>
-          <p className="text-sm opacity-80 font-game">
+        <div className="min-h-dvh grid place-items-center p-4">
+        <div className="flex flex-col items-center gap-4 p-10 max-w-md text-center bg-card text-card-foreground border border-border rounded-2xl shadow-2xl">
+          <h2 className="m-0 text-lg font-semibold text-forest">Something went wrong</h2>
+          <p className="m-0 text-sm text-muted-foreground">
             An unexpected error occurred. You can restart the game to continue playing.
           </p>
-          <Button onClick={this.handleReset} className="font-game">
+          <Button onClick={this.handleReset}>
             Restart Game
           </Button>
+        </div>
         </div>
       );
     }

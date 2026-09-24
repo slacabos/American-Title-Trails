@@ -7,9 +7,9 @@
   },
   "setup": {
     "gameSetup": "Game Setup",
-    "numberOfPlayers": "Number of players (2-5):",
+    "numberOfPlayers": "Number of players",
     "selectNumberOfPlayers": "Select number of players",
-    "players": "Players:",
+    "players": "Players",
     "playersCount": {
       "2": "2 Players",
       "3": "3 Players",
@@ -33,7 +33,7 @@
       "expert": "Expert"
     },
     "startGame": "Start Game",
-    "howToPlay": "📖 How to Play",
+    "howToPlay": "How to play",
     "readyToPlay": "🎮 Ready to Play!",
     "configureHint": "Configure your game settings and click Start Game.",
     "riverOpening": "Every game begins with a river. Take turns building from its source to the lake, then continue with the land tiles."
@@ -74,9 +74,16 @@
     }
   },
   "gameOver": {
-    "title": "Game Over!",
+    "title": "Game over",
     "winner": "Winner: {winner}",
-    "playAgain": "Play Again"
+    "playAgain": "Play again",
+    "winnerLabel": "Winner",
+    "expand": "Expand",
+    "minimize": "Minimize",
+    "expandResults": "Expand results",
+    "minimizeResults": "Minimize results",
+    "noCategories": "No scoring categories",
+    "points": "{points} pts"
   },
   "scoreboard": {
     "title": "Players & Scores",
@@ -152,17 +159,14 @@
     "subtitle": "Everything you need to know to play American Tile Trails",
     "close": "Close",
     "gotIt": "Got it!",
-
     "overview": {
       "title": "🌟 Overview",
       "description": "American Title Trails is a tile-placement strategy game inspired by Carcassonne, set in the American landscape. Players take turns placing tiles to build roads, Costco shopping areas, and McDonald's restaurants while claiming features with followers to score points."
     },
-
     "objective": {
       "title": "🎯 Objective",
       "description": "Score the most points by strategically placing tiles and claiming completed features with your followers."
     },
-
     "gameSetup": {
       "title": "🎲 Game Setup",
       "playerConfig": "Player Configuration",
@@ -178,7 +182,6 @@
       "shuffledDeck": "Shuffled Deck:",
       "shuffledDeckDesc": "Remaining 40 tiles form a shuffled deck for gameplay"
     },
-
     "gameplay": {
       "title": "🎮 Gameplay",
       "turnStructure": "Turn Structure",
@@ -189,7 +192,6 @@
       "rotateTileDesc": "Click \"Rotate Tile\" button to change orientation",
       "placeTile": "Place the Tile:",
       "placeTileDesc": "Click on a valid (green highlighted) position on the board",
-
       "featureClaimingPhase": "2. Feature Claiming Phase 🏴 (Optional)",
       "claimingDesc": "After placing a tile, you may claim ONE feature on that tile",
       "roads": "Roads:",
@@ -204,14 +206,12 @@
       "skipOptionDesc": "You can choose not to claim any feature",
       "farmerClaiming": "Fields (Farmers):",
       "farmerClaimingDesc": "Claim a field area - farmer stays until game end and scores for adjacent completed Costcos",
-
       "scoringPhase": "3. Scoring Phase 📈 (Automatic)",
       "immediateScoring": "Immediate Scoring:",
       "immediateScoringDesc": "When features are completed, points are awarded instantly",
       "followerReturn": "Follower Return:",
       "followerReturnDesc": "Followers on completed features return to your supply"
     },
-
     "controls": {
       "title": "🎮 Controls & Interface",
       "boardInteraction": "Board Interaction",
@@ -221,7 +221,6 @@
       "panDesc": "Drag to move around the board",
       "tilePlacement": "Tile Placement:",
       "tilePlacementDesc": "Click a green space to place. On touchscreens, tap to preview, then confirm.",
-
       "gameInterface": "Game Interface",
       "currentTileDisplay": "Current Tile Display:",
       "currentTileDisplayDesc": "Shows the tile you need to place with rotation controls",
@@ -229,7 +228,6 @@
       "scoreboardDesc": "Live player scores, followers, and turn indicator",
       "activityLog": "Activity Log:",
       "activityLogDesc": "Real-time feed of game events and player actions",
-
       "buttonControls": "Button Controls",
       "rotateTileButton": "Rotate Tile:",
       "rotateTileButtonDesc": "Rotate current tile 90° clockwise",
@@ -238,7 +236,6 @@
       "helpButton": "Help:",
       "helpButtonDesc": "Open this comprehensive guide"
     },
-
     "scoring": {
       "title": "📊 Scoring System",
       "roads": {
@@ -287,7 +284,6 @@
         "winnerDesc": "Player with the most total points wins"
       }
     },
-
     "ai": {
       "title": "🤖 AI Players",
       "behavior": "AI Behavior",
@@ -302,7 +298,6 @@
         "expert": "Expert: Advanced strategy with deep analysis and blocking"
       }
     },
-
     "strategy": {
       "title": "💡 Strategy Tips",
       "general": "General Strategy",
@@ -312,7 +307,6 @@
       "blockOpponentsDesc": "Place tiles to make opponent features harder to complete",
       "multipleFeatures": "Multiple Features:",
       "multipleFeaturesDesc": "Look for tiles that contribute to multiple features simultaneously",
-
       "advanced": "Advanced Tips",
       "followerConservation": "Follower Conservation:",
       "followerConservationDesc": "Manage your 7 followers carefully - you can't get more during the game",
@@ -321,7 +315,6 @@
       "mcdonaldsRisk": "McDonald's Risk:",
       "mcdonaldsRiskDesc": "Max 9 points is tempting, but McDonald's are very hard to complete safely"
     },
-
     "winning": {
       "title": "🎯 Winning Conditions",
       "gameEnd": "Game End:",
@@ -331,7 +324,6 @@
       "winner": "Winner:",
       "winnerDesc": "Player with highest total score wins (tied players share victory)"
     },
-
     "gettingStarted": {
       "title": "🚀 Getting Started",
       "configurePlayers": "Configure Players:",
@@ -341,7 +333,6 @@
       "learnByPlaying": "Learn by Playing:",
       "learnByPlayingDesc": "The interface guides you through each phase"
     },
-
     "finalNote": {
       "title": "🗺️ Have fun building your American landscape!",
       "description": "The game combines strategic thinking with tactical tile placement for an engaging multiplayer experience. Each game creates a unique map of roads, shopping centers, and restaurants across the American countryside."
@@ -366,7 +357,6 @@
     "legal": "{count} places to build",
     "place": "Place tile",
     "cancel": "Cancel",
-    "tabletop": "TABLETOP VIEW",
     "tilesOne": "1 tile",
     "legalOne": "1 place to build",
     "riverOpening": "Build the river · {remaining} river tiles to place",
@@ -375,6 +365,42 @@
     "costcoNone": "No completed Costcos yet · gold checks will mark them",
     "costcoCompleteCount": "Completed Costcos: {count} · gold checks on the board",
     "costcoJustCompletedOne": "Costco completed this turn · look for the gold check",
-    "costcoJustCompletedMany": "{count} Costcos completed this turn · look for the gold checks"
+    "costcoJustCompletedMany": "{count} Costcos completed this turn · look for the gold checks",
+    "compass": "N",
+    "showRules": "Rules",
+    "hideRules": "Hide",
+    "dismiss": "Dismiss"
+  },
+  "hud": {
+    "yourTile": "Your tile",
+    "rotateCw": "Rotate clockwise (R)",
+    "rotateCcw": "Rotate counter-clockwise (Shift+R)",
+    "placeHint3d": "Click a green space to place · Drag to pan · Scroll or pinch to zoom",
+    "placeHint2d": "Click a green space to place · Drag to pan · Scroll to zoom",
+    "claimTitle": "Claim a feature",
+    "claimHint": "Place a follower to score when it completes · {count} left",
+    "claim": "Claim {type}",
+    "placeFarmer": "Place farmer",
+    "skip": "Skip (S)",
+    "thinking": "Thinking…",
+    "waitingFor": "Waiting for {name}…",
+    "scores": "Scores",
+    "turn": "Turn {turn}",
+    "tilesPlaced": "{placed}/{total} tiles",
+    "remaining": "{count} left",
+    "activity": "Activity",
+    "noActivity": "No activity yet",
+    "showActivity": "Show activity log",
+    "hideActivity": "Hide activity log",
+    "menu": "Game menu",
+    "newGame": "New game",
+    "help": "How to play",
+    "featureTypes": {
+      "road": "road",
+      "costco": "Costco",
+      "mcdonalds": "McDonald's",
+      "field": "field",
+      "river": "river"
+    }
   }
 }

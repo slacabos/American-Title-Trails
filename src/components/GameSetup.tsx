@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { PlayerDefinition, AIDifficulty } from "../types";
 import HelpModal from "./HelpModal";
 import PlayerConfigRow from "./PlayerConfigRow";
-import GameSetupSidebar from "./GameSetupSidebar";
+import iconUrl from "@/assets/icon.png";
+import { CircleQuestionMark, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -90,71 +91,80 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
 
   return (
     <>
-      <div className="relative bg-card backdrop-blur-sm border border-border rounded-2xl p-6 shadow-2xl flex flex-col">
-        <div className="flex flex-col justify-center p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-center mb-6 text-accent font-game">
-              🎮 {t("setup.gameSetup")}
-            </h2>
-            <p className="text-center text-muted-foreground mb-8 font-game text-xxs">
-              {t("setup.configureHint")}
+      <div className="w-full max-w-xl rounded-2xl border border-border bg-card text-card-foreground shadow-2xl overflow-hidden">
+        <header className="flex items-center gap-4 p-6 pb-5 bg-muted/60 border-b border-border">
+          <img
+            src={iconUrl}
+            alt={t("app.gameIcon")}
+            className="h-16 w-16 rounded-xl shadow-md shrink-0"
+          />
+          <div className="min-w-0">
+            <h1 className="m-0 brand-wordmark text-sm sm:text-base text-forest">
+              {t("app.title")}
+            </h1>
+            <p className="m-0 mt-2 text-sm text-muted-foreground">
+              {t("app.tagline")}
             </p>
           </div>
+        </header>
 
-          <div className="flex flex-col gap-6 max-w-lg mx-auto">
-            <div className="control-group space-y-2">
-              <Label
-                htmlFor="playerCount"
-                className="text-white text-base font-medium"
-              >
-                {t("setup.numberOfPlayers")}
-              </Label>
-              <Select
-                value={playerCount.toString()}
-                onValueChange={(value) => setPlayerCount(parseInt(value, 10))}
-              >
-                <SelectTrigger
-                  id="playerCount"
-                  className="w-full h-12 text-base font-game"
-                >
-                  <SelectValue placeholder={t("setup.selectNumberOfPlayers")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2">{t("setup.playersCount.2")}</SelectItem>
-                  <SelectItem value="3">{t("setup.playersCount.3")}</SelectItem>
-                  <SelectItem value="4">{t("setup.playersCount.4")}</SelectItem>
-                  <SelectItem value="5">{t("setup.playersCount.5")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-3 my-4">
-              <Label className="text-white text-base font-medium font-game text-xxs">
-                {t("setup.players")}
-              </Label>
-              {playerConfigs.map((config, index) => (
-                <PlayerConfigRow
-                  key={index}
-                  config={config}
-                  index={index}
-                  onUpdate={updatePlayerConfig}
-                />
-              ))}
-            </div>
-
-            <p className="text-sm text-muted-foreground">{t("setup.riverOpening")}</p>
-            <Button
-              onClick={handleStartGame}
-              variant="default"
-              className="w-full font-semibold py-4 px-6 text-lg mt-8 shadow-lg hover:shadow-xl transition-all duration-200"
+        <div className="flex flex-col gap-6 p-6">
+          <h2 className="m-0 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            {t("setup.gameSetup")}
+          </h2>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="playerCount" className="text-sm font-semibold">
+              {t("setup.numberOfPlayers")}
+            </Label>
+            <Select
+              value={playerCount.toString()}
+              onValueChange={(value) => setPlayerCount(parseInt(value, 10))}
             >
+              <SelectTrigger id="playerCount" className="h-11">
+                <SelectValue placeholder={t("setup.selectNumberOfPlayers")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2">{t("setup.playersCount.2")}</SelectItem>
+                <SelectItem value="3">{t("setup.playersCount.3")}</SelectItem>
+                <SelectItem value="4">{t("setup.playersCount.4")}</SelectItem>
+                <SelectItem value="5">{t("setup.playersCount.5")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label className="text-sm font-semibold">{t("setup.players")}</Label>
+            {playerConfigs.map((config, index) => (
+              <PlayerConfigRow
+                key={index}
+                config={config}
+                index={index}
+                onUpdate={updatePlayerConfig}
+              />
+            ))}
+          </div>
+
+          <p className="m-0 flex gap-2 rounded-lg bg-muted/70 p-3 text-sm text-muted-foreground">
+            <Waves size={18} className="shrink-0 mt-0.5 text-forest" aria-hidden="true" />
+            {t("setup.riverOpening")}
+          </p>
+
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <Button
+              variant="outline"
+              size="lg"
+              className="sm:w-auto"
+              onClick={() => setShowHelp(true)}
+            >
+              <CircleQuestionMark aria-hidden="true" />
+              {t("setup.howToPlay")}
+            </Button>
+            <Button onClick={handleStartGame} size="lg" className="sm:flex-1">
               {t("setup.startGame")}
             </Button>
           </div>
         </div>
       </div>
-
-      <GameSetupSidebar onShowHelp={() => setShowHelp(true)} />
 
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </>

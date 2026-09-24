@@ -30,13 +30,13 @@ const PlayerConfigRow: React.FC<PlayerConfigRowProps> = ({
 
   return (
     <div
-      className="flex items-center gap-3 bg-muted/10 p-2 rounded-lg border border-accent/20 transition-all duration-200 hover:bg-muted/15 hover:border-accent/30"
+      className="flex flex-wrap sm:flex-nowrap items-center gap-2 rounded-lg border border-border bg-parchment p-2"
     >
       <div
-        className="w-5 h-5 rounded-full border-2 border-game-text inline-block"
+        className="w-4 h-4 rounded-full shrink-0 inline-block shadow-[0_0_0_2px_#fff]"
         style={{ backgroundColor: config.color }}
       />
-      <Label className="text-white min-w-[50px] text-sm font-game text-xxs">
+      <Label className="min-w-[28px] text-sm font-semibold text-muted-foreground">
         {t("setup.playerPrefix")}
         {index + 1}:
       </Label>
@@ -45,13 +45,13 @@ const PlayerConfigRow: React.FC<PlayerConfigRowProps> = ({
         value={config.name}
         onChange={(e) => onUpdate(index, "name", e.target.value)}
         placeholder={`${t("setup.playerPlaceholder")} ${index + 1}`}
-        className="flex-1 h-10"
+        className="flex-1 min-w-[140px] h-10 bg-white"
       />
       <Select
         value={config.isAI ? "ai" : "human"}
         onValueChange={(value) => onUpdate(index, "isAI", value === "ai")}
       >
-        <SelectTrigger className="w-24 h-10 font-game text-xxs">
+        <SelectTrigger className="w-28 h-10">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -70,7 +70,7 @@ const PlayerConfigRow: React.FC<PlayerConfigRowProps> = ({
             onUpdate(index, "aiDifficulty", value as AIDifficulty)
           }
         >
-          <SelectTrigger className="w-24 h-10 font-game text-xxs">
+          <SelectTrigger className="w-28 h-10">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

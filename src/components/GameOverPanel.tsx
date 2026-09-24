@@ -1,6 +1,8 @@
 import React from "react";
 import type { PlayerState, ScoreBreakdown } from "../types";
 import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp, Crown } from "lucide-react";
+import useTranslations from "@/hooks/useTranslations";
 
 const SCORE_CATEGORY_ORDER = [
   "completed_road",
@@ -40,53 +42,57 @@ const GameOverPanel: React.FC<GameOverPanelProps> = ({
   collapsed,
   onToggle,
 }) => {
-  const topPlayers = [...players]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+  const { t } = useTranslations();
+  const ranked = [...players].sort((a, b) => b.score - a.score);
+  const topPlayers = ranked.slice(0, 3);
 
   return (
-    <div className="rounded-2xl border border-accent/30 bg-card p-5 text-center font-game shadow-2xl max-h-[60vh] flex flex-col overflow-hidden">
-      <div className="flex items-start justify-between gap-4 text-left">
+    <section
+      className="rounded-2xl border border-border bg-card text-card-foreground p-5 shadow-2xl max-h-[70vh] flex flex-col overflow-hidden"
+      aria-label={t("gameOver.title")}
+    >
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="m-0 text-lg text-accent tracking-wide">Game Over!</h2>
-          <p className="mt-2 text-sm text-accent/90">
-            <span className="uppercase tracking-[0.2em] text-xxs block opacity-70">
-              Winner
-            </span>
-            <span className="mt-1 block text-lg text-accent">
-              {winner}
-            </span>
+          <h2 className="m-0 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            {t("gameOver.title")}
+          </h2>
+          <p className="m-0 mt-2 flex items-center gap-2 text-xl font-semibold text-forest">
+            <Crown size={20} className="text-gold" aria-label={t("gameOver.winnerLabel")} />
+            {winner}
           </p>
         </div>
         <Button
           onClick={onToggle}
-          variant="outline"
-          className="text-xxs font-game border-accent/30 text-accent hover:bg-accent/10"
-          aria-label={collapsed ? "Expand results" : "Minimize results"}
+          variant="ghost"
+          size="sm"
+          aria-label={collapsed ? t("gameOver.expandResults") : t("gameOver.minimizeResults")}
         >
-          {collapsed ? "Expand" : "Minimize"}
+          {collapsed ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
+          {collapsed ? t("gameOver.expand") : t("gameOver.minimize")}
         </Button>
       </div>
 
       {collapsed ? (
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xxs">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
           {topPlayers.map((player) => (
             <div
               key={player.id}
-              className="flex items-center gap-2 rounded-md border border-border/50 bg-muted/50 px-2 py-1"
+              className="flex items-center gap-2 rounded-md bg-muted px-2 py-1"
             >
               <span
-                className="h-2 w-2 rounded-full"
+                className="h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: player.color }}
               />
               <span className="font-semibold">{player.name}</span>
-              <span className="opacity-80">{player.score} pts</span>
+              <span className="text-muted-foreground">
+                {t("gameOver.points", { points: player.score })}
+              </span>
             </div>
           ))}
         </div>
       ) : (
-        <div className="mt-5 grid gap-4 text-left overflow-y-auto pr-1 flex-1 min-h-0">
-          {players.map((player) => {
+        <div className="mt-4 grid gap-3 overflow-y-auto pr-1 flex-1 min-h-0">
+          {ranked.map((player, rank) => {
             const breakdown = scoreBreakdown?.[player.id];
             const entries = breakdown
               ? SCORE_CATEGORY_ORDER.map((category) => ({
@@ -98,16 +104,19 @@ const GameOverPanel: React.FC<GameOverPanelProps> = ({
             return (
               <div
                 key={player.id}
-                className="rounded-xl border border-border/50 bg-muted/50 p-4 shadow-game-sm"
-                style={{ borderLeftColor: player.color, borderLeftWidth: 6 }}
+                className="rounded-xl bg-muted/70 p-3"
+                style={{ borderLeft: `5px solid ${player.color}` }}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold tracking-wide">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold">
+                    <span className="text-muted-foreground mr-1.5">{rank + 1}.</span>
                     {player.name}
                   </span>
-                  <span className="text-xs opacity-80">{player.score} pts</span>
+                  <span className="text-base font-bold tabular-nums">
+                    {t("gameOver.points", { points: player.score })}
+                  </span>
                 </div>
-                <div className="mt-3 flex flex-col gap-1 text-xxs opacity-80">
+                <div className="mt-2 flex flex-col gap-0.5 text-xs text-muted-foreground">
                   {entries.length > 0 ? (
                     entries.map(({ category, points }) => (
                       <div
@@ -115,11 +124,11 @@ const GameOverPanel: React.FC<GameOverPanelProps> = ({
                         className="flex items-center justify-between"
                       >
                         <span>{SCORE_CATEGORY_LABELS[category]}</span>
-                        <span className="font-semibold">{points}</span>
+                        <span className="font-semibold tabular-nums text-card-foreground">{points}</span>
                       </div>
                     ))
                   ) : (
-                    <div className="opacity-70">No scoring categories</div>
+                    <div>{t("gameOver.noCategories")}</div>
                   )}
                 </div>
               </div>
@@ -128,13 +137,10 @@ const GameOverPanel: React.FC<GameOverPanelProps> = ({
         </div>
       )}
 
-      <Button
-        onClick={onReset}
-        className="mt-4 bg-green-600 hover:bg-green-700 text-white text-xs"
-      >
-        Play Again
+      <Button onClick={onReset} className="mt-4">
+        {t("gameOver.playAgain")}
       </Button>
-    </div>
+    </section>
   );
 };
 

@@ -9,14 +9,16 @@ import {
   CompletedFeature,
 } from "../types";
 import { Game, GamePhase } from "../game";
-import { BoardView, CurrentTilePreview } from "./BoardView";
+import { BoardView, BoardStatus, ViewToggle } from "./BoardView";
 import { readRenderMode, saveRenderMode, RenderMode } from "@/rendering/renderMode";
 import HelpModal from "./HelpModal";
-import FollowerDetails from "./FollowerDetails";
 import GameOverPanel from "./GameOverPanel";
-import { Button } from "@/components/ui/button";
+import iconUrl from "@/assets/icon.png";
 import { GAME_RULES } from "../constants/gameRules";
-import { getFollowerBreakdown } from "../utils/followerUtils";
+import Scoreboard from "./hud/Scoreboard";
+import TileDock from "./hud/TileDock";
+import ActivityLog, { type LogEntry } from "./hud/ActivityLog";
+import { CircleQuestionMark, Menu, RotateCcw } from "lucide-react";
 
 interface GameBoardProps {
   players: PlayerDefinition[];
@@ -29,7 +31,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const gameRef = useRef<Game | null>(null);
   const logIdRef = useRef(0);
-  const [logs, setLogs] = useState<{ id: number; message: string }[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const dockRef = useRef<HTMLElement>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [renderMode, setRenderMode] = useState<RenderMode>(readRenderMode);
   const [graphicsUnavailable, setGraphicsUnavailable] = useState(false);
@@ -65,10 +70,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       setGameState(gameInstance.getState());
       updateClaimableFeatures(gameInstance, gameInstance.getState());
 
-      addLog("Game started!");
+      addLog(t("messages.gameStarted"));
     } catch (error) {
-      console.error("Failed to initialize game:", error);
-      addLog("Failed to start game. Please try again.");
+      console.error(t("messages.failedToInitialize"), error);
+      addLog(t("messages.failedToStart"));
     }
   }, [players]);
 
@@ -91,7 +96,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     });
     const id = logIdRef.current++;
     setLogs((prev) => [
-      { id, message: `${timestamp} — ${message}` },
+      { id, time: timestamp, message },
       ...prev.slice(0, 19),
     ]);
   }, []);
@@ -144,28 +149,28 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
     const result = game.placeTile(position);
     if (result.success) {
-      addLog(
-        `${
-          gameState.players[gameState.currentPlayerIndex].name
-        } placed tile at (${position.x}, ${position.y})`
-      );
+      addLog(t("messages.placedTile", {
+        playerName: gameState.players[gameState.currentPlayerIndex].name,
+        x: position.x,
+        y: position.y,
+      }));
       logCompletions(result.completedFeatures);
     } else {
-      addLog(`Failed to place tile: ${result.message?.startsWith("river") ? t(`messages.${result.message}`) : result.message}`);
+      addLog(t("messages.failedToPlace", {
+        message: result.message?.startsWith("river") ? t(`messages.${result.message}`) : result.message,
+      }));
     }
   };
 
   const handleRotateClockwise = () => {
     if (game && game.canRotateTile()) {
       game.rotateTileClockwise();
-      addLog("Tile rotated clockwise");
     }
   };
 
   const handleRotateCounterClockwise = () => {
     if (game && game.canRotateTile()) {
       game.rotateTileCounterClockwise();
-      addLog("Tile rotated counter-clockwise");
     }
   };
 
@@ -175,13 +180,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     const displayName = claimableFeatures.find(feature => feature.type === type && feature.identifier === identifier)?.displayName;
     const success = game.claimFeature(type, identifier);
     if (success) {
-      addLog(
-        `${
-          gameState.players[gameState.currentPlayerIndex].name
-        } claimed ${type}${displayName ? ` (${displayName})` : ""}`
-      );
+      addLog(t("messages.claimedFeature", {
+        playerName: gameState.players[gameState.currentPlayerIndex].name,
+        type,
+        identifier: displayName ? ` (${displayName})` : "",
+      }));
     } else {
-      addLog("Failed to claim feature");
+      addLog(t("messages.failedToClaim"));
     }
   };
 
@@ -189,9 +194,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     if (!game || !gameState) return;
 
     game.skipClaim();
-    addLog(
-      `${gameState.players[gameState.currentPlayerIndex].name} skipped claiming`
-    );
+    addLog(t("messages.skippedClaiming", {
+      playerName: gameState.players[gameState.currentPlayerIndex].name,
+    }));
   };
 
   // Keyboard shortcuts
@@ -205,326 +210,183 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
       switch (e.key) {
         case "r":
-          if (e.shiftKey) {
-            if (g.canRotateTile()) {
-              g.rotateTileCounterClockwise();
-              addLog("Tile rotated counter-clockwise");
-            }
-          } else {
-            if (g.canRotateTile()) {
-              g.rotateTileClockwise();
-              addLog("Tile rotated clockwise");
-            }
-          }
-          break;
         case "R":
           if (g.canRotateTile()) {
-            g.rotateTileCounterClockwise();
-            addLog("Tile rotated counter-clockwise");
+            if (e.shiftKey || e.key === "R") g.rotateTileCounterClockwise();
+            else g.rotateTileClockwise();
           }
           break;
         case "s":
         case "S":
           if (phase === GamePhase.CLAIM_FEATURE && !currentPlayerIsAI) {
+            addLog(t("messages.skippedClaiming", { playerName: g.getCurrentPlayer().name }));
             g.skipClaim();
-            addLog("Skipped claiming (keyboard)");
           }
           break;
         case "?":
           setShowHelp((prev) => !prev);
+          break;
+        case "Escape":
+          setMenuOpen(false);
           break;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [addLog, phase, currentPlayerIsAI]);
+  }, [addLog, phase, currentPlayerIsAI, t]);
+
+  const hasState = gameState !== null;
+  // On phones the dock is a bottom sheet; the board shrinks to sit above it.
+  useEffect(() => {
+    const stage = stageRef.current;
+    const dock = dockRef.current;
+    if (!stage || !dock) return;
+    const observer = new ResizeObserver(() => {
+      stage.style.setProperty("--dock-height", `${dock.offsetHeight}px`);
+    });
+    observer.observe(dock);
+    return () => observer.disconnect();
+  }, [game, hasState]);
+
+  // Close the menu on any click outside it.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: PointerEvent) => {
+      if (!(event.target as Element).closest?.(".hud-menu")) setMenuOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [menuOpen]);
 
   if (!game || !gameState) {
     return (
-      <div className="grid grid-cols-[minmax(640px,1fr)_360px] gap-6 p-8 w-full min-w-fit max-w-[1200px]">
-        <div className="relative bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
-          <div className="flex items-center justify-center h-96">
-            Loading game...
-          </div>
-        </div>
+      <div className="game-stage grid place-items-center text-ink" role="status">
+        {t("game.loading")}
       </div>
     );
   }
 
   const tileStats = game.getTileStats();
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  const isCurrentPlayerAI = currentPlayer?.isAI ?? false;
 
   return (
-    <>
-      <div className="game-board-panel relative bg-card backdrop-blur-sm border border-border rounded-2xl p-4 shadow-2xl flex flex-col min-w-0">
-        <BoardView
-          state={gameState}
-          mode={renderMode}
-          onModeChange={handleRenderMode}
-          onTilePlace={handleTilePlace}
-          onUnavailable={handleGraphicsUnavailable}
-          unavailable={graphicsUnavailable}
-          highlightedFeature={highlightedFeature}
+    <div className="game-stage" ref={stageRef}>
+      <BoardView
+        state={gameState}
+        mode={renderMode}
+        onTilePlace={handleTilePlace}
+        onUnavailable={handleGraphicsUnavailable}
+        highlightedFeature={highlightedFeature}
+      />
+
+      <div className="hud">
+        <div className="hud-top">
+          <div className="hud-top-left">
+            <div className="hud-panel brand-chip">
+              <img src={iconUrl} alt={t("app.gameIcon")} />
+              <span className="brand-wordmark">{t("app.title")}</span>
+            </div>
+            <BoardStatus
+              className="hud-panel"
+              state={gameState}
+              unavailable={graphicsUnavailable}
+              onDismissUnavailable={() => setGraphicsUnavailable(false)}
+            />
+          </div>
+          <div className="hud-top-right">
+            <ViewToggle mode={renderMode} onModeChange={handleRenderMode} />
+            <button
+              type="button"
+              className="hud-icon-button"
+              aria-label={t("hud.help")}
+              title={t("hud.help")}
+              onClick={() => setShowHelp(true)}
+            >
+              <CircleQuestionMark size={18} aria-hidden="true" />
+            </button>
+            <div className="hud-menu">
+              <button
+                type="button"
+                className="hud-icon-button"
+                aria-label={t("hud.menu")}
+                aria-expanded={menuOpen}
+                aria-haspopup="menu"
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                <Menu size={18} aria-hidden="true" />
+              </button>
+              {menuOpen && (
+                <div className="hud-panel hud-menu-list" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onReset();
+                    }}
+                  >
+                    <RotateCcw size={15} aria-hidden="true" />
+                    {t("hud.newGame")}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setShowHelp(true);
+                    }}
+                  >
+                    <CircleQuestionMark size={15} aria-hidden="true" />
+                    {t("hud.help")}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <Scoreboard
+          className="hud-score"
+          players={gameState.players}
+          currentPlayerIndex={gameState.currentPlayerIndex}
+          board={gameState.board}
+          turnNumber={gameState.turnNumber}
+          tileStats={tileStats}
+          isGameOver={gameState.isGameOver}
         />
 
-        {isCurrentPlayerAI && !gameState.isGameOver && (
-          <div className="mt-2 text-xs text-center leading-tight font-game animate-pulse">
-            {currentPlayer?.name} is thinking...
-          </div>
-        )}
+        <ActivityLog className="hud-log" entries={logs} />
 
-        {gameState.phase === GamePhase.CLAIM_FEATURE && !isCurrentPlayerAI && (
-          <div className="mt-3 p-3 bg-accent/10 rounded-lg border border-accent/20">
-            <h3 className="m-0 mb-2 text-xs text-accent font-game">
-              Claim a Feature
-            </h3>
-            <p className="text-xs opacity-80 mb-3 leading-tight font-game">
-              💡 Place a follower to score points when features complete. You
-              have{" "}
-              {gameState.players[gameState.currentPlayerIndex]?.followers || 0}{" "}
-              followers remaining.
-            </p>
-            <div className="flex flex-col gap-2">
-              {claimableFeatures.map((feature, index) => (
-                <Button
-                  key={index}
-                  onMouseEnter={() => setHighlightedFeature(feature)}
-                  onMouseLeave={() => setHighlightedFeature(undefined)}
-                  onFocus={() => setHighlightedFeature(feature)}
-                  onBlur={() => setHighlightedFeature(undefined)}
-                  onClick={() =>
-                    handleClaimFeature(feature.type, feature.identifier)
-                  }
-                  className="bg-btn-secondary hover:bg-btn-secondary-hover text-game-text font-game text-xxs"
-                >
-                  {feature.type === "field" ? "Place Farmer" : "Claim"} {feature.type}
-                  {feature.displayName && ` (${feature.displayName})`}
-                </Button>
-              ))}
-              <Button
-                onClick={handleSkipClaim}
-                variant="outline"
-                className="font-game text-xxs"
-              >
-                Skip Claiming (S)
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {gameState.isGameOver && (
-          <div className="absolute inset-x-4 bottom-4 lg:inset-x-auto lg:right-4 lg:bottom-4 lg:w-[420px] w-auto pointer-events-none">
-            <div className="pointer-events-auto">
-              <GameOverPanel
-                players={gameState.players}
-                winner={gameState.winner}
-                scoreBreakdown={gameState.scoreBreakdown}
-                onReset={onReset}
-                collapsed={isGameOverCollapsed}
-                onToggle={() => setIsGameOverCollapsed((prev) => !prev)}
-              />
-            </div>
-          </div>
-        )}
+        <div className="hud-dock">
+          <TileDock
+            ref={dockRef}
+            state={gameState}
+            mode={renderMode}
+            claimableFeatures={claimableFeatures}
+            onRotateClockwise={handleRotateClockwise}
+            onRotateCounterClockwise={handleRotateCounterClockwise}
+            onClaim={handleClaimFeature}
+            onSkip={handleSkipClaim}
+            onHighlight={setHighlightedFeature}
+          />
+        </div>
       </div>
 
-      <aside className="bg-card backdrop-blur-sm border border-border rounded-2xl p-6 flex flex-col gap-6 shadow-2xl">
-        <section>
-          <h2 className="m-0 mb-3 text-sm text-accent font-game">
-            Current Tile
-          </h2>
-          <div className="bg-muted/30 rounded-xl p-4 flex flex-col items-center gap-3">
-            <CurrentTilePreview tile={gameState.currentTile} mode={renderMode} />
-            {gameState.currentTile ? (
-              <>
-                <div className="text-center text-xxs leading-tight font-game">
-                  <strong>{gameState.currentTile.name}</strong>
-                  <div className="opacity-80 mt-1">
-                    Phase: {gameState.phase.replace("_", " ")}
-                  </div>
-                </div>
-                {gameState.phase === GamePhase.PLACE_TILE && !isCurrentPlayerAI && (
-                  <div className="flex flex-col gap-2 w-full mt-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        onClick={handleRotateClockwise}
-                        disabled={!gameState.currentTile}
-                        className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
-                        title="Rotate Clockwise"
-                        style={{ fontSize: "32px" }}
-                      >
-                        ⟳
-                      </Button>
-                      <Button
-                        onClick={handleRotateCounterClockwise}
-                        disabled={!gameState.currentTile}
-                        className="bg-btn-primary hover:bg-btn-primary-hover disabled:opacity-50 disabled:cursor-not-allowed border-0 rounded-md text-game-text px-2 py-2 font-game cursor-pointer transition-all duration-200"
-                        title="Rotate Counter-Clockwise"
-                        style={{ fontSize: "32px" }}
-                      >
-                        ⟲
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center text-xxs opacity-60 font-game">
-                No current tile
-              </div>
-            )}
-          </div>
-        </section>
-
-        {showHelp && (
-          <section className="bg-muted/30 rounded-xl p-4">
-            <h2 className="m-0 mb-3 text-sm text-accent font-game">
-              Quick Guide
-            </h2>
-            <div>
-              <h3>🎯 How to Play</h3>
-              <ol>
-                <li>
-                  <strong>Place Tile:</strong> Click green areas on board
-                </li>
-                <li>
-                  <strong>Rotate:</strong> Use "Rotate Tile" button
-                </li>
-                <li>
-                  <strong>Claim:</strong> Optional - claim roads, Costcos,
-                  McDonalds
-                </li>
-                <li>
-                  <strong>Score:</strong> Get points when features complete
-                </li>
-              </ol>
-
-              <h3>📊 Scoring</h3>
-              <ul>
-                <li>
-                  <strong>Roads:</strong> 1 point per tile
-                </li>
-                <li>
-                  <strong>Costcos:</strong> 2 points per tile
-                </li>
-                <li>
-                  <strong>McDonalds:</strong> 9 points (when surrounded)
-                </li>
-              </ul>
-
-              <h3>🎮 Controls</h3>
-              <ul>
-                <li>
-                  <strong>Zoom:</strong> Mouse wheel
-                </li>
-                <li>
-                  <strong>Pan:</strong> Click and drag board
-                </li>
-                <li>
-                  <strong>Place:</strong> Click valid (green) positions
-                </li>
-              </ul>
-
-            </div>
-          </section>
-        )}
-
-        <section className="bg-muted/30 rounded-xl p-4">
-          <h2 className="m-0 mb-3 text-sm text-accent font-game">
-            Players & Scores
-          </h2>
-          <ul className="list-none m-0 p-0 flex flex-col gap-2">
-            {gameState.players.map((player, index: number) => (
-              <li
-                key={player.id}
-                className="flex items-center gap-2 p-2 rounded-md border-l-2"
-                style={{
-                  backgroundColor: `${player.color}15`,
-                  borderLeftColor: player.color,
-                }}
-              >
-                <span className="text-xs w-4 font-game">
-                  {index === gameState.currentPlayerIndex ? "▶" : ""}
-                </span>
-                <div className="flex-1 flex flex-col gap-1">
-                  <strong className="text-xxs font-game">
-                    {player.name}
-                    {player.isAI && (
-                      <>
-                        {" 🤖 "}
-                        <span className="opacity-70 capitalize">
-                          {player.aiDifficulty || "medium"}
-                        </span>
-                      </>
-                    )}
-                  </strong>
-                  <span className="text-xs opacity-80 font-game">
-                    {player.score} pts •{" "}
-                    <FollowerDetails
-                      breakdown={getFollowerBreakdown(
-                        player.id,
-                        player.followers,
-                        gameState.board
-                      )}
-                    />
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="bg-muted/30 rounded-xl p-4">
-          <div className="text-xxs text-center p-2 bg-secondary/50 rounded-md leading-tight font-game">
-            <div>Turn: {gameState.turnNumber}</div>
-            <div>
-              Tiles: {tileStats.placed}/{tileStats.total}
-            </div>
-            <div>Remaining: {tileStats.remaining}</div>
-          </div>
-        </section>
-
-        <section className="bg-muted/30 rounded-xl p-4 flex flex-col gap-1">
-          <h2 className="m-0 text-sm text-accent font-game mb-2">
-            Game Controls
-          </h2>
-          <Button
-            onClick={onReset}
-            variant="outline"
-            className="font-game text-xxs"
-          >
-            New Game
-          </Button>
-          <Button
-            onClick={() => setShowHelp(true)}
-            variant="outline"
-            className="font-game text-xxs"
-          >
-            📖 Show Help
-          </Button>
-        </section>
-
-        <section className="bg-muted/30 rounded-xl p-4">
-          <h2 className="m-0 mb-3 text-sm text-accent font-game">
-            Activity Log
-          </h2>
-          <ul className="list-none m-0 p-0 flex flex-col gap-1 max-h-48 overflow-y-auto">
-            {logs.map((log) => (
-              <li
-                key={log.id}
-                className="text-xs leading-tight py-1 opacity-80 border-b border-slate-100/10 last:border-b-0 font-game"
-              >
-                {log.message}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </aside>
+      {gameState.isGameOver && (
+        <div className="hud-gameover" data-collapsed={isGameOverCollapsed}>
+          <GameOverPanel
+            players={gameState.players}
+            winner={gameState.winner}
+            scoreBreakdown={gameState.scoreBreakdown}
+            onReset={onReset}
+            collapsed={isGameOverCollapsed}
+            onToggle={() => setIsGameOverCollapsed((prev) => !prev)}
+          />
+        </div>
+      )}
 
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
-    </>
+    </div>
   );
 };
 

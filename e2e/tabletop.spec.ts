@@ -344,9 +344,9 @@ test("the production game opens in 3D and keeps its current tile when switching 
   await page.waitForTimeout(300);
   const preview = page.locator(".tabletop-tile-preview canvas");
   const original = await preview.screenshot();
-  await page.getByTitle("Rotate Clockwise", { exact: true }).click();
+  await page.getByTitle("Rotate clockwise (R)", { exact: true }).click();
   await expect.poll(async () => (await preview.screenshot()).equals(original)).toBe(false);
-  await page.getByTitle("Rotate Counter-Clockwise", { exact: true }).click();
+  await page.getByTitle("Rotate counter-clockwise (Shift+R)", { exact: true }).click();
   await expect.poll(async () => (await preview.screenshot()).equals(original)).toBe(true);
   await page.keyboard.press("r");
   await expect.poll(async () => (await preview.screenshot()).equals(original)).toBe(false);

@@ -19,30 +19,17 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="app-shell min-h-screen flex flex-col">
-      <main className="game-layout">
-        {gameStarted ? (
+    <div className="app-shell">
+      {gameStarted ? (
+        <main className="game-stage-shell">
           <ErrorBoundary onReset={handleResetGame}>
             <GameBoard players={players} onReset={handleResetGame} />
           </ErrorBoundary>
-        ) : (
+        </main>
+      ) : (
+        <main className="setup-screen">
           <GameSetup onStartGame={handleStartGame} />
-        )}
-      </main>
-
-      {gameStarted && (
-        <footer className="bg-card backdrop-blur-sm border-t border-border p-4 flex items-center justify-center gap-4">
-          <img
-            src="/src/assets/icon.png"
-            alt="American Tile Trails Game Icon"
-            className="w-8 h-8 rounded-md"
-          />
-          <div className="text-center">
-            <h1 className="text-sm text-accent font-game mb-1">
-              American Tile Trails
-            </h1>
-          </div>
-        </footer>
+        </main>
       )}
     </div>
   );
