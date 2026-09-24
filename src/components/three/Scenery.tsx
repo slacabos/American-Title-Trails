@@ -385,24 +385,40 @@ export function FeatureHighlight({
   );
 }
 
+/** Windows, lamps and warehouse glass glow after dark. */
+export function NightLights({ night }: { night: boolean }) {
+  const library = useContext(LibraryContext)!;
+  const invalidate = useThree((state) => state.invalidate);
+  useLayoutEffect(() => {
+    library.setNight(night);
+    invalidate();
+  }, [library, night, invalidate]);
+  return null;
+}
+
+/** Warm sun by day; a cool, dim moon at night. Shadows are cast in both. */
 export function Daylight({
   center = [0, 0],
   span = 4,
+  night = false,
 }: {
   center?: [number, number];
   span?: number;
+  night?: boolean;
 }) {
   const target = useMemo(() => new THREE.Object3D(), []);
   target.position.set(center[0], 0, center[1]);
   return (
     <>
       <primitive object={target} />
-      <hemisphereLight args={["#fff6df", "#788a77", 2.1]} />
+      <hemisphereLight
+        args={night ? ["#7d88a0", "#232c30", 1.05] : ["#fff6df", "#788a77", 2.1]}
+      />
       <directionalLight
         position={[center[0] - 5, 10, center[1] + 4]}
         target={target}
-        intensity={2.5}
-        color="#fff0d5"
+        intensity={night ? 1.05 : 2.5}
+        color={night ? "#c3cde6" : "#fff0d5"}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-span}

@@ -26,12 +26,14 @@ import {
   FeatureHighlight,
   Follower,
   GhostTile,
+  NightLights,
   Scenery,
   SceneryProvider,
 } from "./Scenery";
 import { useTranslations } from "@/hooks/useTranslations";
 import { PlacementGrid } from "./PlacementGrid";
 import type { CompletedCostco } from "@/rendering/completedCostcos";
+import { SCENE_PALETTE } from "@/rendering/timeOfDay";
 
 export interface BoardSceneProps {
   state: GameState;
@@ -39,6 +41,7 @@ export interface BoardSceneProps {
   onUnavailable: () => void;
   highlightedFeature?: ClaimableFeature;
   completedCostcos?: CompletedCostco[];
+  night?: boolean;
 }
 
 function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }) {
@@ -295,7 +298,9 @@ export function BoardScene({
   onUnavailable,
   highlightedFeature,
   completedCostcos = [],
+  night = false,
 }: BoardSceneProps) {
+  const palette = SCENE_PALETTE[night ? "night" : "day"];
   const { t } = useTranslations();
   const snapshot = useMemo(() => boardSnapshot(state), [state]);
   const [hover, setHover] = useState<Position>();
@@ -337,7 +342,7 @@ export function BoardScene({
         gl={{ antialias: true, alpha: false, powerPreference: "low-power" }}
         fallback={t("board.unavailable")}
       >
-        <color attach="background" args={["#c8cfbb"]} />
+        <color attach="background" args={[palette.background]} />
         <ContextHealth onUnavailable={onUnavailable} />
         <Navigation
           state={state}
@@ -347,17 +352,18 @@ export function BoardScene({
           onTilePlace={onTilePlace}
           actions={actions}
         />
-        <Daylight center={center} span={span} />
+        <Daylight center={center} span={span} night={night} />
         <mesh
           rotation={[-Math.PI / 2, 0, 0]}
           position={[center[0], -0.096, center[1]]}
           receiveShadow
         >
           <planeGeometry args={[300, 300]} />
-          <meshStandardMaterial color="#c8cfbb" roughness={1} />
+          <meshStandardMaterial color={palette.table} roughness={1} />
         </mesh>
-        <PlacementGrid bounds={bounds} />
+        <PlacementGrid bounds={bounds} color={palette.grid} />
         <SceneryProvider>
+          <NightLights night={night} />
           <Scenery records={snapshot.tiles} seed={state.sceneSeed} />
           {snapshot.legal.map((position) => (
             <CellOutline
@@ -479,9 +485,11 @@ export function BoardScene({
 export function TilePreviewScene({
   tile,
   onUnavailable,
+  night = false,
 }: {
   tile?: ITile;
   onUnavailable: () => void;
+  night?: boolean;
 }) {
   const { t } = useTranslations();
   const records = useMemo(
@@ -500,8 +508,9 @@ export function TilePreviewScene({
         onCreated={({ camera }) => camera.lookAt(0, 0.04, 0)}
       >
         <ContextHealth onUnavailable={onUnavailable} />
-        <Daylight />
+        <Daylight night={night} />
         <SceneryProvider>
+          <NightLights night={night} />
           <Scenery records={records} />
         </SceneryProvider>
       </Canvas>

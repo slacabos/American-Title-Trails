@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { buildRiverDeck, getRiverLake, getRiverSource } from "@/riverLibrary";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SceneryLibrary } from "@/rendering/scenery";
@@ -72,4 +73,24 @@ describe("landmarks", () => {
       }
     },
   );
+});
+
+describe("night lighting", () => {
+  it("lights windows and lamps at night, including models built afterwards", () => {
+    const library = new SceneryLibrary();
+    const glowing = (tile: (typeof tiles)[number]) =>
+      library.get(tile).parts
+        .map((part) => part.material as THREE.MeshStandardMaterial)
+        .filter((material) => material.emissiveIntensity !== undefined && material.emissive?.getHex() !== 0);
+    const mcdonalds = tiles.find((tile) => tile.id === "mcdonalds-abbey")!;
+    expect(glowing(mcdonalds).every((material) => material.emissiveIntensity === 0)).toBe(true);
+    library.setNight(true);
+    expect(glowing(mcdonalds).length).toBeGreaterThan(0);
+    expect(glowing(mcdonalds).every((material) => material.emissiveIntensity > 0)).toBe(true);
+    const houses = tiles.find((tile) => tile.id === "road-end")!;
+    expect(glowing(houses).every((material) => material.emissiveIntensity > 0)).toBe(true);
+    library.setNight(false);
+    expect(glowing(houses).every((material) => material.emissiveIntensity === 0)).toBe(true);
+    library.dispose();
+  });
 });

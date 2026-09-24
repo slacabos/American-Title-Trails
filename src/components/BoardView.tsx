@@ -47,6 +47,7 @@ interface BoardViewProps {
   onTilePlace: (position: Position) => void;
   onUnavailable: () => void;
   highlightedFeature?: ClaimableFeature;
+  night?: boolean;
 }
 
 function useCompletedCostcos(state: GameState) {
@@ -64,6 +65,7 @@ export function BoardView({
   onTilePlace,
   onUnavailable,
   highlightedFeature,
+  night = false,
 }: BoardViewProps) {
   const { t } = useTranslations();
   const canPlace =
@@ -98,6 +100,7 @@ export function BoardView({
               onUnavailable={onUnavailable}
               highlightedFeature={highlightedFeature}
               completedCostcos={finishedCostcos}
+              night={night}
             />
           </Suspense>
         </GraphicsBoundary>
@@ -199,7 +202,7 @@ export function BoardStatus({
   );
 }
 
-function SceneryTilePreview({ tile }: { tile?: ITile }) {
+function SceneryTilePreview({ tile, night }: { tile?: ITile; night?: boolean }) {
   const [unavailable, setUnavailable] = useState(false);
   const onUnavailable = useCallback(() => setUnavailable(true), []);
   const flat = tile ? <TileRenderer tile={tile} size={128} /> : null;
@@ -208,7 +211,7 @@ function SceneryTilePreview({ tile }: { tile?: ITile }) {
   return (
     <GraphicsBoundary fallback={flat} onUnavailable={onUnavailable}>
       <Suspense fallback={flat}>
-        <TilePreviewScene tile={tile} onUnavailable={onUnavailable} />
+        <TilePreviewScene tile={tile} onUnavailable={onUnavailable} night={night} />
       </Suspense>
     </GraphicsBoundary>
   );
@@ -217,16 +220,18 @@ function SceneryTilePreview({ tile }: { tile?: ITile }) {
 export function CurrentTilePreview({
   tile,
   mode,
+  night = false,
 }: {
   tile?: ITile;
   mode: RenderMode;
+  night?: boolean;
 }) {
   // Keep the canvas and its library alive during the claim phase. Recreating
   // WebGL contexts every turn can exhaust the device's graphics resources.
   return (
     <div hidden={!tile}>
       {mode === "3d" ? (
-        <SceneryTilePreview tile={tile} />
+        <SceneryTilePreview tile={tile} night={night} />
       ) : tile ? (
         <TileRenderer tile={tile} size={128} />
       ) : null}

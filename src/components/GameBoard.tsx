@@ -18,6 +18,8 @@ import { GAME_RULES } from "../constants/gameRules";
 import Scoreboard from "./hud/Scoreboard";
 import TileDock from "./hud/TileDock";
 import ActivityLog, { type LogEntry } from "./hud/ActivityLog";
+import TimeToggle from "./hud/TimeToggle";
+import useTimeOfDay from "@/hooks/useTimeOfDay";
 import { CircleQuestionMark, Menu, RotateCcw } from "lucide-react";
 
 interface GameBoardProps {
@@ -33,6 +35,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const logIdRef = useRef(0);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { night, toggle: toggleNight } = useTimeOfDay();
+  const toggleNightRef = useRef(toggleNight);
+  toggleNightRef.current = toggleNight;
   const stageRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLElement>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -226,6 +231,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         case "?":
           setShowHelp((prev) => !prev);
           break;
+        case "n":
+        case "N":
+          toggleNightRef.current();
+          break;
         case "Escape":
           setMenuOpen(false);
           break;
@@ -277,6 +286,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         onTilePlace={handleTilePlace}
         onUnavailable={handleGraphicsUnavailable}
         highlightedFeature={highlightedFeature}
+        night={night}
       />
 
       <div className="hud">
@@ -295,6 +305,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           </div>
           <div className="hud-top-right">
             <ViewToggle mode={renderMode} onModeChange={handleRenderMode} />
+            <TimeToggle night={night} onToggle={toggleNight} />
             <button
               type="button"
               className="hud-icon-button"
@@ -368,6 +379,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
             onClaim={handleClaimFeature}
             onSkip={handleSkipClaim}
             onHighlight={setHighlightedFeature}
+            night={night}
           />
         </div>
       </div>

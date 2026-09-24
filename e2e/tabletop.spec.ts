@@ -357,3 +357,28 @@ test("the production game opens in 3D and keeps its current tile when switching 
     fullPage: true,
   });
 });
+
+test("night mode switches the board and HUD, and persists", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await page.evaluate(() => localStorage.setItem("american-tile-trails.time", "day"));
+  await page.reload();
+  await page.getByRole("button", { name: "Start Game" }).click();
+  await expect(page.getByTestId("board-3d")).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-time", "day");
+  const canvas = page.locator('[data-testid="board-3d"] canvas');
+  await page.waitForTimeout(500);
+  const day = await canvas.screenshot();
+  await page.getByRole("button", { name: "Switch to night" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-time", "night");
+  await expect.poll(async () => (await canvas.screenshot()).equals(day)).toBe(false);
+  await page.screenshot({ path: "test-results/tabletop-night.png" });
+  await page.keyboard.press("n");
+  await expect(page.locator("html")).toHaveAttribute("data-time", "day");
+  await page.keyboard.press("n");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-time", "night");
+  await expect(page.getByRole("button", { name: "Switch to day" })).toBeVisible();
+  expect(errors).toEqual([]);
+});

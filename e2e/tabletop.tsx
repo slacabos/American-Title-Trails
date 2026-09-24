@@ -14,6 +14,8 @@ import {
 import "../src/index.css";
 
 const params = new URLSearchParams(location.search);
+const night = params.has("night");
+document.documentElement.dataset.time = night ? "night" : "day";
 const game = new Game(
   [
     { id: "p1", name: "One", color: "#437eaf", isAI: params.has("full") },
@@ -56,11 +58,12 @@ function Harness() {
             mode={mode}
             onUnavailable={fallback}
             onTilePlace={(position) => game.placeTile(position)}
+            night={night}
           />
         </div>
       </div>
       <aside>
-        <CurrentTilePreview tile={state.currentTile} mode={mode} />
+        <CurrentTilePreview tile={state.currentTile} mode={mode} night={night} />
         <button onClick={() => game.rotateTileClockwise()}>Rotate tile</button>
         {state.phase === GamePhase.CLAIM_FEATURE && (
           <>

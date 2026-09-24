@@ -401,6 +401,8 @@
       "mcdonalds": "McDonald's",
       "field": "field",
       "river": "river"
-    }
+    },
+    "switchToNight": "Switch to night",
+    "switchToDay": "Switch to day"
   }
 }

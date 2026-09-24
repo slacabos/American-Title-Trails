@@ -4,6 +4,8 @@ import HelpModal from "./HelpModal";
 import PlayerConfigRow from "./PlayerConfigRow";
 import iconUrl from "@/assets/icon.png";
 import { CircleQuestionMark, Waves } from "lucide-react";
+import TimeToggle from "./hud/TimeToggle";
+import useTimeOfDay from "@/hooks/useTimeOfDay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,6 +27,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
   const [playerCount, setPlayerCount] = useState(3);
   const [playerConfigs, setPlayerConfigs] = useState<PlayerDefinition[]>([]);
   const [showHelp, setShowHelp] = useState(false);
+  const { night, toggle: toggleNight } = useTimeOfDay();
 
   useEffect(() => {
     const configs: PlayerDefinition[] = [];
@@ -98,13 +101,16 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
             alt={t("app.gameIcon")}
             className="h-16 w-16 rounded-xl shadow-md shrink-0"
           />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="m-0 brand-wordmark text-sm sm:text-base text-forest">
               {t("app.title")}
             </h1>
             <p className="m-0 mt-2 text-sm text-muted-foreground">
               {t("app.tagline")}
             </p>
+          </div>
+          <div className="self-start">
+            <TimeToggle night={night} onToggle={toggleNight} />
           </div>
         </header>
 

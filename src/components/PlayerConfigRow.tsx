@@ -45,7 +45,7 @@ const PlayerConfigRow: React.FC<PlayerConfigRowProps> = ({
         value={config.name}
         onChange={(e) => onUpdate(index, "name", e.target.value)}
         placeholder={`${t("setup.playerPlaceholder")} ${index + 1}`}
-        className="flex-1 min-w-[140px] h-10 bg-white"
+        className="flex-1 min-w-[140px] h-10 bg-field"
       />
       <Select
         value={config.isAI ? "ai" : "human"}

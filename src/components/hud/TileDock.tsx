@@ -17,6 +17,7 @@ interface TileDockProps {
   onClaim: (type: TerrainType, identifier?: string) => void;
   onSkip: () => void;
   onHighlight: (feature?: ClaimableFeature) => void;
+  night?: boolean;
 }
 
 /** The current tile and whatever the active player can do with it. */
@@ -30,6 +31,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
     onClaim,
     onSkip,
     onHighlight,
+    night = false,
   },
   ref,
 ) {
@@ -50,7 +52,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
       {/* The preview stays mounted through the claim phase; recreating WebGL
           contexts every turn can exhaust the device's graphics resources. */}
       <div className="tile-dock-preview" hidden={!state.currentTile}>
-        <CurrentTilePreview tile={state.currentTile} mode={mode} />
+        <CurrentTilePreview tile={state.currentTile} mode={mode} night={night} />
       </div>
       <div className="tile-dock-body">
         {state.currentTile && <div className="tile-dock-name">{state.currentTile.name}</div>}

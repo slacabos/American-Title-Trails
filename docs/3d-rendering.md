@@ -15,8 +15,8 @@ at negative Z. `Tile.rotate()` already rotates the logical connections;
 instance then applies one negative-Y quarter-turn per clockwise orientation.
 
 `tileLayout.ts` derives road paths, shopping footprints, feature anchors, and
-claim resolution from `ITile`. `scenery.ts` owns building layouts, vegetation,
-fences, materials, and procedural ground/sign textures. Shopping portals share a
+claim resolution from `ITile`. `scenery.ts` owns building layouts, fences,
+materials, and procedural ground/sign textures. Shopping portals share a
 half-tile width; roads share a fixed width and tangent-aligned endpoints. Buildings
 sit within their tile, and separate Costco zones retain separate paved areas.
 `warehouseLayout.ts` groups Costco zones by their actual edge connections. Each
@@ -37,6 +37,40 @@ separate passes so intersections have no internal borders. Lane markings leave
 junction centers clear, with stop lines on incoming lanes. Asphalt extends into
 shopping lots while parking covers the shoulders at each driveway entrance.
 
+### Landmarks, regions and night
+
+`landmarks.ts` gives some tile types a man-made landmark in canonical tile space
+(billboard, overlook, barn and silo, cul-de-sac houses, drive-thru menu board,
+picnic table, lamps). `landmarkConflict()` keeps every landmark clear of roads,
+lots, water, the restaurant and every follower anchor; a unit test enforces it.
+Tile names describe what is drawn, never a landscape, because the same tile can
+land in any region.
+
+`regions.ts` is the single source of truth for regional landscapes. Seeded,
+two-octave value noise in a rotated frame yields weights for meadow, farmland,
+pine forest and desert. They sum to 1 and are forced to meadow within two tiles
+of the origin. The seed is `GameState.sceneSeed` (scenery only; it never
+affects rules). Each placed tile passes the weights at its four world corners to
+the ground shader (`groundShader.ts`) as instanced attributes. Neighbours share
+those corners, so there are no seams. The shader interpolates across the tile and
+tints only where the per-type grass mask is white, so roads, lots, water and
+painted markings keep their colours. Farmland adds world-space crop rows; desert
+adds speckle.
+
+`vegetation.ts` lists plant spots per tile type (tree, shrub, sapling). The board
+draws them in one instanced mesh per species. Each spot's region is sampled from
+the weights, so borders mingle: round trees and bushes in meadow, pines in
+forest, hay bales and fences on farmland, cacti and red rocks in the desert. The
+placement ghost and the tile preview always show meadow.
+
+Solid-coloured props merge into one vertex-coloured mesh per tile type
+(`paint.ts`). A second mesh holds windows and lamps. At night,
+`SceneryLibrary.setNight()` turns on their emissive glow, and the warehouse
+glass's too. Night lighting swaps the sun for a cool moon and darkens the
+table; the UI switches palettes through `:root[data-time="night"]` tokens. The
+choice is stored in `localStorage`, defaults to the system dark-mode setting, and
+toggles from the HUD, the setup screen, or the `N` key.
+
 Stored road/store claims use cardinal directions, and field claims use corners.
 They are resolved to the matching feature before placing followers; the 2D and
 3D views share that resolver. Claims match exact tile coordinates, including
@@ -54,7 +88,9 @@ polygons are ignored so stale selections cannot take down the 3D canvas.
 
 Three.js 0.170 and React Three Fiber 8 support the existing React 18 application.
 Each canvas owns and disposes its scenery library. Geometry is merged by material
-within a tile type, then repeated tiles are instanced across the board. A subtle
+within a tile type (all painted props share one material), then repeated tiles
+are instanced across the board. A full 63-tile board draws about 135 calls,
+including shadows. A subtle
 shader grid aligns to tile edges and fades out beyond the board, using one
 additional draw call. The tile
 gallery uses one canvas for every tile and rotation. The current-tile preview is

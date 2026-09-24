@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
@@ -21,6 +22,12 @@
   --line: #d9d3bb;
   --scene: #c8cfbb;
   --hud-shadow: 0 4px 18px rgb(29 52 45 / 0.18), 0 1px 3px rgb(29 52 45 / 0.12);
+  --hud-surface: rgb(247 244 232 / 0.96);
+  --hud-edge: #fbf5dc;
+  --field: #ffffff;
+  --secondary-hover: #cfdbb8;
+  --notice: #f6e7c4;
+  --notice-foreground: #6b4d12;
 
   --background: var(--pine);
   --foreground: var(--parchment);
@@ -48,14 +55,36 @@
   --chart-5: var(--sage);
 }
 
-@font-face {
-  font-family: "Press Start 2P";
-  font-style: normal;
-  font-weight: 400;
-  src: local("Press Start 2P"),
-    url("https://fonts.gstatic.com/s/pressstart2p/v11/e3t4euO8T-267oIAQAu6jDQyK3nF43pq.woff2")
-      format("woff2");
+
+/* Night: the same tabletop after dark. Only the base palette changes; every
+   component reads these tokens. */
+:root[data-time="night"] {
+  color-scheme: dark;
+  --pine: #111915;
+  --pine-soft: #1a2620;
+  --parchment: #1f2b25;
+  --parchment-deep: #24322b;
+  --ink: #ece6cf;
+  --forest: #8dbb91;
+  --forest-hover: #a3cba6;
+  --sage: #2e4136;
+  --sage-soft: #2a3a31;
+  --moss: #a3b39e;
+  --gold: #d7b45f;
+  --line: #34443b;
+  --scene: #161f1b;
+  --hud-shadow: 0 4px 18px rgb(0 0 0 / 0.45), 0 1px 3px rgb(0 0 0 / 0.35);
+  --hud-surface: rgb(31 43 37 / 0.94);
+  --hud-edge: #34443b;
+  --field: #16201b;
+  --secondary-hover: #385042;
+  --notice: #4a3d1f;
+  --notice-foreground: #f2dca6;
+  --primary-foreground: #10201a;
+  --accent-foreground: #1b1406;
+  --destructive-foreground: #fff8e5;
 }
+
 
 body {
   margin: 0;
@@ -100,6 +129,8 @@ body {
   --color-moss: var(--moss);
   --color-gold: var(--gold);
   --color-parchment: var(--parchment);
+  --color-field: var(--field);
+  --color-secondary-hover: var(--secondary-hover);
 }
 
 @layer base {
@@ -148,17 +179,17 @@ body {
 .board-canvas-container canvas { height: 100%; max-height: none; border-radius: 0; }
 
 /* Shared pill used by the 3D camera controls and the 2D info box. */
-.board-pill { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; align-items: center; padding: 3px; gap: 2px; border: 1px solid #fbf5dc; border-radius: 10px; background: rgb(247 244 232 / 0.94); box-shadow: var(--hud-shadow); color: var(--ink); font-size: 12px; white-space: nowrap; }
+.board-pill { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; align-items: center; padding: 3px; gap: 2px; border: 1px solid var(--hud-edge); border-radius: 10px; background: var(--hud-surface); box-shadow: var(--hud-shadow); color: var(--ink); font-size: 12px; white-space: nowrap; }
 .board-pill-status { padding: 0 10px; color: var(--moss); font-variant-numeric: tabular-nums; }
 .board-pill button { min-height: 40px; min-width: 40px; padding: 0 10px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .board-pill button:hover { background: var(--sage-soft); }
 .board-pill .board-pill-divider { width: 1px; align-self: stretch; margin: 6px 2px; background: var(--line); }
 
-.tabletop-compass { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; display: grid; place-items: center; border-radius: 999px; background: rgb(247 244 232 / 0.85); color: var(--ink); font-size: 12px; font-weight: 700; box-shadow: var(--hud-shadow); pointer-events: none; }
+.tabletop-compass { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; display: grid; place-items: center; border-radius: 999px; background: var(--hud-surface); color: var(--ink); font-size: 12px; font-weight: 700; box-shadow: var(--hud-shadow); pointer-events: none; }
 .tabletop-confirm { position: absolute; bottom: 76px; left: 50%; transform: translateX(-50%); display: flex; padding: 5px; gap: 5px; border-radius: 10px; background: var(--parchment); box-shadow: var(--hud-shadow); white-space: nowrap; color: var(--ink); }
 .tabletop-confirm button { min-height: 44px; padding: 0 16px; border-radius: 7px; font-size: 14px; cursor: pointer; }
 .tabletop-confirm button:disabled { opacity: 0.45; cursor: not-allowed; }
-.tabletop-confirm button:first-child { background: var(--forest); color: #fff8e5; }
+.tabletop-confirm button:first-child { background: var(--primary); color: var(--primary-foreground); }
 
 /* ---------- HUD ---------- */
 .hud {
@@ -185,9 +216,9 @@ body {
 .hud-log { grid-area: log; align-self: end; justify-self: start; max-width: 100%; }
 .hud-dock { grid-area: dock; align-self: end; }
 
-.hud-panel { pointer-events: auto; background: rgb(247 244 232 / 0.96); color: var(--ink); border: 1px solid #fbf5dc; border-radius: 12px; box-shadow: var(--hud-shadow); backdrop-filter: blur(6px); }
+.hud-panel { pointer-events: auto; background: var(--hud-surface); color: var(--ink); border: 1px solid var(--hud-edge); border-radius: 12px; box-shadow: var(--hud-shadow); backdrop-filter: blur(6px); }
 .hud-panel-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--moss); }
-.hud-icon-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; border-radius: 10px; background: rgb(247 244 232 / 0.96); color: var(--ink); border: 1px solid #fbf5dc; box-shadow: var(--hud-shadow); cursor: pointer; }
+.hud-icon-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; border-radius: 10px; background: var(--hud-surface); color: var(--ink); border: 1px solid var(--hud-edge); box-shadow: var(--hud-shadow); cursor: pointer; }
 .hud-icon-button:hover { background: var(--sage-soft); }
 
 .brand-chip { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; flex-shrink: 0; }
@@ -196,13 +227,13 @@ body {
 
 .board-status { padding: 8px 12px; font-size: 13px; line-height: 1.45; max-width: 560px; }
 .board-status-sub { font-size: 12px; color: var(--moss); margin-top: 2px; }
-.board-status-notice { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 6px 8px; border-radius: 8px; background: #f6e7c4; color: #6b4d12; font-size: 12px; }
+.board-status-notice { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 6px 8px; border-radius: 8px; background: var(--notice); color: var(--notice-foreground); font-size: 12px; }
 .board-status-notice button { margin-left: auto; cursor: pointer; border-radius: 6px; padding: 2px; }
 .board-status-toggle { display: none; }
 
-.board-view-switch { pointer-events: auto; display: flex; padding: 3px; gap: 3px; border-radius: 10px; background: rgb(247 244 232 / 0.96); border: 1px solid #fbf5dc; box-shadow: var(--hud-shadow); }
+.board-view-switch { pointer-events: auto; display: flex; padding: 3px; gap: 3px; border-radius: 10px; background: var(--hud-surface); border: 1px solid var(--hud-edge); box-shadow: var(--hud-shadow); }
 .board-view-switch button { min-height: 34px; padding: 0 12px; border-radius: 7px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--moss); }
-.board-view-switch button[aria-pressed="true"] { background: var(--forest); color: #fff8e5; }
+.board-view-switch button[aria-pressed="true"] { background: var(--primary); color: var(--primary-foreground); }
 
 .hud-menu { position: relative; }
 .hud-menu-list { position: absolute; right: 0; top: calc(100% + 6px); min-width: 180px; padding: 4px; display: flex; flex-direction: column; z-index: 10; }
@@ -214,7 +245,7 @@ body {
 .scoreboard ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .scoreboard li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; column-gap: 8px; padding: 7px 8px; border-radius: 8px; }
 .scoreboard li[aria-current="true"] { background: var(--sage-soft); box-shadow: inset 0 0 0 1.5px var(--forest); }
-.scoreboard-dot { width: 10px; height: 10px; border-radius: 999px; box-shadow: 0 0 0 2px #fff; }
+.scoreboard-dot { width: 10px; height: 10px; border-radius: 999px; box-shadow: 0 0 0 2px var(--hud-edge); }
 .scoreboard-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
 .scoreboard-meta { grid-column: 2 / 4; font-size: 11px; color: var(--moss); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .scoreboard-score { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }

@@ -35,7 +35,7 @@ const fragmentShader = /* glsl */ `
 `;
 
 /** A single, non-interactive grid that fades beyond the growing board. */
-export function PlacementGrid({ bounds }: { bounds: Bounds }) {
+export function PlacementGrid({ bounds, color = "#75816b" }: { bounds: Bounds; color?: string }) {
   const { minX, minY, maxX, maxY } = bounds;
   const centerX = (minX + maxX) / 2;
   const centerZ = (minY + maxY) / 2;
@@ -45,9 +45,9 @@ export function PlacementGrid({ bounds }: { bounds: Bounds }) {
       boardHalfSize: {
         value: new Vector2((maxX - minX + 1) / 2, (maxY - minY + 1) / 2),
       },
-      lineColor: { value: new Color("#75816b") },
+      lineColor: { value: new Color(color) },
     }),
-    [centerX, centerZ, minX, minY, maxX, maxY],
+    [centerX, centerZ, minX, minY, maxX, maxY, color],
   );
 
   return (
