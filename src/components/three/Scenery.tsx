@@ -14,7 +14,10 @@ import { warehouseLayout, warehouseLayoutKey } from "@/rendering/warehouseLayout
 import type { ITile } from "@/interfaces/ITile";
 import type { ClaimableFeature, TileRecord } from "@/types";
 import { SceneryLibrary, SceneryPart } from "@/rendering/scenery";
+import { dominantRegion, regionWeights } from "@/rendering/regions";
+import { hash01, type Species, speciesFor, vegetationSpots, worldSpot } from "@/rendering/vegetation";
 import {
+  canonicalTile,
   CORNERS,
   featureAnchor,
   Point,
@@ -70,8 +73,87 @@ function Instances({
   );
 }
 
+interface PlantInstances {
+  species: Species;
+  matrices: THREE.Matrix4[];
+  colors: THREE.Color[];
+}
+
+// The alternate crown tint that meadow trees used before they were instanced.
+const DARK_CROWN = new THREE.Color("#477d50");
+const LIGHT_CROWN = new THREE.Color("#65934d");
+const DARK_TINT = new THREE.Color(
+  DARK_CROWN.r / LIGHT_CROWN.r,
+  DARK_CROWN.g / LIGHT_CROWN.g,
+  DARK_CROWN.b / LIGHT_CROWN.b,
+);
+const WHITE = new THREE.Color(1, 1, 1);
+
+/** Group every plant on the board by species, with a world transform each. */
+export function plantInstances(records: TileRecord[], seed?: number): PlantInstances[] {
+  const groups = new Map<Species, PlantInstances>();
+  for (const { tile, position } of records) {
+    const base = canonicalTile(tile);
+    for (const spot of vegetationSpots(base)) {
+      const [x, z] = worldSpot(position, tile.orientation, spot);
+      const region = dominantRegion(regionWeights(x, z, seed));
+      const species = speciesFor(region, spot.kind);
+      const group = groups.get(species) ?? { species, matrices: [], colors: [] };
+      const yaw = hash01(x, z, 1) * Math.PI * 2;
+      group.matrices.push(
+        new THREE.Matrix4().compose(
+          new THREE.Vector3(x, 0, z),
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0)),
+          new THREE.Vector3(spot.scale, spot.scale, spot.scale),
+        ),
+      );
+      group.colors.push(species === "round" && spot.kind === "tree" && spot.variant % 2 === 0 ? DARK_TINT : WHITE);
+      groups.set(species, group);
+    }
+  }
+  return [...groups.values()];
+}
+
+function PlantMesh({ plants }: { plants: PlantInstances }) {
+  const library = useContext(LibraryContext)!;
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const invalidate = useThree((state) => state.invalidate);
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    plants.matrices.forEach((matrix, i) => {
+      mesh.setMatrixAt(i, matrix);
+      mesh.setColorAt(i, plants.colors[i]);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.computeBoundingSphere();
+    invalidate();
+  }, [plants, invalidate]);
+  return (
+    <instancedMesh
+      ref={ref}
+      args={[library.getSpecies(plants.species), library.paintMaterial(), plants.matrices.length]}
+      castShadow
+      receiveShadow
+    />
+  );
+}
+
+/** One draw per plant species, however many tiles are on the board. */
+export function Vegetation({ records, seed }: { records: TileRecord[]; seed?: number }) {
+  const groups = useMemo(() => plantInstances(records, seed), [records, seed]);
+  return (
+    <>
+      {groups.map((plants) => (
+        <PlantMesh key={`${plants.species}-${plants.matrices.length}`} plants={plants} />
+      ))}
+    </>
+  );
+}
+
 /** One draw per material and tile type, regardless of how many copies are on the board. */
-export function Scenery({ records }: { records: TileRecord[] }) {
+export function Scenery({ records, seed }: { records: TileRecord[]; seed?: number }) {
   const library = useContext(LibraryContext)!;
   const groups = useMemo(() => {
     const result = new Map<string, TileRecord[]>();
@@ -97,6 +179,7 @@ export function Scenery({ records }: { records: TileRecord[] }) {
         </group>
       ))}
       <Warehouses records={records} />
+      <Vegetation records={records} seed={seed} />
     </>
   );
 }

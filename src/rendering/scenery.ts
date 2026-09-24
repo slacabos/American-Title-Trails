@@ -1,16 +1,16 @@
-import { hasRiverBridge, nearRiver, paintRiver, restaurantPosition, tileRoadPath } from "./riverLayout";
+import { hasRiverBridge, paintRiver, restaurantPosition, tileRoadPath } from "./riverLayout";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { ITile } from "@/interfaces/ITile";
 import { buildWarehouses } from "./warehouseGeometry";
 import { GLOW_COLOR, PaintBatch, place, type PropBuilder } from "./paint";
 import { buildLandmark, LANDMARKS } from "./landmarks";
+import { buildSpecies, type Species, speciesFor, vegetationSpots } from "./vegetation";
 
 const NIGHT_GLOW = 1.1;
 import { WarehouseComplex, warehouseLayout } from "./warehouseLayout";
 import {
   canonicalTile,
-  CORNERS,
   insidePolygon,
   Point,
   ROAD_WIDTH,
@@ -117,16 +117,38 @@ export class SceneryLibrary {
     return material;
   }
 
+  private species = new Map<Species, THREE.BufferGeometry>();
+
+  /** Shared geometry for one plant species, drawn with the paint material. */
+  getSpecies(kind: Species): THREE.BufferGeometry {
+    let geometry = this.species.get(kind);
+    if (!geometry) {
+      geometry = buildSpecies(kind);
+      this.species.set(kind, geometry);
+    }
+    return geometry;
+  }
+
   /** A prospective tile shows a complete standalone section before placement. */
   getGhost(tile: ITile): TileModel {
     const key = sceneryKey(tile);
     const cached = this.ghosts.get(key);
     if (cached) return cached;
+    const base = canonicalTile(tile);
     const warehouse = this.createWarehouses(warehouseLayout([
-      { tile: canonicalTile(tile), position: { x: 0, y: 0 } },
+      { tile: base, position: { x: 0, y: 0 } },
     ]));
     warehouse.parts.forEach((part) => this.ghostGeometry.add(part.geometry));
-    const model = { parts: [...this.get(tile).parts, ...warehouse.parts] };
+    // The ghost has no region yet, so it previews meadow plants.
+    const plants = new PaintBatch();
+    for (const spot of vegetationSpots(base)) {
+      const geometry = this.getSpecies(speciesFor("meadow", spot.kind)).clone();
+      plants.add(place(geometry, new THREE.Vector3(spot.at[0], 0, spot.at[1]), undefined, spot.scale));
+    }
+    const plantGeometry = plants.build();
+    const vegetation = plantGeometry ? [{ geometry: plantGeometry, material: this.paintMaterial() }] : [];
+    vegetation.forEach((part) => this.ghostGeometry.add(part.geometry));
+    const model = { parts: [...this.get(tile).parts, ...warehouse.parts, ...vegetation] };
     this.ghosts.set(key, model);
     return model;
   }
@@ -141,7 +163,7 @@ export class SceneryLibrary {
   }
 
   /** One vertex-coloured material shared by every painted prop. */
-  private paintMaterial(): THREE.Material {
+  paintMaterial(): THREE.Material {
     let material = this.materials.get("paint");
     if (!material) {
       material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.87 });
@@ -491,49 +513,6 @@ export class SceneryLibrary {
       add(deck, material, new THREE.Vector3());
     }
 
-    const corners = [
-      ...new Set(base.fieldSegments.flatMap((segment) => segment.corners)),
-    ];
-    corners.forEach((corner, i) => {
-      const [x, z] = CORNERS[corner];
-      const variation = (scenerySeed(base.id) + i * 137) >>> 0;
-      if (
-        (i > 0 && variation % 5 === 0) ||
-        nearRiver(base, [x, z], 0.10) ||
-        (base.river && base.hasMcDonalds && Math.hypot(x - restaurantPosition(base)[0], z - restaurantPosition(base)[1]) < 0.28) ||
-        zones.some((polygon) => insidePolygon([x, z], polygon)) ||
-        roads.some(([rx, rz]) => Math.hypot(rx - x, rz - z) < 0.19)
-      )
-        return;
-      const treeX = x + ((variation % 17) / 16 - 0.5) * 0.06;
-      const treeZ = z + (((variation >>> 4) % 17) / 16 - 0.5) * 0.06;
-      shape(
-        new THREE.CylinderGeometry(0.01, 0.015, 0.09, 5),
-        "#826a4b",
-        new THREE.Vector3(treeX, 0.043, treeZ),
-      );
-      shape(
-        new THREE.IcosahedronGeometry(0.055 + (variation % 4) * 0.006, 1),
-        i % 2 ? "#65934d" : "#477d50",
-        new THREE.Vector3(treeX, 0.12, treeZ),
-      );
-      shape(
-        new THREE.IcosahedronGeometry(0.035, 0),
-        "#88a75a",
-        new THREE.Vector3(x - 0.065, 0.025, z + 0.027),
-      );
-      if (variation % 3 === 0) {
-        const sapling: Point = [treeX - Math.sign(x) * 0.09, treeZ];
-        if (!nearRiver(base, sapling, 0.06) && !zones.some((polygon) => insidePolygon(sapling, polygon)) &&
-          !roads.some(([rx, rz]) => Math.hypot(rx - sapling[0], rz - sapling[1]) < 0.15)) {
-          shape(new THREE.CylinderGeometry(0.006, 0.01, 0.065, 5), "#826a4b",
-            new THREE.Vector3(sapling[0], 0.032, sapling[1]));
-          shape(new THREE.IcosahedronGeometry(0.042, 1), "#65934d",
-            new THREE.Vector3(sapling[0], 0.088, sapling[1]));
-        }
-      }
-    });
-
     const parts: SceneryPart[] = [];
     for (const [material, geometries] of batches) {
       const geometry = mergeGeometries(geometries);
@@ -699,6 +678,7 @@ export class SceneryLibrary {
   /** Release the canvas's geometry, materials, and textures on unmount. */
   dispose(): void {
     this.ghostGeometry.forEach((geometry) => geometry.dispose());
+    this.species.forEach((geometry) => geometry.dispose());
     this.models.forEach((model) =>
       model.parts.forEach((part) => part.geometry.dispose()),
     );

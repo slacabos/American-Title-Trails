@@ -8,14 +8,19 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 export class PaintBatch {
   private geometries: THREE.BufferGeometry[] = [];
 
-  add(geometry: THREE.BufferGeometry, color: string): void {
+  /** Omit `color` to keep a geometry's existing vertex colours. */
+  add(geometry: THREE.BufferGeometry, color?: string): void {
     // Mixed indexed (boxes) and non-indexed (icosahedra) geometry cannot merge.
     const flat = geometry.index ? geometry.toNonIndexed() : geometry;
     if (flat !== geometry) geometry.dispose();
     if (!flat.getAttribute("uv")) {
       flat.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(flat.getAttribute("position").count * 2), 2));
     }
-    const tint = new THREE.Color(color);
+    if (!color && flat.getAttribute("color")) {
+      this.geometries.push(flat);
+      return;
+    }
+    const tint = new THREE.Color(color ?? "#ffffff");
     const colors = new Float32Array(flat.getAttribute("position").count * 3);
     for (let i = 0; i < colors.length; i += 3) {
       colors[i] = tint.r;
