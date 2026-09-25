@@ -6,6 +6,8 @@ declare global {
       rendered: () => boolean;
       markerVisibility: () => { total: number; visible: number }[];
       surfacePixels: (id: string, points: [number, number][]) => number[][];
+      riverTileIds: () => string[];
+      waterPixels: (id: string) => number[][];
     };
   }
 }
@@ -68,21 +70,19 @@ test("feature highlights tolerate stale selections and empty polygons on every t
 });
 
 
-test("all river tiles render in classic view with water in every orientation", async ({ page }, testInfo) => {
-  const errors: string[] = [];
-  page.on("pageerror", error => errors.push(error.message));
-  await page.setViewportSize({ width: 1220, height: 1300 });
-  for (let group = 4; group < 7; group++) {
-    await page.goto(`/e2e/tiles.html?page=${group}&classic`);
-    await expect(page.locator("canvas")).toHaveCount(16);
-    const waterCounts = await page.locator("canvas").evaluateAll(canvases => canvases.map(canvas => {
-      const pixels = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height).data;
-      let count = 0;
-      for (let i = 0; i < pixels.length; i += 4) if (pixels[i + 2] > pixels[i] + 35 && pixels[i + 1] > pixels[i] + 25) count++;
-      return count;
-    }));
-    expect(waterCounts.every(count => count > 150)).toBe(true);
-    await page.screenshot({ path: testInfo.outputPath(`river-classic-${group}.png`), fullPage: true });
+test("every river tile paints water along its whole river path", async ({ page }) => {
+  await page.goto("/e2e/tiles.html?page=4");
+  const water = await page.evaluate(() =>
+    window.tileSceneryTest.riverTileIds().map((id) => ({
+      id,
+      pixels: window.tileSceneryTest.waterPixels(id),
+    })),
+  );
+  expect(water.length).toBe(12);
+  for (const { id, pixels } of water) {
+    expect(pixels.length, id).toBeGreaterThanOrEqual(3);
+    for (const [r, g, b] of pixels) {
+      expect(b > r + 35 && g > r + 25, `${id} pixel ${[r, g, b]}`).toBe(true);
+    }
   }
-  expect(errors).toEqual([]);
 });

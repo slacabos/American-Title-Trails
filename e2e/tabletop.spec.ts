@@ -29,6 +29,8 @@ declare global {
         textures: number;
       };
       loseContext: () => void;
+      cameraTarget: () => number[];
+      cameraUp: () => number[];
       previewFrame: () => number;
       losePreviewContext: () => void;
     };
@@ -98,15 +100,16 @@ test("a preview context failure keeps the board and game in 3D", async ({ page }
   await expect.poll(() => page.evaluate(() => window.tabletopTest.previewFrame())).toBeGreaterThan(0);
   const state = await page.evaluate(() => window.tabletopTest.state());
   await page.evaluate(() => window.tabletopTest.losePreviewContext());
-  await expect(page.locator(".tile-renderer-container")).toBeVisible();
+  // Only the preview gives up; the board keeps rendering in 3D.
+  await expect(page.locator(".tabletop-tile-preview")).toHaveCount(0);
   await expect(page.getByTestId("board-3d")).toBeVisible();
-  await expect(page.getByRole("button", { name: "3D scenery" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Tabletop" })).toHaveAttribute("aria-pressed", "true");
   expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(state);
   const point = await legalPoint(page);
   await page.mouse.click(point.x, point.y);
   await expect(page.getByTestId("tile-count")).toHaveText("2");
   await page.getByRole("button", { name: "Skip claim" }).click();
-  await expect(page.locator(".tile-renderer-container")).toBeVisible();
+  await expect(page.locator(".tabletop-tile-preview")).toHaveCount(0);
   await expect(page.getByTestId("board-3d")).toBeVisible();
 });
 
@@ -176,10 +179,10 @@ test("desktop placement, dragging, rotation, claiming and view switching preserv
   await expect(page.getByTestId("phase")).toHaveText("place_tile");
   const state = await page.evaluate(() => window.tabletopTest.state());
   expect(state.claims.length).toBeGreaterThan(0);
-  await page.getByRole("button", { name: "2D classic" }).click();
-  await expect(page.locator(".board-canvas-container")).toBeVisible();
+  await page.getByRole("button", { name: "Drone" }).click();
+  await expect(page.getByTestId("board-3d")).toBeVisible();
   expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(state);
-  await page.getByRole("button", { name: "3D scenery" }).click();
+  await page.getByRole("button", { name: "Tabletop" }).click();
   await expect(page.getByTestId("board-3d")).toBeVisible();
   expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(state);
   expect(errors).toEqual([]);
@@ -258,7 +261,7 @@ test("pinch zoom never places a tile or opens a confirmation", async ({
   await context.close();
 });
 
-test("context loss falls back without losing tiles, claims or scores", async ({
+test("context loss shows a retry panel without losing tiles, claims or scores", async ({
   page,
 }) => {
   await ready(page);
@@ -267,16 +270,32 @@ test("context loss falls back without losing tiles, claims or scores", async ({
   await expect(page.getByTestId("tile-count")).toHaveText("2");
   const before = await page.evaluate(() => window.tabletopTest.state());
   await page.evaluate(() => window.tabletopTest.loseContext());
-  await expect(page.locator(".board-canvas-container")).toBeVisible();
-  await expect(page.getByRole("status")).toContainText(
-    "Your game continues in 2D",
+  await expect(page.getByText("3D graphics aren't available right now")).toBeVisible();
+  await expect(page.getByTestId("board-3d")).toHaveCount(0);
+  expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(
+    before,
   );
+  // A fresh canvas asks for a new context, and the game carries on.
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByTestId("board-3d")).toBeVisible();
+  // The remounted canvas registers its renderer a moment after it appears.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        try {
+          return window.tabletopTest.stats().frame;
+        } catch {
+          return 0;
+        }
+      }),
+    )
+    .toBeGreaterThan(0);
   expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(
     before,
   );
 });
 
-test("devices without WebGL start in the working classic view", async ({
+test("devices without WebGL get the unavailable panel instead of a crash", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -289,11 +308,15 @@ test("devices without WebGL start in the working classic view", async ({
       return Reflect.apply(original, this, [type, ...args]);
     } as typeof original;
   });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/e2e/tabletop.html");
-  await expect(page.locator(".board-canvas-container")).toBeVisible();
-  await expect(page.getByRole("status")).toContainText(
-    "Your game continues in 2D",
-  );
+  await expect(page.getByText("3D graphics aren't available right now")).toBeVisible();
+  // Retrying on a device that still has no WebGL lands back on the panel.
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByText("3D graphics aren't available right now")).toBeVisible();
+  await expect(page.getByTestId("tile-count")).toHaveText("1");
+  expect(errors).toEqual([]);
 });
 
 test("full-deck scenery renders efficiently and stops drawing when idle", async ({
@@ -348,7 +371,34 @@ test("zooming out sheds scenery detail and zooming back in restores it", async (
   console.log("Triangles by tier:", { near: near.triangles, far: far.triangles });
 });
 
-test("the production game opens in 3D and keeps its current tile when switching views", async ({
+test("the drone view looks straight down with north up, places tiles and is remembered", async ({
+  page,
+}) => {
+  await ready(page);
+  const overhead = async () => {
+    const [x, , z] = await page.evaluate(() => window.tabletopTest.stats().camera);
+    const [tx, , tz] = await page.evaluate(() => window.tabletopTest.cameraTarget());
+    return Math.hypot(x - tx, z - tz);
+  };
+  expect(await overhead()).toBeGreaterThan(1);
+  await page.getByRole("button", { name: "Drone" }).click();
+  await expect.poll(overhead).toBeLessThan(0.01);
+  const up = await page.evaluate(() => window.tabletopTest.cameraUp());
+  expect(up[2]).toBeCloseTo(-1, 5);
+  const point = await legalPoint(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(page.getByTestId("tile-count")).toHaveText("2");
+  await page.screenshot({ path: "test-results/tabletop-drone.png" });
+
+  await page.reload();
+  await expect(page.getByTestId("board-3d")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Drone" })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(overhead).toBeLessThan(0.01);
+  await page.getByRole("button", { name: "Tabletop" }).click();
+  await expect.poll(overhead).toBeGreaterThan(1);
+});
+
+test("the production game keeps its current tile when switching camera views", async ({
   page,
 }) => {
   await page.goto("/");
@@ -357,9 +407,10 @@ test("the production game opens in 3D and keeps its current tile when switching 
   const name = await page
     .locator(".tabletop-tile-preview")
     .getAttribute("aria-label");
-  await page.getByRole("button", { name: "2D classic" }).click();
-  await expect(page.locator(".board-canvas-container")).toBeVisible();
-  await page.getByRole("button", { name: "3D scenery" }).click();
+  await page.getByRole("button", { name: "Drone" }).click();
+  await expect(page.getByRole("button", { name: "Drone" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("board-3d")).toBeVisible();
+  await page.getByRole("button", { name: "Tabletop" }).click();
   await expect(page.locator(".tabletop-tile-preview")).toHaveAttribute(
     "aria-label",
     name!,

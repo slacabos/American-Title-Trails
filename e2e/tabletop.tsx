@@ -7,10 +7,10 @@ import { GamePhase, Position } from "../src/types";
 import { BoardStatus, BoardView, CurrentTilePreview, ViewToggle } from "../src/components/BoardView";
 import { boardSnapshot } from "../src/rendering/tileLayout";
 import {
-  readRenderMode,
-  RenderMode,
-  saveRenderMode,
-} from "../src/rendering/renderMode";
+  readCameraView,
+  saveCameraView,
+  type CameraView,
+} from "../src/rendering/cameraView";
 import "../src/index.css";
 
 const params = new URLSearchParams(location.search);
@@ -29,41 +29,39 @@ if (params.has("full")) {
 }
 function Harness() {
   const [state, setState] = useState(game.getState());
-  const [mode, setMode] = useState<RenderMode>(readRenderMode);
+  const [view, setView] = useState<CameraView>(readCameraView);
   const [unavailable, setUnavailable] = useState(false);
   useEffect(() => {
     game.setStateChangeListener(setState);
   }, []);
-  const fallback = useCallback(() => {
-    setMode("2d");
-    setUnavailable(true);
-  }, []);
+  const fallback = useCallback(() => setUnavailable(true), []);
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 260px", gap: 12, padding: 12 }}>
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
-          <BoardStatus className="hud-panel" state={state} unavailable={unavailable} />
+          <BoardStatus className="hud-panel" state={state} />
           <ViewToggle
-            mode={mode}
-            onModeChange={(value) => {
-              setMode(value);
-              setUnavailable(false);
-              saveRenderMode(value);
+            view={view}
+            onViewChange={(value) => {
+              setView(value);
+              saveCameraView(value);
             }}
           />
         </div>
         <div style={{ position: "relative", height: "64vh", minHeight: 420 }}>
           <BoardView
             state={state}
-            mode={mode}
+            view={view}
             onUnavailable={fallback}
+            unavailable={unavailable}
+            onRetry={() => setUnavailable(false)}
             onTilePlace={(position) => game.placeTile(position)}
             night={night}
           />
         </div>
       </div>
       <aside>
-        <CurrentTilePreview tile={state.currentTile} mode={mode} night={night} />
+        <CurrentTilePreview tile={state.currentTile} night={night} />
         <button onClick={() => game.rotateTileClockwise()}>Rotate tile</button>
         {state.phase === GamePhase.CLAIM_FEATURE && (
           <>
@@ -150,6 +148,21 @@ Object.assign(window, {
         zoom: state.camera.zoom,
         camera: state.camera.position.toArray(),
       };
+    },
+    /** Where the camera's view ray meets the table. */
+    cameraTarget: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>(
+        '[data-testid="board-3d"] canvas',
+      )!;
+      const { camera } = _roots.get(canvas)!.store.getState();
+      const direction = camera.getWorldDirection(new Vector3());
+      return camera.position.clone().addScaledVector(direction, -camera.position.y / direction.y).toArray();
+    },
+    cameraUp: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>(
+        '[data-testid="board-3d"] canvas',
+      )!;
+      return _roots.get(canvas)!.store.getState().camera.up.toArray();
     },
     previewFrame: () => {
       const canvas = document.querySelector<HTMLCanvasElement>(

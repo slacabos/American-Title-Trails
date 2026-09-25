@@ -15,9 +15,8 @@ A turn resolves in this order: place, optionally claim, score completed features
 - `src/riverLibrary.ts`: all twelve authored tile topologies and field-to-Costco adjacency.
 - `src/riverRules.ts`: additional placement checks, shared by humans, previews and AI.
 - `src/rendering/riverLayout.ts`: shared water paths, building anchors and bridge routes.
-- `src/rendering/riverCanvas.ts`: classic tile rendering. The same paths texture 3D scenery, with raised bridge geometry.
 - `src/test/river.test.ts`: opening order, rotations, forbidden bends, bank topology, claims, scoring and full AI games.
-- Storybook's River Tiles and All Tiles And Rotations show both renderers; Playwright checks every rotation, highlights and marker visibility.
+- Storybook's All Tiles And Rotations shows every river tile in 3D; Playwright checks every rotation, highlights, marker visibility and water along each river path.
 
 The source and lake are separate from the shuffled middle stack. Water endpoints are derived from board topology, so previews and rotations use the same rules without storing a second river state.
 

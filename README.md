@@ -16,7 +16,7 @@ The Vite dev server runs at http://localhost:3000 and opens automatically.
 - Local multiplayer with 2-5 players.
 - AI opponents with easy, medium, hard, and expert difficulty.
 - A 12-tile River opening, followed by the existing 51 land tiles (63 tiles total).
-- Curving water, lakeside restaurants, and road bridges in both 2D and 3D.
+- Curving water, lakeside restaurants, and road bridges on a 3D tabletop.
 - Tile rotation with live placement validation.
 - Feature claiming for roads, Costcos, McDonald's, and fields (farmers).
 - Farmers stay on the board and score at game end.
@@ -109,8 +109,10 @@ UI strings live in `src/content/translations/en.json` and are accessed via `src/
 
 The game opens in an angled 3D view with miniature highways, Costco warehouses,
 McDonald's restaurants, parking lots, vegetation, and colored followers. The
-**3D scenery / 2D classic** switch preserves the current game and remembers your
-choice. If WebGL cannot start or its context is lost, play continues in 2D.
+**Tabletop / Drone** switch swings the camera between that angled view and a
+top-down drone view with north at the top. It preserves the current game and
+remembers your choice. The game needs WebGL: if 3D graphics cannot start or stop
+responding, the board shows a **Try again** button and the game state is kept.
 
 - **Mouse:** hover over a green outline to preview; click to place. Drag to pan,
   scroll to zoom, and use **Fit board** to restore automatic framing.

@@ -10,7 +10,7 @@ import {
 } from "../types";
 import { Game, GamePhase } from "../game";
 import { BoardView, BoardStatus, ViewToggle } from "./BoardView";
-import { readRenderMode, saveRenderMode, RenderMode } from "@/rendering/renderMode";
+import { readCameraView, saveCameraView, type CameraView } from "@/rendering/cameraView";
 import HelpModal from "./HelpModal";
 import GameOverPanel from "./GameOverPanel";
 import iconUrl from "@/assets/icon.png";
@@ -45,17 +45,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const stageRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLElement>(null);
   const [showHelp, setShowHelp] = useState(false);
-  const [renderMode, setRenderMode] = useState<RenderMode>(readRenderMode);
+  const [view, setView] = useState<CameraView>(readCameraView);
   const [graphicsUnavailable, setGraphicsUnavailable] = useState(false);
   const [highlightedFeature, setHighlightedFeature] = useState<ClaimableFeature>();
-  const handleGraphicsUnavailable = useCallback(() => {
-    setGraphicsUnavailable(true);
-    setRenderMode("2d");
-  }, []);
-  const handleRenderMode = (mode: RenderMode) => {
-    setRenderMode(mode);
-    setGraphicsUnavailable(false);
-    saveRenderMode(mode);
+  const handleGraphicsUnavailable = useCallback(() => setGraphicsUnavailable(true), []);
+  const handleViewChange = (next: CameraView) => {
+    setView(next);
+    saveCameraView(next);
   };
   const [isGameOverCollapsed, setIsGameOverCollapsed] = useState(false);
 
@@ -233,9 +229,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     <div className="game-stage" ref={stageRef}>
       <BoardView
         state={gameState}
-        mode={renderMode}
+        view={view}
         onTilePlace={handleTilePlace}
         onUnavailable={handleGraphicsUnavailable}
+        unavailable={graphicsUnavailable}
+        onRetry={() => setGraphicsUnavailable(false)}
         highlightedFeature={highlightedFeature}
         night={night}
       />
@@ -250,12 +248,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
             <BoardStatus
               className="hud-panel"
               state={gameState}
-              unavailable={graphicsUnavailable}
-              onDismissUnavailable={() => setGraphicsUnavailable(false)}
             />
           </div>
           <div className="hud-top-right">
-            <ViewToggle mode={renderMode} onModeChange={handleRenderMode} />
+            <ViewToggle view={view} onViewChange={handleViewChange} />
             <TimeToggle night={night} onToggle={toggleNight} />
             <button
               type="button"
@@ -323,7 +319,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           <TileDock
             ref={dockRef}
             state={gameState}
-            mode={renderMode}
             claimableFeatures={claimableFeatures}
             onRotateClockwise={handleRotateClockwise}
             onRotateCounterClockwise={handleRotateCounterClockwise}

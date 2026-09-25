@@ -2,7 +2,6 @@ import React from "react";
 import { RotateCcw, RotateCw } from "lucide-react";
 import type { ClaimableFeature, GameState, TerrainType } from "@/types";
 import { GamePhase } from "@/types";
-import type { RenderMode } from "@/rendering/renderMode";
 import { Button } from "@/components/ui/button";
 import useTranslations from "@/hooks/useTranslations";
 import { CurrentTilePreview } from "../BoardView";
@@ -10,7 +9,6 @@ import HudPanel from "./HudPanel";
 
 interface TileDockProps {
   state: GameState;
-  mode: RenderMode;
   claimableFeatures: ClaimableFeature[];
   onRotateClockwise: () => void;
   onRotateCounterClockwise: () => void;
@@ -24,7 +22,6 @@ interface TileDockProps {
 export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function TileDock(
   {
     state,
-    mode,
     claimableFeatures,
     onRotateClockwise,
     onRotateCounterClockwise,
@@ -52,7 +49,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
       {/* The preview stays mounted through the claim phase; recreating WebGL
           contexts every turn can exhaust the device's graphics resources. */}
       <div className="tile-dock-preview" hidden={!state.currentTile}>
-        <CurrentTilePreview tile={state.currentTile} mode={mode} night={night} />
+        <CurrentTilePreview tile={state.currentTile} night={night} />
       </div>
       <div className="tile-dock-body">
         {state.currentTile && <div className="tile-dock-name">{state.currentTile.name}</div>}
@@ -78,7 +75,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
               </Button>
             </div>
             <p className="tile-dock-hint m-0">
-              {t(mode === "3d" ? "hud.placeHint3d" : "hud.placeHint2d")}
+              {t("hud.placeHint3d")}
             </p>
           </>
         )}

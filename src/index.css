@@ -26,8 +26,6 @@
   --hud-edge: #fbf5dc;
   --field: #ffffff;
   --secondary-hover: #cfdbb8;
-  --notice: #f6e7c4;
-  --notice-foreground: #6b4d12;
 
   --background: var(--pine);
   --foreground: var(--parchment);
@@ -78,8 +76,6 @@
   --hud-edge: #34443b;
   --field: #16201b;
   --secondary-hover: #385042;
-  --notice: #4a3d1f;
-  --notice-foreground: #f2dca6;
   --primary-foreground: #10201a;
   --accent-foreground: #1b1406;
   --destructive-foreground: #fff8e5;
@@ -164,21 +160,13 @@ body {
 .tabletop-tile-preview { width: 168px; height: 144px; max-width: 100%; }
 .tabletop-loading { display: grid; place-items: center; height: 100%; font-size: 15px; color: var(--ink); background: var(--scene); }
 
-/* 2D board */
-.board-canvas-container canvas,
-.tile-renderer {
-  width: 100%;
-  height: auto;
-  display: block;
-  image-rendering: pixelated;
-  border-radius: 8px;
-  background: var(--pine);
-  flex-shrink: 1;
-}
-.board-canvas-container { background: var(--pine); }
-.board-canvas-container canvas { height: 100%; max-height: none; border-radius: 0; }
+/* Shown in place of the board when 3D graphics cannot run. */
+.board-unavailable { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 24px; text-align: center; background: var(--scene); color: var(--ink); }
+.board-unavailable svg { color: var(--gold); }
+.board-unavailable h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.board-unavailable p { margin: 0 0 6px; max-width: 34ch; font-size: 13px; color: var(--moss); }
 
-/* Shared pill used by the 3D camera controls and the 2D info box. */
+/* Pill that holds the camera controls and tile count. */
 .board-pill { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; align-items: center; padding: 3px; gap: 2px; border: 1px solid var(--hud-edge); border-radius: 10px; background: var(--hud-surface); box-shadow: var(--hud-shadow); color: var(--ink); font-size: 12px; white-space: nowrap; }
 .board-pill-status { padding: 0 10px; color: var(--moss); font-variant-numeric: tabular-nums; }
 .board-pill button { min-height: 40px; min-width: 40px; padding: 0 10px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
@@ -227,8 +215,6 @@ body {
 
 .board-status { padding: 8px 12px; font-size: 13px; line-height: 1.45; max-width: 560px; }
 .board-status-sub { font-size: 12px; color: var(--moss); margin-top: 2px; }
-.board-status-notice { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 6px 8px; border-radius: 8px; background: var(--notice); color: var(--notice-foreground); font-size: 12px; }
-.board-status-notice button { margin-left: auto; cursor: pointer; border-radius: 6px; padding: 2px; }
 .board-status-toggle { display: none; }
 
 .board-view-switch { pointer-events: auto; display: flex; padding: 3px; gap: 3px; border-radius: 10px; background: var(--hud-surface); border: 1px solid var(--hud-edge); box-shadow: var(--hud-shadow); }
@@ -255,6 +241,8 @@ body {
 /* Tile dock */
 .tile-dock { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .tile-dock-preview { display: flex; justify-content: center; border-radius: 10px; background: var(--sage-soft); padding: 6px; }
+/* With no 3D preview (loading, or graphics unavailable) the tile name stands alone. */
+.tile-dock-preview:not(:has(.tabletop-tile-preview)) { display: none; }
 .hud [hidden] { display: none !important; }
 .tile-dock-name { font-size: 14px; font-weight: 600; text-align: center; }
 .tile-dock-hint { font-size: 11px; line-height: 1.5; color: var(--moss); text-align: center; }
@@ -277,7 +265,7 @@ body {
 
 /* Focus */
 .board-view-switch button:focus-visible, .board-pill button:focus-visible, .tabletop-confirm button:focus-visible,
-.hud-icon-button:focus-visible, .hud-menu-list button:focus-visible, .activity-log-toggle:focus-visible, .board-status-notice button:focus-visible {
+.hud-icon-button:focus-visible, .hud-menu-list button:focus-visible, .activity-log-toggle:focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 2px;
 }

@@ -4,9 +4,9 @@ import { MeshStandardMaterial, WebGLRenderTarget } from "three";
 import { Daylight, FeatureHighlight, Follower, Scenery, SceneryProvider } from "../src/components/three/Scenery";
 import { buildDeck, getStartTile } from "../src/tileLibrary";
 import { buildRiverDeck, getRiverSource, getRiverLake } from "../src/riverLibrary";
-import { TileRenderer } from "../src/components/TileRenderer";
 import { SceneryLibrary } from "../src/rendering/scenery";
 import { featureAnchor, type Point } from "../src/rendering/tileLayout";
+import { riverPath } from "../src/rendering/riverLayout";
 import type { ITile } from "../src/interfaces/ITile";
 import type { ClaimableFeature } from "../src/types";
 
@@ -27,6 +27,25 @@ function features(tile: ITile): ClaimableFeature[] {
     ...tile.fieldSegments.map((_, i) => ({ type: "field" as const, identifier: `field_${i}` })),
     ...(tile.hasMcDonalds ? [{ type: "mcdonalds" as const }] : []),
   ];
+}
+
+/** Read the procedural ground texture at canonical tile coordinates. */
+function surfacePixels(id: string, points: Point[]) {
+  const library = new SceneryLibrary();
+  try {
+    const model = library.get(allTiles.find((tile) => tile.id === id)!);
+    const material = model.parts.map((part) => part.material).find((material) =>
+      material instanceof MeshStandardMaterial && material.map,
+    ) as MeshStandardMaterial;
+    const canvas = material.map!.image as HTMLCanvasElement;
+    const ctx = canvas.getContext("2d")!;
+    return points.map(([x, z]) => Array.from(ctx.getImageData(
+      Math.floor((x + 0.5) * canvas.width),
+      Math.floor((z + 0.5) * canvas.height), 1, 1,
+    ).data));
+  } finally {
+    library.dispose();
+  }
 }
 
 Object.assign(window, {
@@ -65,22 +84,14 @@ Object.assign(window, {
     rendered: () => Array.from(document.querySelectorAll("canvas")).every(
       (canvas) => (_roots.get(canvas)?.store.getState().gl.info.render.calls ?? 0) > 0,
     ),
-    surfacePixels: (id: string, points: Point[]) => {
-      const library = new SceneryLibrary();
-      try {
-        const model = library.get(allTiles.find((tile) => tile.id === id)!);
-        const material = model.parts.map((part) => part.material).find((material) =>
-          material instanceof MeshStandardMaterial && material.map,
-        ) as MeshStandardMaterial;
-        const canvas = material.map!.image as HTMLCanvasElement;
-        const ctx = canvas.getContext("2d")!;
-        return points.map(([x, z]) => Array.from(ctx.getImageData(
-          Math.floor((x + 0.5) * canvas.width),
-          Math.floor((z + 0.5) * canvas.height), 1, 1,
-        ).data));
-      } finally {
-        library.dispose();
-      }
+    surfacePixels,
+    riverTileIds: () => allTiles.filter((tile) => tile.river).map((tile) => tile.id),
+    /** Ground pixels sampled along a river tile's water path. */
+    waterPixels: (id: string) => {
+      const tile = allTiles.find((candidate) => candidate.id === id)!;
+      // Edge points sit on the tile border; the lake is checked at its centre.
+      const inside = riverPath(tile).filter(([x, z]) => Math.abs(x) < 0.48 && Math.abs(z) < 0.48);
+      return surfacePixels(id, tile.river?.kind === "lake" ? [...inside, [-0.12, -0.04]] : inside);
     },
   },
 });
@@ -91,9 +102,7 @@ createRoot(document.getElementById("root")!).render(
       <section key={tile.id}>
         <h2 style={{ fontSize: 18, margin: "12px 24px 0" }}>{tile.name} · {tile.id}</h2>
         <div style={{ height: 240, background: "#f1eee3" }}>
-          {params.has("classic") ? <div style={{ display: "flex", justifyContent: "space-evenly", padding: 15 }}>
-            {rotations.map(rotation => <TileRenderer key={rotation} tile={tile.rotate(rotation)} size={210} />)}
-          </div> : <Canvas
+          <Canvas
             orthographic
             shadows="percentage"
             frameloop="demand"
@@ -159,7 +168,7 @@ createRoot(document.getElementById("root")!).render(
                 />;
               });
             })}
-          </Canvas>}
+          </Canvas>
         </div>
         <div style={{ display: "flex", justifyContent: "space-evenly", marginBottom: 18 }}>
           {rotations.map((rotation) => <span key={rotation}>{rotation * 90}°</span>)}

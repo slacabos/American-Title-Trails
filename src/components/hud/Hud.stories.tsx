@@ -30,7 +30,6 @@ function Dock({ phase }: { phase: "place" | "claim" | "ai" }) {
     <div style={{ width: 288 }}>
       <TileDock
         state={state}
-        mode="2d"
         claimableFeatures={
           state.phase === GamePhase.CLAIM_FEATURE ? game.getClaimableFeaturesForCurrentTurn() : []
         }

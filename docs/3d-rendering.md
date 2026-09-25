@@ -72,8 +72,7 @@ choice is stored in `localStorage`, defaults to the system dark-mode setting, an
 toggles from the HUD, the setup screen, or the `N` key.
 
 Stored road/store claims use cardinal directions, and field claims use corners.
-They are resolved to the matching feature before placing followers; the 2D and
-3D views share that resolver. Claims match exact tile coordinates, including
+They are resolved to the matching feature before placing followers. Claims match exact tile coordinates, including
 negative positions. Feature anchors deliberately avoid centroids that could sit
 inside another feature.
 Claim markers keep these world-space anchors but render as a final transparent
@@ -100,20 +99,28 @@ a second canvas, sharing the same model-building code and camera angle. It stays
 mounted (hidden while claiming) and reuses its library across turns, avoiding
 repeated WebGL context creation and delayed teardown.
 
-The orthographic camera has a fixed 45-degree diagonal and 50-degree elevation.
-OrbitControls has rotation disabled. Automatic fitting follows board growth until
+The orthographic camera has two views (`src/rendering/cameraPose.ts`). The
+tabletop looks along a fixed 45-degree diagonal from 50 degrees up. The drone
+looks straight down with `camera.up` set to north (negative Z). OrbitControls
+reads `camera.up` when it is built, so the controls are rebuilt for each view; the
+drone pans in screen space so dragging slides across the table. Switching blends
+direction, up vector, target and zoom over 350 ms (instant with reduced motion),
+keeping the player's focus, or the fitted frame when auto-fit is on. The choice is
+stored as `american-tile-trails.view`; a saved `"2d"` from the old renderer switch
+migrates to the drone view. Rotation is disabled. Automatic fitting follows board growth until
 the player pans or zooms; Fit board re-enables it. Pointer-up placement requires a
 primary click with no drag or multi-touch gesture. Touch selects a preview and
-requires a separate confirmation. Both renderers gate placement to human turns.
+requires a separate confirmation. Placement is gated to human turns.
 
 Game-state notifications produce fresh render snapshots because the engine's
 board object and tile map mutate in place. Rendering uses `frameloop="demand"`;
 camera and instance-matrix changes explicitly invalidate it, including preview
 rotation. Pixel density is capped at 1.5, with one
-1024-pixel directional shadow map per scene. Context-loss listeners and a graphics
-error boundary fall back to classic rendering without resetting the game. Preview
-failures fall back only within the preview; a healthy board stays in 3D. Context
-loss from a detached or inactive canvas during teardown is ignored.
+1024-pixel directional shadow map per scene. There is no 2D renderer: context-loss
+listeners and a graphics error boundary replace the board with a panel whose
+**Try again** remounts the canvas, without resetting the game. Preview failures
+hide only the preview; a healthy board keeps rendering. Context loss from a
+detached or inactive canvas during teardown is ignored.
 
 ## Verification
 

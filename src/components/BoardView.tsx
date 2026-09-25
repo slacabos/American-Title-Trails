@@ -1,13 +1,11 @@
 import React, { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import type { ClaimableFeature, GameState, Position } from "@/types";
-import { GamePhase } from "@/types";
 import type { ITile } from "@/interfaces/ITile";
-import BoardCanvas from "./BoardCanvas";
-import TileRenderer from "./TileRenderer";
-import type { RenderMode } from "@/rendering/renderMode";
+import { CAMERA_VIEWS, type CameraView } from "@/rendering/cameraView";
 import { useTranslations } from "@/hooks/useTranslations";
 import { completedCostcos } from "@/rendering/completedCostcos";
-import { TriangleAlert, X } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const BoardScene = lazy(() =>
   import("./three/BoardScene").then((module) => ({
@@ -23,7 +21,7 @@ const TilePreviewScene = lazy(() =>
 export class GraphicsBoundary extends React.Component<
   {
     children: React.ReactNode;
-    fallback: React.ReactNode;
+    fallback?: React.ReactNode;
     onUnavailable: () => void;
   },
   { failed: boolean }
@@ -37,15 +35,19 @@ export class GraphicsBoundary extends React.Component<
     this.props.onUnavailable();
   }
   render() {
-    return this.state.failed ? this.props.fallback : this.props.children;
+    return this.state.failed ? (this.props.fallback ?? null) : this.props.children;
   }
 }
 
 interface BoardViewProps {
   state: GameState;
-  mode: RenderMode;
+  view: CameraView;
   onTilePlace: (position: Position) => void;
+  /** Called when the 3D renderer fails or loses its context. */
   onUnavailable: () => void;
+  unavailable: boolean;
+  /** Called before the canvas is remounted after a failure. */
+  onRetry: () => void;
   highlightedFeature?: ClaimableFeature;
   night?: boolean;
 }
@@ -58,35 +60,44 @@ function useCompletedCostcos(state: GameState) {
   );
 }
 
-/** The board itself: the 3D tabletop, or the 2D canvas as its fallback. */
+/** Shown in place of the board when 3D graphics cannot run. */
+function GraphicsUnavailable({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslations();
+  return (
+    <div className="board-unavailable" role="status">
+      <TriangleAlert size={28} aria-hidden="true" />
+      <h2>{t("board.unavailableTitle")}</h2>
+      <p>{t("board.unavailable")}</p>
+      <Button onClick={onRetry}>{t("board.retry")}</Button>
+    </div>
+  );
+}
+
+/** The 3D board, or a retry panel when graphics are unavailable. */
 export function BoardView({
   state,
-  mode,
+  view,
   onTilePlace,
   onUnavailable,
+  unavailable,
+  onRetry,
   highlightedFeature,
   night = false,
 }: BoardViewProps) {
   const { t } = useTranslations();
-  const canPlace =
-    state.phase === GamePhase.PLACE_TILE &&
-    !state.isGameOver &&
-    !state.players[state.currentPlayerIndex]?.isAI;
   const finishedCostcos = useCompletedCostcos(state);
-  const flat = (
-    <BoardCanvas
-      board={state.board}
-      gameState={state}
-      currentTile={canPlace ? state.currentTile : undefined}
-      onTilePlace={canPlace ? onTilePlace : undefined}
-      showValidPlacements={canPlace}
-      completedCostcos={finishedCostcos}
-    />
-  );
+  // A new key remounts the boundary and canvas, which asks for a fresh context.
+  const [attempt, setAttempt] = useState(0);
+  const retry = () => {
+    setAttempt((count) => count + 1);
+    onRetry();
+  };
   return (
     <div className="board-viewport">
-      {mode === "3d" ? (
-        <GraphicsBoundary onUnavailable={onUnavailable} fallback={flat}>
+      {unavailable ? (
+        <GraphicsUnavailable onRetry={retry} />
+      ) : (
+        <GraphicsBoundary key={attempt} onUnavailable={onUnavailable}>
           <Suspense
             fallback={
               <div className="tabletop-loading" role="status">
@@ -96,6 +107,7 @@ export function BoardView({
           >
             <BoardScene
               state={state}
+              view={view}
               onTilePlace={onTilePlace}
               onUnavailable={onUnavailable}
               highlightedFeature={highlightedFeature}
@@ -104,47 +116,41 @@ export function BoardView({
             />
           </Suspense>
         </GraphicsBoundary>
-      ) : (
-        flat
       )}
     </div>
   );
 }
 
 export function ViewToggle({
-  mode,
-  onModeChange,
+  view,
+  onViewChange,
 }: {
-  mode: RenderMode;
-  onModeChange: (mode: RenderMode) => void;
+  view: CameraView;
+  onViewChange: (view: CameraView) => void;
 }) {
   const { t } = useTranslations();
   return (
     <div className="board-view-switch" role="group" aria-label={t("board.view")}>
-      {(["3d", "2d"] as const).map((view) => (
+      {CAMERA_VIEWS.map((option) => (
         <button
-          key={view}
+          key={option}
           type="button"
-          aria-pressed={mode === view}
-          onClick={() => onModeChange(view)}
+          aria-pressed={view === option}
+          onClick={() => onViewChange(option)}
         >
-          {t(`board.${view}`)}
+          {t(option === "drone" ? "board.droneView" : "board.tabletopView")}
         </button>
       ))}
     </div>
   );
 }
 
-/** Draw stage and Costco progress, plus the 3D-unavailable notice. */
+/** Draw stage and Costco progress. */
 export function BoardStatus({
   state,
-  unavailable,
-  onDismissUnavailable,
   className = "",
 }: {
   state: GameState;
-  unavailable?: boolean;
-  onDismissUnavailable?: () => void;
   className?: string;
 }) {
   const { t } = useTranslations();
@@ -187,17 +193,6 @@ export function BoardStatus({
             { count: finishedCostcos.length },
           )}
       </div>
-      {unavailable && (
-        <div className="board-status-notice" role="status">
-          <TriangleAlert size={14} aria-hidden="true" />
-          <span>{t("board.unavailable")}</span>
-          {onDismissUnavailable && (
-            <button type="button" aria-label={t("board.dismiss")} onClick={onDismissUnavailable}>
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -205,12 +200,11 @@ export function BoardStatus({
 function SceneryTilePreview({ tile, night }: { tile?: ITile; night?: boolean }) {
   const [unavailable, setUnavailable] = useState(false);
   const onUnavailable = useCallback(() => setUnavailable(true), []);
-  const flat = tile ? <TileRenderer tile={tile} size={128} /> : null;
-  // A preview failure should never change the healthy board's render mode.
-  if (unavailable) return flat;
+  // A preview failure hides only the preview; the board and the tile name stay.
+  if (unavailable) return null;
   return (
-    <GraphicsBoundary fallback={flat} onUnavailable={onUnavailable}>
-      <Suspense fallback={flat}>
+    <GraphicsBoundary onUnavailable={onUnavailable}>
+      <Suspense fallback={null}>
         <TilePreviewScene tile={tile} onUnavailable={onUnavailable} night={night} />
       </Suspense>
     </GraphicsBoundary>
@@ -219,22 +213,16 @@ function SceneryTilePreview({ tile, night }: { tile?: ITile; night?: boolean }) 
 
 export function CurrentTilePreview({
   tile,
-  mode,
   night = false,
 }: {
   tile?: ITile;
-  mode: RenderMode;
   night?: boolean;
 }) {
   // Keep the canvas and its library alive during the claim phase. Recreating
   // WebGL contexts every turn can exhaust the device's graphics resources.
   return (
     <div hidden={!tile}>
-      {mode === "3d" ? (
-        <SceneryTilePreview tile={tile} night={night} />
-      ) : tile ? (
-        <TileRenderer tile={tile} size={128} />
-      ) : null}
+      <SceneryTilePreview tile={tile} night={night} />
     </div>
   );
 }

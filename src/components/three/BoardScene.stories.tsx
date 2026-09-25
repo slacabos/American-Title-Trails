@@ -54,6 +54,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const ConnectedScenery: Story = {};
 export const FullDeck: Story = { args: { state: populatedState(Infinity) } };
+export const DroneView: Story = { args: { state: populatedState(Infinity), view: "drone" } };
 
 const warehouseBoard = new Board();
 warehouseExamples.forEach((example, i) => {

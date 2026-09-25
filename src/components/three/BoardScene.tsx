@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Minus, Plus } from "lucide-react";
@@ -35,6 +35,14 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { PlacementGrid } from "./PlacementGrid";
 import type { CompletedCostco } from "@/rendering/completedCostcos";
 import { SCENE_PALETTE } from "@/rendering/timeOfDay";
+import type { CameraView } from "@/rendering/cameraView";
+import {
+  applyPose,
+  blendPose,
+  VIEW_POSES,
+  VIEW_TRANSITION_MS,
+  type ViewPose,
+} from "@/rendering/cameraPose";
 
 export interface BoardSceneProps {
   state: GameState;
@@ -43,6 +51,7 @@ export interface BoardSceneProps {
   highlightedFeature?: ClaimableFeature;
   completedCostcos?: CompletedCostco[];
   night?: boolean;
+  view?: CameraView;
 }
 
 function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }) {
@@ -78,11 +87,21 @@ interface CameraActions {
   fit: () => void;
   zoom: (factor: number) => void;
 }
-const CAMERA_DIRECTION = new THREE.Vector3(
-  1,
-  Math.tan((50 * Math.PI) / 180) * Math.SQRT2,
-  1,
-).normalize();
+interface ViewTransition {
+  view: CameraView;
+  from: ViewPose;
+  to: ViewPose;
+  fromTarget: THREE.Vector3;
+  toTarget: THREE.Vector3;
+  fromZoom: number;
+  toZoom: number;
+  start: number;
+  duration: number;
+}
+
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 
 function ContextHealth({ onUnavailable }: { onUnavailable: () => void }) {
   const { gl, get } = useThree();
@@ -102,6 +121,7 @@ function ContextHealth({ onUnavailable }: { onUnavailable: () => void }) {
 
 function Navigation({
   state,
+  view,
   legal,
   onHover,
   onSelect,
@@ -109,6 +129,7 @@ function Navigation({
   actions,
 }: {
   state: GameState;
+  view: CameraView;
   legal: Position[];
   onHover: (position?: Position) => void;
   onSelect: (position: Position) => void;
@@ -127,14 +148,18 @@ function Navigation({
   const bounds = state.board.getBounds();
   const { minX, minY, maxX, maxY } = bounds;
 
-  const fit = useCallback(() => {
-    const cam = camera as THREE.OrthographicCamera;
-    const target = new THREE.Vector3((minX + maxX) / 2, 0, (minY + maxY) / 2);
-    camera.position.copy(target).addScaledVector(CAMERA_DIRECTION, 30);
-    camera.lookAt(target);
-    camera.updateMatrixWorld();
-    if (controls.current) controls.current.target.copy(target);
-    const inverse = camera.matrixWorldInverse;
+  // The view the controls are built for. It changes once a switch has landed.
+  const [settledView, setSettledView] = useState(view);
+  // The look target, kept across control rebuilds and view switches.
+  const target = useRef(new THREE.Vector3());
+  const transition = useRef<ViewTransition | null>(null);
+
+  /** Where to look, and how far to zoom, to frame the whole board in a pose. */
+  const framing = useCallback((pose: ViewPose) => {
+    const center = new THREE.Vector3((minX + maxX) / 2, 0, (minY + maxY) / 2);
+    const probe = (camera as THREE.OrthographicCamera).clone();
+    applyPose(probe, center, pose);
+    const inverse = probe.matrixWorldInverse;
     const projected = new THREE.Box3();
     for (const x of [minX - 1.5, maxX + 1.5])
       for (const z of [minY - 1.5, maxY + 1.5]) {
@@ -146,22 +171,83 @@ function Navigation({
         );
       }
     const span = projected.getSize(new THREE.Vector3());
-    cam.zoom = Math.min(180, size.width / span.x, size.height / span.y) * 0.9;
+    const zoom = Math.min(180, size.width / span.x, size.height / span.y) * 0.9;
+    return { center, zoom };
+  }, [camera, minX, minY, maxX, maxY, size.width, size.height]);
+
+  const fit = useCallback(() => {
+    // A view switch lands on a fitted frame by itself.
+    if (transition.current) return;
+    const cam = camera as THREE.OrthographicCamera;
+    const pose = VIEW_POSES[settledView];
+    const { center, zoom } = framing(pose);
+    target.current.copy(center);
+    applyPose(camera, center, pose);
+    cam.zoom = zoom;
     cam.updateProjectionMatrix();
-    controls.current?.update();
+    if (controls.current) {
+      controls.current.target.copy(center);
+      controls.current.update();
+    }
     invalidate();
-  }, [camera, minX, minY, maxX, maxY, size.width, size.height, invalidate]);
+  }, [camera, framing, settledView, invalidate]);
   // Layout effects run before the controls effect below first calls it.
   useLayoutEffect(() => {
     fitRef.current = fit;
   }, [fit]);
 
+  // Start swinging the camera when the requested view changes.
   useEffect(() => {
+    if (view === settledView || transition.current?.view === view) return;
+    const cam = camera as THREE.OrthographicCamera;
+    const to = VIEW_POSES[view];
+    const framed = autoFit.current ? framing(to) : undefined;
+    if (controls.current) controls.current.enabled = false;
+    transition.current = {
+      view,
+      from: {
+        direction: camera.position.clone().sub(target.current).normalize(),
+        up: camera.up.clone(),
+      },
+      to,
+      fromTarget: target.current.clone(),
+      toTarget: framed?.center ?? target.current.clone(),
+      fromZoom: cam.zoom,
+      toZoom: framed?.zoom ?? cam.zoom,
+      start: performance.now(),
+      duration: prefersReducedMotion() ? 0 : VIEW_TRANSITION_MS,
+    };
+    invalidate();
+  }, [view, settledView, camera, framing, invalidate]);
+
+  useFrame(() => {
+    const move = transition.current;
+    if (!move) return;
+    const cam = camera as THREE.OrthographicCamera;
+    const t = move.duration ? (performance.now() - move.start) / move.duration : 1;
+    const k = Math.min(1, t);
+    target.current.lerpVectors(move.fromTarget, move.toTarget, k);
+    applyPose(camera, target.current, blendPose(move.from, move.to, k));
+    cam.zoom = THREE.MathUtils.lerp(move.fromZoom, move.toZoom, k);
+    cam.updateProjectionMatrix();
+    if (k < 1) {
+      invalidate();
+      return;
+    }
+    transition.current = null;
+    setSettledView(move.view);
+  });
+
+  useEffect(() => {
+    // OrbitControls reads camera.up when it is built, so each view gets its own.
+    applyPose(camera, target.current, VIEW_POSES[settledView]);
     const orbit = new OrbitControls(camera, gl.domElement);
     controls.current = orbit;
+    orbit.target.copy(target.current);
     orbit.enableRotate = false;
     orbit.enableDamping = false;
-    orbit.screenSpacePanning = false;
+    // Looking straight down, screen-space panning slides across the table.
+    orbit.screenSpacePanning = settledView === "drone";
     orbit.minZoom = 8;
     orbit.maxZoom = 320;
     orbit.mouseButtons = {
@@ -170,7 +256,10 @@ function Navigation({
       RIGHT: THREE.MOUSE.PAN,
     };
     orbit.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
-    const changed = () => invalidate();
+    const changed = () => {
+      target.current.copy(orbit.target);
+      invalidate();
+    };
     orbit.addEventListener("change", changed);
     actions.current = {
       fit: () => {
@@ -185,13 +274,14 @@ function Navigation({
         invalidate();
       },
     };
-    fitRef.current();
+    if (autoFit.current) fitRef.current();
+    else orbit.update();
     return () => {
       orbit.dispose();
       controls.current = undefined;
       actions.current = null;
     };
-  }, [camera, gl, invalidate, actions]);
+  }, [camera, gl, invalidate, actions, settledView]);
 
   useEffect(() => {
     if (autoFit.current) fit();
@@ -306,6 +396,7 @@ export function BoardScene({
   highlightedFeature,
   completedCostcos = [],
   night = false,
+  view = "tabletop",
 }: BoardSceneProps) {
   const palette = SCENE_PALETTE[night ? "night" : "day"];
   const { t } = useTranslations();
@@ -359,6 +450,7 @@ export function BoardScene({
         <ContextHealth onUnavailable={onUnavailable} />
         <Navigation
           state={state}
+          view={view}
           legal={snapshot.legal}
           onHover={setHovered}
           onSelect={setSelected}
@@ -439,7 +531,7 @@ export function BoardScene({
           )}
       </Canvas>
       <div className="tabletop-compass" aria-hidden="true">
-        {t("board.compass")}↗
+        {t("board.compass")}{view === "drone" ? "↑" : "↗"}
       </div>
       <div
         className="board-pill tabletop-camera-controls"

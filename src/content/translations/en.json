@@ -39,7 +39,6 @@
     "riverOpening": "Every game begins with a river. Take turns building from its source to the lake, then continue with the land tiles."
   },
   "game": {
-    "loading": "Loading game...",
     "currentTile": "Current Tile",
     "gameControls": "Game Controls",
     "newGame": "New Game",
@@ -131,8 +130,6 @@
   },
   "messages": {
     "gameStarted": "Game started!",
-    "failedToInitialize": "Failed to initialize game:",
-    "failedToStart": "Failed to start game. Please try again.",
     "placedTile": "{playerName} placed tile at ({x}, {y})",
     "featuresCompleted": "{count} features completed!",
     "costcoCompleted": "Costco complete! Worth {points} points if claimed.",
@@ -342,13 +339,9 @@
     "eyebrow": "American Tile Trails",
     "title": "Build your corner of America",
     "view": "Board view",
-    "3d": "3D scenery",
-    "2d": "2D classic",
     "loading": "Setting the tabletop…",
-    "unavailable": "3D is unavailable on this device. Your game continues in 2D.",
+    "unavailable": "Your game is safe. This device couldn't start 3D graphics, or they stopped responding.",
     "previewUnavailable": "3D tile preview is unavailable.",
-    "hint3d": "Click a green space to place · Drag to pan · Scroll / pinch to zoom · Touch: tap, then confirm · R / Shift+R to rotate",
-    "hint2d": "Click a green space to place · Drag to pan · Scroll to zoom · R / Shift+R to rotate",
     "cameraControls": "Camera controls",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
@@ -369,14 +362,16 @@
     "compass": "N",
     "showRules": "Rules",
     "hideRules": "Hide",
-    "dismiss": "Dismiss"
+    "tabletopView": "Tabletop",
+    "droneView": "Drone",
+    "unavailableTitle": "3D graphics aren't available right now",
+    "retry": "Try again"
   },
   "hud": {
     "yourTile": "Your tile",
     "rotateCw": "Rotate clockwise (R)",
     "rotateCcw": "Rotate counter-clockwise (Shift+R)",
     "placeHint3d": "Click a green space to place · Drag to pan · Scroll or pinch to zoom",
-    "placeHint2d": "Click a green space to place · Drag to pan · Scroll to zoom",
     "claimTitle": "Claim a feature",
     "claimHint": "Place a follower to score when it completes · {count} left",
     "claim": "Claim {type}",
