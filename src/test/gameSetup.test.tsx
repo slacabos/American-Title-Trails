@@ -94,4 +94,55 @@ describe("GameSetup Component", () => {
     expect(calledWith[1].color).toBe("#1982c4"); // Second color in palette
     expect(calledWith[2].color).toBe("#ffca3a"); // Third color in palette
   });
+
+  const pick = async (user: ReturnType<typeof userEvent.setup>, select: HTMLElement, option: string) => {
+    await user.click(select);
+    await user.click(await screen.findByRole("option", { name: option }));
+  };
+
+  it("renames the first player between their human and AI defaults", async () => {
+    const user = userEvent.setup();
+    render(<GameSetup onStartGame={mockOnStartGame} />);
+    await pick(user, screen.getAllByRole("combobox")[1], "AI");
+    expect(screen.getByDisplayValue("Computer 1")).toBeInTheDocument();
+    await pick(user, screen.getAllByRole("combobox")[1], "Human");
+    expect(screen.getByDisplayValue("You")).toBeInTheDocument();
+  });
+
+  it("gives a blank-named player the AI default when they become AI", async () => {
+    const user = userEvent.setup();
+    render(<GameSetup onStartGame={mockOnStartGame} />);
+    const [first] = screen.getAllByDisplayValue("You");
+    await user.clear(first);
+    await pick(user, screen.getAllByRole("combobox")[1], "AI");
+    expect(screen.getByDisplayValue("Computer 1")).toBeInTheDocument();
+  });
+
+  it("keeps a custom name when a player changes type", async () => {
+    const user = userEvent.setup();
+    render(<GameSetup onStartGame={mockOnStartGame} />);
+    const [first] = screen.getAllByDisplayValue("You");
+    await user.clear(first);
+    await user.type(first, "Ada");
+    await pick(user, screen.getAllByRole("combobox")[1], "AI");
+    expect(screen.getByDisplayValue("Ada")).toBeInTheDocument();
+  });
+
+  it("rebuilds default players when the count changes", async () => {
+    const user = userEvent.setup();
+    render(<GameSetup onStartGame={mockOnStartGame} />);
+    await pick(user, screen.getAllByRole("combobox")[0], "5 Players");
+    expect(screen.getAllByDisplayValue(/Player \d+|You/)).toHaveLength(5);
+    await pick(user, screen.getAllByRole("combobox")[0], "2 Players");
+    expect(screen.getAllByDisplayValue(/Player \d+|You/)).toHaveLength(2);
+  });
+
+  it("names blank players by seat when the game starts", async () => {
+    const user = userEvent.setup();
+    render(<GameSetup onStartGame={mockOnStartGame} />);
+    await user.clear(screen.getByDisplayValue("Player 2"));
+    await user.click(screen.getByRole("button", { name: /start game/i }));
+    const players = mockOnStartGame.mock.calls[0][0] as PlayerDefinition[];
+    expect(players[1].name).toBe("Player 2");
+  });
 });
