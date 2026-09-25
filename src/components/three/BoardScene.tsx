@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -118,8 +119,11 @@ function Navigation({
   const controls = useRef<OrbitControls | undefined>(undefined);
   const autoFit = useRef(true);
   const fitRef = useRef<() => void>(() => {});
+  // Pointer listeners are attached once; they read the latest props from here.
   const latest = useRef({ legal, onHover, onSelect, onTilePlace });
-  latest.current = { legal, onHover, onSelect, onTilePlace };
+  useLayoutEffect(() => {
+    latest.current = { legal, onHover, onSelect, onTilePlace };
+  });
   const bounds = state.board.getBounds();
   const { minX, minY, maxX, maxY } = bounds;
 
@@ -147,7 +151,10 @@ function Navigation({
     controls.current?.update();
     invalidate();
   }, [camera, minX, minY, maxX, maxY, size.width, size.height, invalidate]);
-  fitRef.current = fit;
+  // Layout effects run before the controls effect below first calls it.
+  useLayoutEffect(() => {
+    fitRef.current = fit;
+  }, [fit]);
 
   useEffect(() => {
     const orbit = new OrbitControls(camera, gl.domElement);
@@ -303,21 +310,27 @@ export function BoardScene({
   const palette = SCENE_PALETTE[night ? "night" : "day"];
   const { t } = useTranslations();
   const snapshot = useMemo(() => boardSnapshot(state), [state]);
-  const [hover, setHover] = useState<Position>();
-  const [selected, setSelected] = useState<Position>();
+  // A hover or touch selection survives rotation, but never a turn or a
+  // placement: each remembers the turn it was made in and lapses after it.
+  const turn = `${state.turnNumber}:${state.phase}:${state.currentPlayerIndex}`;
+  const [hoverAt, setHoverAt] = useState<{ turn: string; position?: Position }>();
+  const [selectedAt, setSelectedAt] = useState<{ turn: string; position?: Position }>();
+  const hover = hoverAt?.turn === turn ? hoverAt.position : undefined;
+  const selected = selectedAt?.turn === turn ? selectedAt.position : undefined;
   const actions = useRef<CameraActions | null>(null);
   const setHovered = useCallback(
     (position?: Position) =>
-      setHover((previous) =>
-        samePosition(previous, position) ? previous : position,
+      setHoverAt((previous) =>
+        previous?.turn === turn && samePosition(previous.position, position)
+          ? previous
+          : { turn, position },
       ),
-    [],
+    [turn],
   );
-  // A selected touch preview survives rotation, but never a turn or a placement.
-  useEffect(() => {
-    setSelected(undefined);
-    setHover(undefined);
-  }, [state.turnNumber, state.phase, state.currentPlayerIndex]);
+  const setSelected = useCallback(
+    (position?: Position) => setSelectedAt({ turn, position }),
+    [turn],
+  );
   const preview = snapshot.legal.find((position) =>
     samePosition(position, selected ?? hover),
   );

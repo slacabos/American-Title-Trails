@@ -1,5 +1,5 @@
 import useTranslations from "@/hooks/useTranslations";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   PlayerDefinition,
   Position,
@@ -22,6 +22,9 @@ import TimeToggle from "./hud/TimeToggle";
 import useTimeOfDay from "@/hooks/useTimeOfDay";
 import { CircleQuestionMark, Menu, RotateCcw } from "lucide-react";
 
+const logTime = () =>
+  new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
 interface GameBoardProps {
   players: PlayerDefinition[];
   onReset: () => void;
@@ -29,15 +32,16 @@ interface GameBoardProps {
 
 const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const { t } = useTranslations();
-  const [game, setGame] = useState<Game | null>(null);
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  const gameRef = useRef<Game | null>(null);
-  const logIdRef = useRef(0);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  // One game per mount: App remounts this component for every new game. A
+  // constructor error reaches the surrounding ErrorBoundary.
+  const [game] = useState(() => new Game(players));
+  const [gameState, setGameState] = useState<GameState>(() => game.getState());
+  const logIdRef = useRef(1);
+  const [logs, setLogs] = useState<LogEntry[]>(() => [
+    { id: 0, time: logTime(), message: t("messages.gameStarted") },
+  ]);
   const [menuOpen, setMenuOpen] = useState(false);
   const { night, toggle: toggleNight } = useTimeOfDay();
-  const toggleNightRef = useRef(toggleNight);
-  toggleNightRef.current = toggleNight;
   const stageRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLElement>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -54,54 +58,32 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     saveRenderMode(mode);
   };
   const [isGameOverCollapsed, setIsGameOverCollapsed] = useState(false);
-  const [claimableFeatures, setClaimableFeatures] = useState<
-    ClaimableFeature[]
-  >([]);
 
-  // Initialize game
   useEffect(() => {
-    try {
-      const gameInstance = new Game(players);
-      gameRef.current = gameInstance;
-      setGame(gameInstance);
+    game.setStateChangeListener((state) => {
+      // Claiming/skipping unmounts the hovered or focused button without
+      // necessarily firing mouseleave/blur. Never carry its selection forward.
+      setHighlightedFeature(undefined);
+      setGameState(state);
+    });
+  }, [game]);
 
-      // Set up state change listener
-      gameInstance.setStateChangeListener((state) => {
-        setGameState(state);
-        updateClaimableFeatures(gameInstance, state);
-      });
-
-      // Get initial state
-      setGameState(gameInstance.getState());
-      updateClaimableFeatures(gameInstance, gameInstance.getState());
-
-      addLog(t("messages.gameStarted"));
-    } catch (error) {
-      console.error(t("messages.failedToInitialize"), error);
-      addLog(t("messages.failedToStart"));
-    }
-  }, [players]);
+  // Each state change is a fresh snapshot, so this recomputes once per change.
+  const claimableFeatures = useMemo(
+    () => gameState.phase === GamePhase.CLAIM_FEATURE ? game.getClaimableFeaturesForCurrentTurn() : [],
+    [game, gameState],
+  );
 
   // Handle AI turns - trigger on relevant state changes only
-  const currentPlayerIndex = gameState?.currentPlayerIndex;
-  const phase = gameState?.phase;
-  const isGameOver = gameState?.isGameOver;
-  const currentPlayerIsAI = gameState?.players?.[currentPlayerIndex ?? 0]?.isAI;
-
-  useEffect(() => {
-    if (gameState?.isGameOver) {
-      setIsGameOverCollapsed(false);
-    }
-  }, [gameState?.isGameOver]);
+  const currentPlayerIndex = gameState.currentPlayerIndex;
+  const phase = gameState.phase;
+  const isGameOver = gameState.isGameOver;
+  const currentPlayerIsAI = gameState.players[currentPlayerIndex]?.isAI;
 
   const addLog = useCallback((message: string) => {
-    const timestamp = new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
     const id = logIdRef.current++;
     setLogs((prev) => [
-      { id, time: timestamp, message },
+      { id, time: logTime(), message },
       ...prev.slice(0, 19),
     ]);
   }, []);
@@ -115,12 +97,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   }, [addLog, t]);
 
   useEffect(() => {
-    if (!gameRef.current || !currentPlayerIsAI || isGameOver) return;
+    if (!currentPlayerIsAI || isGameOver) return;
     const timer = setTimeout(() => {
-      const currentGame = gameRef.current;
-      if (!currentGame) return;
-      const playerName = currentGame.getCurrentPlayer().name;
-      const action = currentGame.processAITurn();
+      const playerName = game.getCurrentPlayer().name;
+      const action = game.processAITurn();
       if (action?.type === "placed" && action.result.success) {
         logCompletions(action.result.completedFeatures);
       } else if (action?.type === "claimed") {
@@ -132,25 +112,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       }
     }, GAME_RULES.AI_MOVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [currentPlayerIsAI, currentPlayerIndex, phase, isGameOver, addLog, logCompletions, t]);
-
-  const updateClaimableFeatures = useCallback(
-    (gameInstance: Game, state: GameState) => {
-      // Claiming/skipping unmounts the hovered or focused button without
-      // necessarily firing mouseleave/blur. Never carry its selection forward.
-      setHighlightedFeature(undefined);
-      if (state.phase === GamePhase.CLAIM_FEATURE) {
-        const features = gameInstance.getClaimableFeaturesForCurrentTurn();
-        setClaimableFeatures(features);
-      } else {
-        setClaimableFeatures([]);
-      }
-    },
-    []
-  );
+  }, [game, currentPlayerIsAI, currentPlayerIndex, phase, isGameOver, addLog, logCompletions, t]);
 
   const handleTilePlace = (position: Position) => {
-    if (!game || !gameState || gameState.phase !== GamePhase.PLACE_TILE || gameState.isGameOver || gameState.players[gameState.currentPlayerIndex]?.isAI) return;
+    if (gameState.phase !== GamePhase.PLACE_TILE || gameState.isGameOver || gameState.players[gameState.currentPlayerIndex]?.isAI) return;
 
     const result = game.placeTile(position);
     if (result.success) {
@@ -168,20 +133,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   };
 
   const handleRotateClockwise = () => {
-    if (game && game.canRotateTile()) {
+    if (game.canRotateTile()) {
       game.rotateTileClockwise();
     }
   };
 
   const handleRotateCounterClockwise = () => {
-    if (game && game.canRotateTile()) {
+    if (game.canRotateTile()) {
       game.rotateTileCounterClockwise();
     }
   };
 
   const handleClaimFeature = (type: TerrainType, identifier?: string) => {
-    if (!game || !gameState) return;
-
     const displayName = claimableFeatures.find(feature => feature.type === type && feature.identifier === identifier)?.displayName;
     const success = game.claimFeature(type, identifier);
     if (success) {
@@ -196,8 +159,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   };
 
   const handleSkipClaim = () => {
-    if (!game || !gameState) return;
-
     game.skipClaim();
     addLog(t("messages.skippedClaiming", {
       playerName: gameState.players[gameState.currentPlayerIndex].name,
@@ -210,8 +171,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       // Ignore when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      const g = gameRef.current;
-      if (!g) return;
+      const g = game;
 
       switch (e.key) {
         case "r":
@@ -233,7 +193,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           break;
         case "n":
         case "N":
-          toggleNightRef.current();
+          toggleNight();
           break;
         case "Escape":
           setMenuOpen(false);
@@ -243,9 +203,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [addLog, phase, currentPlayerIsAI, t]);
+  }, [game, addLog, phase, currentPlayerIsAI, t, toggleNight]);
 
-  const hasState = gameState !== null;
   // On phones the dock is a bottom sheet; the board shrinks to sit above it.
   useEffect(() => {
     const stage = stageRef.current;
@@ -256,7 +215,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     });
     observer.observe(dock);
     return () => observer.disconnect();
-  }, [game, hasState]);
+  }, []);
 
   // Close the menu on any click outside it.
   useEffect(() => {
@@ -267,14 +226,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     window.addEventListener("pointerdown", close);
     return () => window.removeEventListener("pointerdown", close);
   }, [menuOpen]);
-
-  if (!game || !gameState) {
-    return (
-      <div className="game-stage grid place-items-center text-ink" role="status">
-        {t("game.loading")}
-      </div>
-    );
-  }
 
   const tileStats = game.getTileStats();
 

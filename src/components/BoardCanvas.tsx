@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import type { ITile, IBoard } from "../interfaces";
 import { Position, TileRecord, GameState } from "../types";
 import { featureAnchor, resolveClaim, zonePolygon } from "@/rendering/tileLayout";
@@ -92,7 +92,6 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     canvasStateRef.current = canvasState;
   }, [canvasState]);
 
-  const [validPlacements, setValidPlacements] = useState<Position[]>([]);
 
   // Clear tile cache when tileSize changes
   useEffect(() => {
@@ -153,14 +152,11 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
     }));
   }, [tileCount, board, tileSize, canvasSize]);
 
-  // Update valid placements when board or current tile changes
-  useEffect(() => {
-    if (currentTile) {
-      setValidPlacements(board.getPlacementCandidates());
-    } else {
-      setValidPlacements([]);
-    }
-  }, [board, currentTile]);
+  // Valid placements change whenever the board or the current tile does.
+  const validPlacements = useMemo(
+    () => (currentTile ? board.getPlacementCandidates() : []),
+    [board, currentTile],
+  );
 
   // Convert screen coordinates to board coordinates
   const screenToBoard = useCallback(

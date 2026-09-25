@@ -16,8 +16,8 @@
     "test:ai-sim": "vitest run src/test/ai.sim.test.ts",
     "test:ui": "vitest --ui",
     "test:coverage": "npm run test:coverage:unit && npm run test:coverage:browser && node scripts/merge-coverage.mjs",
-    "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "test:browser": "playwright test",
     "test:coverage:unit": "vitest run --coverage --coverage.reportsDirectory=coverage/unit",
     "test:coverage:browser": "vitest run --config vite.config.ts --project storybook --coverage.enabled --coverage.include=\"src/**/*.{ts,tsx}\" --coverage.exclude=\"src/**/*.stories.tsx\" --coverage.exclude=\"src/test/**\" --coverage.exclude=\"src/**/*.d.ts\" --coverage.reporter=json --coverage.reportsDirectory=coverage/storybook"
@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.3.1",
+    "@eslint/js": "^10.0.1",
     "@storybook/addon-a11y": "^10.6.0",
     "@storybook/addon-docs": "^10.6.0",
     "@storybook/addon-onboarding": "^10.6.0",
@@ -69,8 +70,6 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.186.0",
-    "@typescript-eslint/eslint-plugin": "^8.70.1",
-    "@typescript-eslint/parser": "^8.70.1",
     "@vitejs/plugin-react": "^6.1.1",
     "@vitest/browser": "^4.1.11",
     "@vitest/browser-playwright": "^4.1.11",
@@ -80,6 +79,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "eslint-plugin-storybook": "^10.6.0",
+    "globals": "^17.12.0",
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",
@@ -90,6 +90,7 @@
     "tailwindcss": "^4.3.3",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
     "vitest": "^4.1.11"
   }

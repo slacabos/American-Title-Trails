@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PlayerDefinition, AIDifficulty } from "../types";
 import HelpModal from "./HelpModal";
 import PlayerConfigRow from "./PlayerConfigRow";
@@ -24,27 +24,27 @@ interface GameSetupProps {
 
 const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
   const { t } = useTranslations();
+  const defaultConfigs = (count: number): PlayerDefinition[] =>
+    Array.from({ length: count }, (_, i) => ({
+      name:
+        i === 0
+          ? t("setup.defaultPlayerName")
+          : t("setup.defaultPlayerNameTemplate", { number: i + 1 }),
+      id: `player-${i + 1}`,
+      isAI: i > 0,
+      aiDifficulty: i > 0 ? "medium" : undefined,
+      color: PLAYER_COLORS[i],
+    }));
   const [playerCount, setPlayerCount] = useState(3);
-  const [playerConfigs, setPlayerConfigs] = useState<PlayerDefinition[]>([]);
+  const [playerConfigs, setPlayerConfigs] = useState(() => defaultConfigs(3));
   const [showHelp, setShowHelp] = useState(false);
   const { night, toggle: toggleNight } = useTimeOfDay();
 
-  useEffect(() => {
-    const configs: PlayerDefinition[] = [];
-    for (let i = 0; i < playerCount; i++) {
-      configs.push({
-        name:
-          i === 0
-            ? t("setup.defaultPlayerName")
-            : t("setup.defaultPlayerNameTemplate", { number: i + 1 }),
-        id: `player-${i + 1}`,
-        isAI: i > 0,
-        aiDifficulty: i > 0 ? "medium" : undefined,
-        color: PLAYER_COLORS[i],
-      });
-    }
-    setPlayerConfigs(configs);
-  }, [playerCount, t]);
+  // Changing the count starts from fresh defaults, as it always has.
+  const changePlayerCount = (count: number) => {
+    setPlayerCount(count);
+    setPlayerConfigs(defaultConfigs(count));
+  };
 
   const updatePlayerConfig = (
     index: number,
@@ -124,7 +124,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
             </Label>
             <Select
               value={playerCount.toString()}
-              onValueChange={(value) => setPlayerCount(parseInt(value, 10))}
+              onValueChange={(value) => changePlayerCount(parseInt(value, 10))}
             >
               <SelectTrigger id="playerCount" className="h-11">
                 <SelectValue placeholder={t("setup.selectNumberOfPlayers")} />
