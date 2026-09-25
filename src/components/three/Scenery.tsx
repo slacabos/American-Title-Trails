@@ -18,10 +18,13 @@ import { cornerWeights } from "@/rendering/regions";
 import { writeRegionAttributes } from "@/rendering/groundShader";
 import { type PlantInstances, plantInstances, SMALL_SPECIES } from "@/rendering/vegetation";
 import { Lod } from "@/rendering/lod";
+import { AT_REST, landingMatrix, type LandingFrame } from "@/rendering/landing";
 import {
+  canonicalTile,
   CORNERS,
   featureAnchor,
   Point,
+  positionKey,
   sceneryKey,
   zonePolygon,
 } from "@/rendering/tileLayout";
@@ -38,18 +41,53 @@ export function SceneryProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Where a tile instance rests: rotated about its centre, then placed. */
+function restingMatrix({ position, tile }: TileRecord, out = new THREE.Matrix4()) {
+  out.makeRotationY((-tile.orientation * Math.PI) / 2);
+  return out.setPosition(position.x, 0, position.y);
+}
+
+/**
+ * Keep one instanced mesh's landing instances in step with the landing
+ * frame, and put them back at rest when it ends. Returns whether any changed.
+ */
+function useLandingInstances(
+  landing: React.RefObject<LandingFrame | null> | undefined,
+  owners: string[],
+  rest: (index: number, out: THREE.Matrix4) => THREE.Matrix4,
+) {
+  const moving = useRef<number[]>([]);
+  const scratch = useMemo(() => ({ base: new THREE.Matrix4(), out: new THREE.Matrix4() }), []);
+  return (mesh: THREE.InstancedMesh) => {
+    const frame = landing?.current;
+    const indices = frame ? owners.flatMap((owner, i) => (owner === frame.key ? [i] : [])) : [];
+    if (!indices.length && !moving.current.length) return;
+    const started = indices.length > 0 && moving.current.length === 0;
+    for (const i of moving.current) if (!indices.includes(i) && i < owners.length) mesh.setMatrixAt(i, rest(i, scratch.base));
+    for (const i of indices) mesh.setMatrixAt(i, landingMatrix(rest(i, scratch.base), frame!.center, frame!.pose, scratch.out));
+    mesh.instanceMatrix.needsUpdate = true;
+    // Refresh the culling bounds as the tile starts high and when it has landed.
+    if (started || !indices.length) mesh.computeBoundingSphere();
+    moving.current = indices;
+  };
+}
+
 function Instances({
   part,
   records,
   seed,
+  landing,
 }: {
   part: SceneryPart;
   records: TileRecord[];
   seed?: number;
+  landing?: React.RefObject<LandingFrame | null>;
 }) {
   const library = useContext(LibraryContext)!;
   const ref = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
+  const owners = useMemo(() => records.map(({ position }) => positionKey(position)), [records]);
+  const animate = useLandingInstances(landing, owners, (i, out) => restingMatrix(records[i], out));
   // Runs before each demand frame, so a zoom change and its tier share a frame.
   useFrame(({ camera }) => {
     const mesh = ref.current;
@@ -57,6 +95,7 @@ function Instances({
     const lod = library.lod.update(camera.zoom);
     mesh.visible = !part.fine || lod !== Lod.Far;
     mesh.castShadow = part.fine ? lod === Lod.Full : true;
+    animate(mesh);
   });
   useLayoutEffect(() => {
     const mesh = ref.current;
@@ -68,11 +107,7 @@ function Instances({
       );
     }
     const matrix = new THREE.Matrix4();
-    records.forEach(({ position, tile }, index) => {
-      matrix.makeRotationY((-tile.orientation * Math.PI) / 2);
-      matrix.setPosition(position.x, 0, position.y);
-      mesh.setMatrixAt(index, matrix);
-    });
+    records.forEach((record, index) => mesh.setMatrixAt(index, restingMatrix(record, matrix)));
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
     // Instance matrices change outside React's mesh props. Demand rendering
@@ -91,10 +126,17 @@ function Instances({
   );
 }
 
-function PlantMesh({ plants }: { plants: PlantInstances }) {
+function PlantMesh({
+  plants,
+  landing,
+}: {
+  plants: PlantInstances;
+  landing?: React.RefObject<LandingFrame | null>;
+}) {
   const library = useContext(LibraryContext)!;
   const ref = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
+  const animate = useLandingInstances(landing, plants.owners, (i, out) => out.copy(plants.matrices[i]));
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
@@ -114,6 +156,7 @@ function PlantMesh({ plants }: { plants: PlantInstances }) {
     mesh.geometry = library.getSpecies(plants.species, lod !== Lod.Full);
     mesh.visible = lod !== Lod.Far || !SMALL_SPECIES.has(plants.species);
     mesh.castShadow = lod !== Lod.Far;
+    animate(mesh);
   });
   return (
     <instancedMesh
@@ -126,19 +169,39 @@ function PlantMesh({ plants }: { plants: PlantInstances }) {
 }
 
 /** One draw per plant species, however many tiles are on the board. */
-export function Vegetation({ records, seed }: { records: TileRecord[]; seed?: number }) {
+export function Vegetation({
+  records,
+  seed,
+  landing,
+}: {
+  records: TileRecord[];
+  seed?: number;
+  landing?: React.RefObject<LandingFrame | null>;
+}) {
   const groups = useMemo(() => plantInstances(records, seed), [records, seed]);
   return (
     <>
       {groups.map((plants) => (
-        <PlantMesh key={`${plants.species}-${plants.matrices.length}`} plants={plants} />
+        <PlantMesh key={`${plants.species}-${plants.matrices.length}`} plants={plants} landing={landing} />
       ))}
     </>
   );
 }
 
 /** One draw per material and tile type, regardless of how many copies are on the board. */
-export function Scenery({ records, seed }: { records: TileRecord[]; seed?: number }) {
+export function Scenery({
+  records,
+  seed,
+  landing,
+  landingKey,
+}: {
+  records: TileRecord[];
+  seed?: number;
+  /** The pose of the tile landing this frame, written by the scene's driver. */
+  landing?: React.RefObject<LandingFrame | null>;
+  /** The position key of the landing tile, while it lands. */
+  landingKey?: string;
+}) {
   const library = useContext(LibraryContext)!;
   const groups = useMemo(() => {
     const result = new Map<string, TileRecord[]>();
@@ -160,18 +223,109 @@ export function Scenery({ records, seed }: { records: TileRecord[]; seed?: numbe
               part={part}
               records={tiles}
               seed={seed}
+              landing={landing}
             />
           ))}
         </group>
       ))}
-      <Warehouses records={records} />
-      <Vegetation records={records} seed={seed} />
+      <Warehouses records={records} landing={landing} landingKey={landingKey} />
+      <Vegetation records={records} seed={seed} landing={landing} />
     </>
   );
 }
 
-function Warehouses({ records }: { records: TileRecord[] }) {
-  return <WarehouseModel key={warehouseLayoutKey(records)} records={records} />;
+function Warehouses({
+  records,
+  landing,
+  landingKey,
+}: {
+  records: TileRecord[];
+  landing?: React.RefObject<LandingFrame | null>;
+  landingKey?: string;
+}) {
+  // Joined warehouses are one board-wide mesh. A landing Costco tile falls as
+  // its own section and joins the rest once it has landed.
+  const lander = landingKey ? records.find(({ position }) => positionKey(position) === landingKey) : undefined;
+  const settled = lander ? records.filter((record) => record !== lander) : records;
+  return (
+    <>
+      <WarehouseModel key={warehouseLayoutKey(settled)} records={settled} />
+      {lander && lander.tile.costcoZones.length > 0 && landing && (
+        <LandingWarehouse record={lander} landing={landing} />
+      )}
+    </>
+  );
+}
+
+function LandingWarehouse({
+  record,
+  landing,
+}: {
+  record: TileRecord;
+  landing: React.RefObject<LandingFrame | null>;
+}) {
+  const library = useContext(LibraryContext)!;
+  const group = useRef<THREE.Group>(null);
+  const key = positionKey(record.position);
+  const [model] = useState(() =>
+    library.createWarehouses(warehouseLayout([{ tile: canonicalTile(record.tile), position: { x: 0, y: 0 } }])),
+  );
+  useEffect(() => () => model.parts.forEach((part) => part.geometry.dispose()), [model]);
+  useFrame(() => {
+    const node = group.current;
+    if (!node) return;
+    const pose = landing.current?.key === key ? landing.current.pose : AT_REST;
+    node.position.set(record.position.x, pose.lift, record.position.y);
+    node.scale.set(pose.spread, pose.squash, pose.spread);
+  });
+  return (
+    <group
+      ref={group}
+      dispose={null}
+      name="landing-warehouse"
+      position={[record.position.x, 0, record.position.y]}
+      rotation={[0, (-record.tile.orientation * Math.PI) / 2, 0]}
+    >
+      {model.parts.map((part, i) => (
+        <mesh key={i} geometry={part.geometry} material={part.material} castShadow receiveShadow />
+      ))}
+    </group>
+  );
+}
+
+/** A ring of dust that spreads from the tile as it lands. */
+export function LandingDust({
+  landing,
+  night = false,
+}: {
+  landing: React.RefObject<LandingFrame | null>;
+  night?: boolean;
+}) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const material = useRef<THREE.MeshBasicMaterial>(null);
+  useFrame(() => {
+    const ring = mesh.current;
+    if (!ring || !material.current) return;
+    const frame = landing.current;
+    ring.visible = !!frame && frame.pose.dustOpacity > 0;
+    if (!frame || !ring.visible) return;
+    ring.position.set(frame.center.x, 0.012, frame.center.y);
+    ring.scale.setScalar(frame.pose.dustScale);
+    material.current.opacity = frame.pose.dustOpacity;
+  });
+  return (
+    <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]} visible={false} name="landing-dust" renderOrder={2}>
+      <ringGeometry args={[0.46, 0.66, 48]} />
+      <meshBasicMaterial
+        ref={material}
+        color={night ? "#5d675f" : "#efe6c9"}
+        transparent
+        opacity={0}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
 }
 
 function WarehouseModel({ records }: { records: TileRecord[] }) {

@@ -31,6 +31,9 @@ declare global {
       loseContext: () => void;
       cameraTarget: () => number[];
       cameraUp: () => number[];
+      dustVisible: () => boolean;
+      landingWarehouseHeight: () => number | null;
+      tileHeight: (position: Position) => number;
       previewFrame: () => number;
       losePreviewContext: () => void;
     };
@@ -496,4 +499,57 @@ test("camera keys zoom, pan and fit the board", async ({ page }) => {
   await page.keyboard.press("f");
   await expect.poll(async () => (await stats()).zoom).toBeCloseTo(fitted.zoom, 3);
   await expect.poll(async () => (await stats()).camera[0]).toBeCloseTo(fitted.camera[0], 3);
+});
+
+test("a placed tile drops in, raises dust, lands, and rendering goes idle", async ({ page }, testInfo) => {
+  await ready(page);
+  const point = await legalPoint(page);
+  const target = (await page.evaluate(() => window.tabletopTest.state().legal))[0];
+  const before = await page.evaluate(() => window.tabletopTest.stats().frame);
+  await page.mouse.click(point.x, point.y);
+  await expect(page.getByTestId("tile-count")).toHaveText("2");
+  // Early in the fall the tile is drawn above the table.
+  await expect.poll(() => page.evaluate((p) => window.tabletopTest.tileHeight(p), target)).toBeGreaterThan(0.05);
+  await expect.poll(() => page.evaluate(() => window.tabletopTest.dustVisible())).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("landing-dust.png") });
+  // It lands exactly on the table, and demand rendering stops.
+  await expect.poll(() => page.evaluate((p) => window.tabletopTest.tileHeight(p), target), { timeout: 3000 }).toBe(0);
+  await expect.poll(() => page.evaluate(() => window.tabletopTest.dustVisible())).toBe(false);
+  const settled = await page.evaluate(() => window.tabletopTest.stats().frame);
+  expect(settled - before).toBeGreaterThan(5);
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => window.tabletopTest.stats().frame)).toBe(settled);
+});
+
+test("reduced motion places tiles without the landing animation", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await ready(page);
+  const point = await legalPoint(page);
+  const target = (await page.evaluate(() => window.tabletopTest.state().legal))[0];
+  await page.mouse.click(point.x, point.y);
+  await expect(page.getByTestId("tile-count")).toHaveText("2");
+  for (let i = 0; i < 5; i++) {
+    expect(await page.evaluate((p) => window.tabletopTest.tileHeight(p), target)).toBe(0);
+    expect(await page.evaluate(() => window.tabletopTest.dustVisible())).toBe(false);
+    await page.waitForTimeout(60);
+  }
+});
+
+test("a Costco tile's warehouse falls with it, then joins its neighbours", async ({ page }) => {
+  await ready(page);
+  // Play turns until a Costco tile comes up.
+  for (let turn = 0; turn < 12 && !/costco/.test((await page.evaluate(() => window.tabletopTest.state())).tileId ?? ""); turn++) {
+    const point = await legalPoint(page);
+    const count = await page.evaluate(() => window.tabletopTest.state().count);
+    await page.mouse.click(point.x, point.y);
+    await expect.poll(() => page.evaluate(() => window.tabletopTest.state().count)).toBe(count + 1);
+    if ((await page.evaluate(() => window.tabletopTest.state().phase)) === "claim_feature")
+      await page.getByRole("button", { name: "Skip claim" }).click();
+    await expect.poll(() => page.evaluate(() => window.tabletopTest.landingWarehouseHeight())).toBeNull();
+  }
+  expect((await page.evaluate(() => window.tabletopTest.state())).tileId).toMatch(/costco/);
+  const point = await legalPoint(page);
+  await page.mouse.click(point.x, point.y);
+  await expect.poll(() => page.evaluate(() => window.tabletopTest.landingWarehouseHeight())).toBeGreaterThan(0.1);
+  await expect.poll(() => page.evaluate(() => window.tabletopTest.landingWarehouseHeight()), { timeout: 3000 }).toBeNull();
 });

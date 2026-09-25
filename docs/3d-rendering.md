@@ -122,6 +122,25 @@ listeners and a graphics error boundary replace the board with a panel whose
 hide only the preview; a healthy board keeps rendering. Context loss from a
 detached or inactive canvas during teardown is ignored.
 
+### Landing animation
+
+Each tile placed after the scene mounts drops in over 480 ms
+(`src/rendering/landing.ts`). It falls from 0.6 above the table, squashes to
+about 0.9 height on impact, then settles through a small damped rebound. A
+dust ring spreads and fades as it settles. AI placements animate too; the
+board a scene opens on never does, and `prefers-reduced-motion` skips the
+animation.
+
+`BoardScene`'s `LandingDriver` writes the pose once per frame into a shared
+ref. It uses a negative `useFrame` priority, so it runs first without taking
+over rendering. It keeps demand rendering going only until the tile lands.
+The tile's instanced parts and plants are moved inside their existing
+`useFrame` callbacks, by rewriting that instance's matrix (and restoring it at
+rest). `PlantInstances.owners` maps plants to their tile. Warehouses are one
+board-wide mesh, so a landing Costco tile is left out of the joined layout and
+falls as its own section (`landing-warehouse`). It joins its neighbours once it
+lands.
+
 ## Verification
 
 - Unit checks cover all 16 tile types in every rotation, edge portals, negative

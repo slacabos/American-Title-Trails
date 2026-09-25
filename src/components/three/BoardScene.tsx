@@ -27,6 +27,7 @@ import {
   FeatureHighlight,
   Follower,
   GhostTile,
+  LandingDust,
   NightLights,
   Scenery,
   SceneryProvider,
@@ -44,6 +45,12 @@ import {
   VIEW_TRANSITION_MS,
   type ViewPose,
 } from "@/rendering/cameraPose";
+import {
+  LANDING_MS,
+  landingPose,
+  prefersReducedMotion,
+  type LandingFrame,
+} from "@/rendering/landing";
 
 export interface BoardSceneProps {
   state: GameState;
@@ -109,9 +116,6 @@ interface ViewTransition {
   duration: number;
 }
 
-const prefersReducedMotion = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 
 function ContextHealth({ onUnavailable }: { onUnavailable: () => void }) {
   const { gl, get } = useThree();
@@ -426,6 +430,65 @@ function Navigation({
   return null;
 }
 
+interface Landing {
+  key: string;
+  center: Position;
+}
+
+/**
+ * The tile placed since the scene mounted, while it lands. The board a
+ * scene opens on never animates, and reduced motion skips landings.
+ */
+function useLanding(state: GameState) {
+  const placed = state.lastPlacedPosition;
+  const placedKey = placed ? positionKey(placed) : undefined;
+  const [seenKey, setSeenKey] = useState(placedKey);
+  const [landing, setLanding] = useState<Landing | null>(null);
+  if (placedKey !== seenKey) {
+    setSeenKey(placedKey);
+    setLanding(placed && placedKey && !prefersReducedMotion() ? { key: placedKey, center: placed } : null);
+  }
+  const done = useCallback(() => setLanding(null), []);
+  return { landing, done };
+}
+
+/**
+ * Advances the landing once per frame, before the meshes that draw the tile
+ * read it, and keeps demand rendering going only until the tile has landed.
+ */
+function LandingDriver({
+  landing,
+  frame,
+  onDone,
+}: {
+  landing: Landing | null;
+  frame: React.RefObject<LandingFrame | null>;
+  onDone: () => void;
+}) {
+  const invalidate = useThree((state) => state.invalidate);
+  const started = useRef<{ key: string; at: number } | null>(null);
+  useEffect(() => {
+    if (landing) invalidate();
+  }, [landing, invalidate]);
+  // A negative priority runs first without taking over rendering.
+  useFrame(() => {
+    if (!landing) {
+      frame.current = null;
+      return;
+    }
+    if (started.current?.key !== landing.key) started.current = { key: landing.key, at: performance.now() };
+    const t = (performance.now() - started.current.at) / LANDING_MS;
+    if (t >= 1) {
+      frame.current = null;
+      onDone();
+      return;
+    }
+    frame.current = { key: landing.key, center: landing.center, pose: landingPose(t) };
+    invalidate();
+  }, -1);
+  return null;
+}
+
 export function BoardScene({
   state,
   onTilePlace,
@@ -438,6 +501,8 @@ export function BoardScene({
 }: BoardSceneProps) {
   const palette = SCENE_PALETTE[night ? "night" : "day"];
   const { t } = useTranslations();
+  const { landing, done: landed } = useLanding(state);
+  const landingFrame = useRef<LandingFrame | null>(null);
   const snapshot = useMemo(() => boardSnapshot(state), [state]);
   // A hover or touch selection survives rotation, but never a turn or a
   // placement: each remembers the turn it was made in and lapses after it.
@@ -531,7 +596,14 @@ export function BoardScene({
         <PlacementGrid bounds={bounds} color={palette.grid} />
         <SceneryProvider>
           <NightLights night={night} />
-          <Scenery records={snapshot.tiles} seed={state.sceneSeed} />
+          <LandingDriver landing={landing} frame={landingFrame} onDone={landed} />
+          <Scenery
+            records={snapshot.tiles}
+            seed={state.sceneSeed}
+            landing={landingFrame}
+            landingKey={landing?.key}
+          />
+          <LandingDust landing={landingFrame} night={night} />
           {snapshot.legal.map((position) => (
             <CellOutline
               key={positionKey(position)}

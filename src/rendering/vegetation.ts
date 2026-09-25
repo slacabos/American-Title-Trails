@@ -3,7 +3,7 @@ import type { ITile } from "@/interfaces/ITile";
 import type { Position, TileRecord } from "@/types";
 import { PaintBatch, place } from "./paint";
 import { nearRiver, restaurantPosition, tileRoadPath } from "./riverLayout";
-import { canonicalTile, CORNERS, insidePolygon, Point, rotatePoint, zonePolygon } from "./tileLayout";
+import { canonicalTile, CORNERS, insidePolygon, Point, positionKey, rotatePoint, zonePolygon } from "./tileLayout";
 import { type Region, regionWeights, sampleRegion } from "./regions";
 
 export type SpotKind = "tree" | "shrub" | "sapling";
@@ -141,6 +141,8 @@ export interface PlantInstances {
   species: Species;
   matrices: THREE.Matrix4[];
   colors: THREE.Color[];
+  /** The `positionKey` of the tile each plant grows on. */
+  owners: string[];
 }
 
 // The alternate crown tint that meadow trees used before they were instanced.
@@ -162,7 +164,7 @@ export function plantInstances(records: TileRecord[], seed?: number): PlantInsta
       const [x, z] = worldSpot(position, tile.orientation, spot);
       const region = sampleRegion(regionWeights(x, z, seed), hash01(x, z, seed ?? 0));
       const species = speciesFor(region, spot.kind);
-      const group = groups.get(species) ?? { species, matrices: [], colors: [] };
+      const group = groups.get(species) ?? { species, matrices: [], colors: [], owners: [] };
       const yaw = hash01(x, z, 1) * Math.PI * 2;
       group.matrices.push(
         new THREE.Matrix4().compose(
@@ -172,6 +174,7 @@ export function plantInstances(records: TileRecord[], seed?: number): PlantInsta
         ),
       );
       group.colors.push(species === "round" && spot.kind === "tree" && spot.variant % 2 === 0 ? DARK_TINT : WHITE);
+      group.owners.push(positionKey(position));
       groups.set(species, group);
     }
   }

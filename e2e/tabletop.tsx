@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { _roots } from "@react-three/fiber";
-import { Vector3 } from "three";
+import { InstancedMesh, Matrix4, Vector3 } from "three";
 import { Game } from "../src/game";
 import { GamePhase, Position } from "../src/types";
 import { BoardStatus, BoardView, CurrentTilePreview, ViewToggle } from "../src/components/BoardView";
@@ -163,6 +163,34 @@ Object.assign(window, {
         '[data-testid="board-3d"] canvas',
       )!;
       return _roots.get(canvas)!.store.getState().camera.up.toArray();
+    },
+    /** Height of a landing Costco tile's own warehouse section, or null once joined. */
+    landingWarehouseHeight: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
+      const group = _roots.get(canvas)!.store.getState().scene.getObjectByName("landing-warehouse");
+      return group ? group.position.y : null;
+    },
+    /** Whether the landing dust ring is showing this frame. */
+    dustVisible: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
+      return _roots.get(canvas)!.store.getState().scene.getObjectByName("landing-dust")?.visible ?? false;
+    },
+    /** Highest instance of the tile at a board position, as drawn this frame. */
+    tileHeight: (position: Position) => {
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
+      const matrix = new Matrix4();
+      const point = new Vector3();
+      let height = 0;
+      _roots.get(canvas)!.store.getState().scene.traverse((object) => {
+        if (!(object instanceof InstancedMesh)) return;
+        for (let i = 0; i < object.count; i++) {
+          object.getMatrixAt(i, matrix);
+          point.setFromMatrixPosition(matrix);
+          if (Math.round(point.x) === position.x && Math.round(point.z) === position.y)
+            height = Math.max(height, point.y);
+        }
+      });
+      return height;
     },
     previewFrame: () => {
       const canvas = document.querySelector<HTMLCanvasElement>(

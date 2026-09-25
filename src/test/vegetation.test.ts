@@ -26,3 +26,12 @@ describe("regional vegetation", () => {
     expect([...species].every((kind) => kind === "round" || kind === "bush")).toBe(true);
   });
 });
+
+describe("plant owners", () => {
+  it("records which tile each plant grows on", () => {
+    const groups = plantInstances(board.slice(0, 3), 42);
+    const owners = groups.flatMap((group) => group.owners);
+    expect(new Set(owners)).toEqual(new Set(board.slice(0, 3).map(({ position }) => `${position.x},${position.y}`)));
+    for (const group of groups) expect(group.owners).toHaveLength(group.matrices.length);
+  });
+});
