@@ -50,8 +50,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
           ol: ({ children }) => (
             <ol className="space-y-2 text-sm leading-relaxed mb-4 [counter-reset:list-counter]">
               {React.Children.map(children, (child, index) => {
-                if (React.isValidElement(child) && child.type === "li") {
-                  return React.cloneElement(child as React.ReactElement<any>, {
+                if (
+                  React.isValidElement<{ children?: React.ReactNode; className?: string }>(child) &&
+                  child.type === "li"
+                ) {
+                  return React.cloneElement(child, {
                     className: "flex gap-2",
                     children: (
                       <>

@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GameSetup from "../components/GameSetup";
 import { PlayerDefinition } from "../types";
 
 describe("GameSetup Component", () => {
-  let mockOnStartGame: ReturnType<typeof vi.fn>;
+  let mockOnStartGame: Mock<(players: PlayerDefinition[]) => void>;
 
   beforeEach(() => {
     mockOnStartGame = vi.fn();

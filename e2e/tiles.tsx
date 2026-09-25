@@ -95,7 +95,7 @@ createRoot(document.getElementById("root")!).render(
             {rotations.map(rotation => <TileRenderer key={rotation} tile={tile.rotate(rotation)} size={210} />)}
           </div> : <Canvas
             orthographic
-            shadows
+            shadows="percentage"
             frameloop="demand"
             dpr={1}
             camera={{ position: params.has("top") ? [0, 8, 0] : [0, 6, 4.2], zoom: 190 }}

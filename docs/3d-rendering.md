@@ -89,8 +89,10 @@ polygons are ignored so stale selections cannot take down the 3D canvas.
 Three.js 0.170 and React Three Fiber 8 support the existing React 18 application.
 Each canvas owns and disposes its scenery library. Geometry is merged by material
 within a tile type (all painted props share one material), then repeated tiles
-are instanced across the board. A full 63-tile board draws about 135 calls,
-including shadows. A subtle
+are instanced across the board. At its fitted zoom, a full 63-tile board draws
+about 150 calls and 46k triangles in the colour pass. Since three r186,
+`renderer.info` also counts the shadow-map pass, so the e2e budget test reports
+about 232 calls and 82k triangles for the same scene. A subtle
 shader grid aligns to tile edges and fades out beyond the board, using one
 additional draw call. The tile
 gallery uses one canvas for every tile and rotation. The current-tile preview is

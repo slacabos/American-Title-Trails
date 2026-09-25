@@ -115,7 +115,7 @@ function Navigation({
   actions: React.MutableRefObject<CameraActions | null>;
 }) {
   const { camera, gl, size, invalidate } = useThree();
-  const controls = useRef<OrbitControls>();
+  const controls = useRef<OrbitControls | undefined>(undefined);
   const autoFit = useRef(true);
   const fitRef = useRef<() => void>(() => {});
   const latest = useRef({ legal, onHover, onSelect, onTilePlace });
@@ -335,7 +335,7 @@ export function BoardScene({
     <div className="tabletop-scene" data-testid="board-3d">
       <Canvas
         orthographic
-        shadows
+        shadows="percentage"
         camera={{ position: [12, 20, 12], zoom: 90, near: 0.1, far: 150 }}
         dpr={[1, 1.5]}
         frameloop="demand"
@@ -500,7 +500,7 @@ export function TilePreviewScene({
     <div className="tabletop-tile-preview" role="img" aria-label={tile?.name}>
       <Canvas
         orthographic
-        shadows
+        shadows="percentage"
         camera={{ position: [3, 5.056, 3], zoom: 122, near: 0.1, far: 40 }}
         frameloop="demand"
         dpr={[1, 1.5]}

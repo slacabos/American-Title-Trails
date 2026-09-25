@@ -29,7 +29,7 @@ function Review() {
     <button disabled={count === 1} onClick={() => setCount(count - 1)}>Remove tile</button>
     <button disabled={count === example.records.length} onClick={() => setCount(count + 1)}>Add tile</button>
     <div style={{ height: 650, background: "#eee9dd" }}>
-      <Canvas orthographic shadows frameloop="demand" dpr={1}
+      <Canvas orthographic shadows="percentage" frameloop="demand" dpr={1}
         camera={{ position: [center[0] + 6, 10.1, center[1] + 6], zoom: 225 }}
         onCreated={({ camera }) => camera.lookAt(center[0], 0, center[1])}>
         <Daylight />
