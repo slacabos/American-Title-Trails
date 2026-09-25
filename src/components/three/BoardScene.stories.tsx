@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useEffect, useState } from "react";
+import { expect, waitFor, within } from "storybook/test";
 import { BoardScene } from "./BoardScene";
 import { Game } from "@/game";
 import { Board } from "@/board";
@@ -53,6 +55,39 @@ const meta: Meta<typeof BoardScene> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const ConnectedScenery: Story = {};
+
+/** Two AI players keep placing tiles; each one drops in and settles. */
+function LandingDemo() {
+  const [game] = useState(() => new Game(
+    [
+      { id: "blue", name: "Blue", color: "#457da1", isAI: true },
+      { id: "red", name: "Red", color: "#cc5d44", isAI: true },
+    ],
+    { seed: 71 },
+  ));
+  const [state, setState] = useState(() => game.getState());
+  useEffect(() => {
+    game.setStateChangeListener(setState);
+    const timer = setInterval(() => {
+      if (!game.getState().isGameOver) game.processAITurn();
+    }, 350);
+    return () => clearInterval(timer);
+  }, [game]);
+  return <BoardScene state={state} onTilePlace={() => {}} onUnavailable={() => {}} />;
+}
+
+export const TileLanding: Story = {
+  render: () => <LandingDemo />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await canvas.findByTestId("board-3d");
+    // The river opening includes Costco tiles, whose warehouses land too.
+    await waitFor(
+      () => expect(Number(canvas.getByText(/\d+ tiles/).textContent!.match(/\d+/)![0])).toBeGreaterThanOrEqual(10),
+      { timeout: 14000 },
+    );
+  },
+};
 export const FullDeck: Story = { args: { state: populatedState(Infinity) } };
 export const DroneView: Story = { args: { state: populatedState(Infinity), view: "drone" } };
 
