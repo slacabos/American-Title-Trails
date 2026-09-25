@@ -49,6 +49,8 @@ interface BoardViewProps {
   /** Called before the canvas is remounted after a failure. */
   onRetry: () => void;
   highlightedFeature?: ClaimableFeature;
+  /** The keyboard placement cursor, previewed like a hover. */
+  cursor?: Position;
   night?: boolean;
 }
 
@@ -82,6 +84,7 @@ export function BoardView({
   unavailable,
   onRetry,
   highlightedFeature,
+  cursor,
   night = false,
 }: BoardViewProps) {
   const { t } = useTranslations();
@@ -112,6 +115,7 @@ export function BoardView({
               onUnavailable={onUnavailable}
               highlightedFeature={highlightedFeature}
               completedCostcos={finishedCostcos}
+              cursor={cursor}
               night={night}
             />
           </Suspense>

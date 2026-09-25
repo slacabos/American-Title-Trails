@@ -1,5 +1,5 @@
 import useTranslations from "@/hooks/useTranslations";
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import {
   PlayerDefinition,
   Position,
@@ -11,6 +11,15 @@ import {
 import { Game, GamePhase } from "../game";
 import { BoardView, BoardStatus, ViewToggle } from "./BoardView";
 import { readCameraView, saveCameraView, type CameraView } from "@/rendering/cameraView";
+import {
+  activatesOnEnter,
+  arrowDirection,
+  isArrowKey,
+  isTypingTarget,
+  nearestLegal,
+  nextLegal,
+} from "@/rendering/keyboard";
+import { boardSnapshot, samePosition } from "@/rendering/tileLayout";
 import HelpModal from "./HelpModal";
 import GameOverPanel from "./GameOverPanel";
 import iconUrl from "@/assets/icon.png";
@@ -20,7 +29,10 @@ import TileDock from "./hud/TileDock";
 import ActivityLog, { type LogEntry } from "./hud/ActivityLog";
 import TimeToggle from "./hud/TimeToggle";
 import useTimeOfDay from "@/hooks/useTimeOfDay";
-import { CircleQuestionMark, Menu, RotateCcw } from "lucide-react";
+import { CircleQuestionMark, Keyboard, Menu, RotateCcw } from "lucide-react";
+
+const sameFeature = (a: ClaimableFeature, b?: ClaimableFeature) =>
+  !!b && a.type === b.type && a.identifier === b.identifier;
 
 const logTime = () =>
   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -161,45 +173,106 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
     }));
   };
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore when typing in inputs
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  // Keyboard placement cursor. Like the board's hover, it belongs to one turn.
+  // When a rotation makes its spot illegal it snaps to the nearest legal one.
+  const turnKey = `${gameState.turnNumber}:${phase}:${currentPlayerIndex}`;
+  const legal = useMemo(() => boardSnapshot(gameState).legal, [gameState]);
+  const [cursorAt, setCursorAt] = useState<{ turn: string; position: Position }>();
+  const cursor = cursorAt?.turn !== turnKey
+    ? undefined
+    : legal.some((spot) => samePosition(spot, cursorAt.position))
+      ? cursorAt.position
+      : nearestLegal(legal, cursorAt.position);
 
-      const g = game;
+  // Keyboard shortcuts. The listener is attached once and always runs the
+  // latest handler, which closes over this render's state.
+  const onKeyDown = useRef<(event: KeyboardEvent) => void>(() => {});
+  useLayoutEffect(() => {
+    onKeyDown.current = (e: KeyboardEvent) => {
+      const typing = isTypingTarget(e);
+      if (e.key === "?") {
+        if (!(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement))
+          setShowHelp((prev) => !prev);
+        return;
+      }
+      if (typing) return;
+      const human = !currentPlayerIsAI && !isGameOver;
+      const placing = human && phase === GamePhase.PLACE_TILE;
+      const claiming = human && phase === GamePhase.CLAIM_FEATURE;
+      const modified = e.ctrlKey || e.metaKey || e.altKey;
 
-      switch (e.key) {
+      // Shift+arrows pan the camera; the board scene handles those.
+      if (isArrowKey(e.key)) {
+        if (modified || e.shiftKey) return;
+        if (placing && legal.length) {
+          e.preventDefault();
+          const position = cursor
+            ? nextLegal(cursor, legal, arrowDirection(e.key, view))
+            : nearestLegal(legal, gameState.lastPlacedPosition)!;
+          setCursorAt({ turn: turnKey, position });
+        } else if (claiming && claimableFeatures.length && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+          e.preventDefault();
+          const count = claimableFeatures.length;
+          const index = claimableFeatures.findIndex((feature) => sameFeature(feature, highlightedFeature));
+          const step = e.key === "ArrowDown" ? 1 : -1;
+          const next = index < 0 ? (step > 0 ? 0 : count - 1) : (index + step + count) % count;
+          setHighlightedFeature(claimableFeatures[next]);
+        }
+        return;
+      }
+
+      if ((e.key === "Enter" || e.key === " ") && !modified) {
+        // A focused button keeps its own Enter/Space.
+        if (activatesOnEnter(e)) return;
+        if (placing && cursor) {
+          e.preventDefault();
+          handleTilePlace(cursor);
+        } else if (claiming && highlightedFeature) {
+          e.preventDefault();
+          handleClaimFeature(highlightedFeature.type, highlightedFeature.identifier);
+        }
+        return;
+      }
+
+      if (modified) return;
+      if (/^[1-9]$/.test(e.key)) {
+        const feature = claiming ? claimableFeatures[Number(e.key) - 1] : undefined;
+        if (feature) handleClaimFeature(feature.type, feature.identifier);
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
         case "r":
-        case "R":
-          if (g.canRotateTile()) {
-            if (e.shiftKey || e.key === "R") g.rotateTileCounterClockwise();
-            else g.rotateTileClockwise();
-          }
+          if (e.shiftKey) handleRotateCounterClockwise();
+          else handleRotateClockwise();
+          break;
+        case "e":
+          handleRotateClockwise();
+          break;
+        case "q":
+          handleRotateCounterClockwise();
           break;
         case "s":
-        case "S":
-          if (phase === GamePhase.CLAIM_FEATURE && !currentPlayerIsAI) {
-            addLog(t("messages.skippedClaiming", { playerName: g.getCurrentPlayer().name }));
-            g.skipClaim();
-          }
-          break;
-        case "?":
-          setShowHelp((prev) => !prev);
+          if (claiming) handleSkipClaim();
           break;
         case "n":
-        case "N":
           toggleNight();
           break;
-        case "Escape":
+        case "v":
+          handleViewChange(view === "drone" ? "tabletop" : "drone");
+          break;
+        case "escape":
           setMenuOpen(false);
+          setCursorAt(undefined);
           break;
       }
     };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [game, addLog, phase, currentPlayerIsAI, t, toggleNight]);
+  });
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => onKeyDown.current(event);
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, []);
 
   // On phones the dock is a bottom sheet; the board shrinks to sit above it.
   useEffect(() => {
@@ -235,6 +308,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         unavailable={graphicsUnavailable}
         onRetry={() => setGraphicsUnavailable(false)}
         highlightedFeature={highlightedFeature}
+        cursor={cursor}
         night={night}
       />
 
@@ -297,6 +371,17 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
                     <CircleQuestionMark size={15} aria-hidden="true" />
                     {t("hud.help")}
                   </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setShowHelp(true);
+                    }}
+                  >
+                    <Keyboard size={15} aria-hidden="true" />
+                    {t("hud.shortcuts")}
+                  </button>
                 </div>
               )}
             </div>
@@ -325,6 +410,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
             onClaim={handleClaimFeature}
             onSkip={handleSkipClaim}
             onHighlight={setHighlightedFeature}
+            highlighted={highlightedFeature}
             night={night}
           />
         </div>

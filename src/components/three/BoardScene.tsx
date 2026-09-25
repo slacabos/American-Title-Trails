@@ -36,6 +36,7 @@ import { PlacementGrid } from "./PlacementGrid";
 import type { CompletedCostco } from "@/rendering/completedCostcos";
 import { SCENE_PALETTE } from "@/rendering/timeOfDay";
 import type { CameraView } from "@/rendering/cameraView";
+import { isArrowKey, isTypingTarget } from "@/rendering/keyboard";
 import {
   applyPose,
   blendPose,
@@ -52,6 +53,8 @@ export interface BoardSceneProps {
   completedCostcos?: CompletedCostco[];
   night?: boolean;
   view?: CameraView;
+  /** The keyboard placement cursor; a pointer hover or touch selection wins. */
+  cursor?: Position;
 }
 
 function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }) {
@@ -86,7 +89,14 @@ function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }
 interface CameraActions {
   fit: () => void;
   zoom: (factor: number) => void;
+  /** Move the view by screen pixels (right, up), staying on the table. */
+  pan: (right: number, up: number) => void;
+  /** Bring a board position back into view when it nears the edge. */
+  focus: (position: Position) => void;
 }
+
+/** How far one Shift+arrow press pans, in screen pixels. */
+const PAN_STEP = 90;
 interface ViewTransition {
   view: CameraView;
   from: ViewPose;
@@ -261,10 +271,37 @@ function Navigation({
       invalidate();
     };
     orbit.addEventListener("change", changed);
+    // Slide camera and target together, then drop the target back onto the
+    // table along the view direction (which does not change an orthographic view).
+    const shift = (offset: THREE.Vector3) => {
+      autoFit.current = false;
+      const direction = camera.getWorldDirection(new THREE.Vector3());
+      const next = orbit.target.clone().add(offset);
+      next.addScaledVector(direction, -next.y / direction.y);
+      camera.position.add(next.clone().sub(orbit.target));
+      orbit.target.copy(next);
+      target.current.copy(next);
+      orbit.update();
+      invalidate();
+    };
     actions.current = {
       fit: () => {
         autoFit.current = true;
         fitRef.current();
+      },
+      pan: (right, up) => {
+        const cam = camera as THREE.OrthographicCamera;
+        camera.updateMatrixWorld();
+        const offset = new THREE.Vector3()
+          .setFromMatrixColumn(camera.matrixWorld, 0)
+          .multiplyScalar(right / cam.zoom)
+          .add(new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).multiplyScalar(up / cam.zoom));
+        shift(offset);
+      },
+      focus: ({ x, y }) => {
+        const point = new THREE.Vector3(x, 0, y).project(camera);
+        if (Math.abs(point.x) < 0.7 && Math.abs(point.y) < 0.7) return;
+        shift(new THREE.Vector3(x, 0, y).sub(orbit.target));
       },
       zoom: (factor) => {
         autoFit.current = false;
@@ -397,6 +434,7 @@ export function BoardScene({
   completedCostcos = [],
   night = false,
   view = "tabletop",
+  cursor,
 }: BoardSceneProps) {
   const palette = SCENE_PALETTE[night ? "night" : "day"];
   const { t } = useTranslations();
@@ -409,6 +447,29 @@ export function BoardScene({
   const hover = hoverAt?.turn === turn ? hoverAt.position : undefined;
   const selected = selectedAt?.turn === turn ? selectedAt.position : undefined;
   const actions = useRef<CameraActions | null>(null);
+  // Camera keys. Game keys (cursor, placing, claiming) live in GameBoard.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (isTypingTarget(event) || event.ctrlKey || event.metaKey || event.altKey) return;
+      const camera = actions.current;
+      if (!camera) return;
+      if (event.key === "+" || event.key === "=") camera.zoom(1.2);
+      else if (event.key === "-" || event.key === "_") camera.zoom(1 / 1.2);
+      else if (event.key === "f" || event.key === "F") camera.fit();
+      else if (event.shiftKey && isArrowKey(event.key)) {
+        event.preventDefault();
+        const right = event.key === "ArrowRight" ? PAN_STEP : event.key === "ArrowLeft" ? -PAN_STEP : 0;
+        const up = event.key === "ArrowUp" ? PAN_STEP : event.key === "ArrowDown" ? -PAN_STEP : 0;
+        camera.pan(right, up);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+  // Keep the keyboard cursor on screen.
+  useEffect(() => {
+    if (cursor) actions.current?.focus(cursor);
+  }, [cursor]);
   const setHovered = useCallback(
     (position?: Position) =>
       setHoverAt((previous) =>
@@ -423,7 +484,7 @@ export function BoardScene({
     [turn],
   );
   const preview = snapshot.legal.find((position) =>
-    samePosition(position, selected ?? hover),
+    samePosition(position, selected ?? hover ?? cursor),
   );
   const last =
     state.lastPlacedPosition && state.board.getTile(state.lastPlacedPosition);

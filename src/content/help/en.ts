@@ -79,9 +79,18 @@ Each turn consists of up to 3 phases:
 - **Pan:** Drag to move around the board.
 - **Tile Placement:** Click a green space to place. On a touchscreen, tap a space to preview, then press **Place tile**. Use **Cancel** to dismiss it.
 - **Hover Preview:** See the current tile on a legal space before placing it.
-- **Rotate:** Use the rotation buttons, **R**, or **Shift+R**.
+- **Rotate:** Use the rotation buttons, **R** / **E** (clockwise), or **Shift+R** / **Q** (counter-clockwise).
 - **Claim Preview:** Hover or focus a claim button to highlight its feature on the board.
 - **Followers:** Standing pawns claim roads, stores, and restaurants. Reclining pawns are farmers; small fences distinguish adjoining separate fields.
+
+### Playing with the Keyboard
+
+Every action has a key; the full list is at the top of this help.
+
+- **Place a tile:** The arrow keys move a cursor between legal spaces (up is up on screen, in either view). Press **Enter** or **Space** to place the tile there.
+- **Claim:** **Up** / **Down** step through the claim options and highlight each feature on the board; **Enter** claims it. **1–9** claim an option directly, and **S** skips.
+- **Camera:** **+** and **−** zoom, **Shift+Arrows** pan, **F** fits the board, and **V** switches between Tabletop and Drone.
+- **Other:** **N** switches day and night, **Esc** clears the cursor, and **?** opens this help.
 
 ---
 

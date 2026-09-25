@@ -456,3 +456,44 @@ test("night mode switches the board and HUD, and persists", async ({ page }) => 
   await expect(page.getByRole("button", { name: "Switch to day" })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("a whole turn can be played from the keyboard", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start Game" }).click();
+  await expect(page.getByTestId("board-3d")).toBeVisible();
+  await expect(page.getByText("0/62 tiles")).toBeVisible();
+  const status = page.locator(".board-pill-status");
+  // Rotate with E until the tile fits somewhere.
+  for (let turn = 0; turn < 4; turn++) {
+    if (/\b[1-9]\d* places? to build/.test((await status.textContent()) ?? "")) break;
+    await page.keyboard.press("e");
+    await page.waitForTimeout(100);
+  }
+  await expect(status).toContainText(/\b[1-9]\d* places? to build/);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("1/62 tiles")).toBeVisible();
+  // Claim with the keyboard if offered, otherwise the turn has already passed.
+  if (await page.getByText("Claim a feature").isVisible()) await page.keyboard.press("s");
+  await expect(page.getByText(/Waiting for|Thinking/).first()).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("camera keys zoom, pan and fit the board", async ({ page }) => {
+  await ready(page);
+  const stats = () => page.evaluate(() => window.tabletopTest.stats());
+  const fitted = await stats();
+  await page.keyboard.press("+");
+  await expect.poll(async () => (await stats()).zoom).toBeGreaterThan(fitted.zoom * 1.1);
+  await page.keyboard.press("-");
+  await page.keyboard.press("-");
+  await expect.poll(async () => (await stats()).zoom).toBeLessThan(fitted.zoom * 0.9);
+  const before = await stats();
+  await page.keyboard.press("Shift+ArrowRight");
+  await expect.poll(async () => (await stats()).camera[0]).not.toBeCloseTo(before.camera[0], 3);
+  await page.keyboard.press("f");
+  await expect.poll(async () => (await stats()).zoom).toBeCloseTo(fitted.zoom, 3);
+  await expect.poll(async () => (await stats()).camera[0]).toBeCloseTo(fitted.camera[0], 3);
+});

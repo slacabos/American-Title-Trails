@@ -2,6 +2,7 @@ import React from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import MarkdownRenderer from "./MarkdownRenderer";
+import ShortcutList from "./hud/ShortcutList";
 import { helpContent } from "../content/help";
 
 interface HelpModalProps {
@@ -16,6 +17,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         <DialogTitle className="sr-only">How to play</DialogTitle>
         <div className="overflow-y-auto max-h-[92vh] px-6 sm:px-8 pb-6">
           <div className="space-y-6 text-card-foreground pt-6">
+            <ShortcutList />
             <MarkdownRenderer
               content={helpContent.en}
               className="max-w-none"

@@ -398,6 +398,25 @@
       "river": "river"
     },
     "switchToNight": "Switch to night",
-    "switchToDay": "Switch to day"
+    "switchToDay": "Switch to day",
+    "keyboardHint": "Arrows + Enter to place · R rotate · ? all keys",
+    "shortcuts": "Keyboard shortcuts"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "moveCursor": "Move the placement cursor between legal spaces",
+    "place": "Place the tile at the cursor",
+    "rotateClockwise": "Rotate clockwise",
+    "rotateCounterClockwise": "Rotate counter-clockwise",
+    "chooseClaim": "Choose a feature to claim",
+    "claim": "Claim the chosen feature",
+    "skip": "Skip claiming",
+    "zoom": "Zoom in / out",
+    "pan": "Pan the board",
+    "fit": "Fit the board",
+    "view": "Switch between Tabletop and Drone",
+    "night": "Switch day / night",
+    "cancel": "Clear the cursor, close menus",
+    "help": "Show or hide help"
   }
 }

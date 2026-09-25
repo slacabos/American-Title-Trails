@@ -15,6 +15,8 @@ interface TileDockProps {
   onClaim: (type: TerrainType, identifier?: string) => void;
   onSkip: () => void;
   onHighlight: (feature?: ClaimableFeature) => void;
+  /** The option Enter would claim, chosen with the arrow keys or the pointer. */
+  highlighted?: ClaimableFeature;
   night?: boolean;
 }
 
@@ -28,6 +30,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
     onClaim,
     onSkip,
     onHighlight,
+    highlighted,
     night = false,
   },
   ref,
@@ -77,6 +80,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
             <p className="tile-dock-hint m-0">
               {t("hud.placeHint3d")}
             </p>
+            <p className="tile-dock-hint tile-dock-keys m-0">{t("hud.keyboardHint")}</p>
           </>
         )}
 
@@ -90,7 +94,10 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
                 <Button
                   key={`${feature.type}-${feature.identifier ?? ""}`}
                   variant="secondary"
-                  className="justify-start"
+                  className="justify-start aria-[current=true]:ring-2 aria-[current=true]:ring-gold"
+                  aria-current={
+                    highlighted?.type === feature.type && highlighted.identifier === feature.identifier
+                  }
                   onMouseEnter={() => onHighlight(feature)}
                   onMouseLeave={() => onHighlight(undefined)}
                   onFocus={() => onHighlight(feature)}

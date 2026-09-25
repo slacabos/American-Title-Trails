@@ -249,6 +249,15 @@ body {
 .tile-dock-rotate { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .tile-dock-claims { display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
 
+/* Keyboard shortcut list (help screen) */
+.shortcut-list { border-radius: 12px; background: var(--muted); padding: 14px 16px; }
+.shortcut-list h2 { margin: 0 0 10px; font-size: 16px; font-weight: 600; color: var(--forest); }
+.shortcut-list dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 20px; }
+.shortcut-list dl > div { display: grid; grid-template-columns: 128px 1fr; align-items: center; gap: 10px; font-size: 13px; }
+.shortcut-list dt { display: flex; flex-wrap: wrap; gap: 4px; }
+.shortcut-list dd { margin: 0; color: var(--ink); }
+.shortcut-list kbd { min-width: 22px; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); border-bottom-width: 2px; background: var(--card); font: 600 11px/1.6 system-ui, sans-serif; text-align: center; color: var(--ink); }
+
 /* Activity log */
 .activity-log { width: 288px; max-width: 100%; }
 .activity-log-toggle { width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 10px; font-size: 12px; cursor: pointer; border-radius: 12px; text-align: left; }
