@@ -325,6 +325,29 @@ test("full-deck scenery renders efficiently and stops drawing when idle", async 
   console.log("Full-deck rendering:", first);
 });
 
+test("zooming out sheds scenery detail and zooming back in restores it", async ({
+  page,
+}) => {
+  await ready(page, "?full");
+  const zoomTo = async (label: "Zoom in" | "Zoom out", clicks: number) => {
+    for (let i = 0; i < clicks; i++) {
+      const frame = await page.evaluate(() => window.tabletopTest.stats().frame);
+      await page.getByRole("button", { name: label, exact: true }).click();
+      await expect.poll(() => page.evaluate(() => window.tabletopTest.stats().frame)).toBeGreaterThan(frame);
+    }
+    return page.evaluate(() => window.tabletopTest.stats());
+  };
+  const near = await zoomTo("Zoom in", 4);
+  const far = await zoomTo("Zoom out", 7);
+  const back = await zoomTo("Zoom in", 7);
+  expect(near.zoom).toBeGreaterThan(71);
+  expect(far.zoom).toBeLessThan(28);
+  // Zoomed out, the whole board is on screen, so frustum culling saves nothing.
+  expect(far.triangles).toBeLessThan(near.triangles * 0.6);
+  expect(back.triangles).toBe(near.triangles);
+  console.log("Triangles by tier:", { near: near.triangles, far: far.triangles });
+});
+
 test("the production game opens in 3D and keeps its current tile when switching views", async ({
   page,
 }) => {

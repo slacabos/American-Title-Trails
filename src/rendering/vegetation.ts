@@ -82,31 +82,39 @@ export function worldSpot(position: Position, orientation: number, spot: Vegetat
   return [position.x + x, position.y + z];
 }
 
-/** Species geometry at the origin, painted with vertex colours. */
-export function buildSpecies(species: Species): THREE.BufferGeometry {
+/** Kinds of spot that are too small to see from far away. */
+export const SMALL_SPECIES: ReadonlySet<Species> = new Set(["bush", "fern", "fence", "rock"]);
+
+/**
+ * Species geometry at the origin, painted with vertex colours. `coarse` keeps
+ * the silhouette with fewer segments for zoomed-out boards.
+ */
+export function buildSpecies(species: Species, coarse = false): THREE.BufferGeometry {
+  // Radial segments: full count, or the fewest that still read as round.
+  const r = (segments: number) => (coarse ? Math.max(4, Math.ceil(segments / 2)) : segments);
   const batch = new PaintBatch();
   const add = (geometry: THREE.BufferGeometry, color: string, y: number, x = 0, z = 0, rotation?: THREE.Euler) =>
     batch.add(place(geometry, new THREE.Vector3(x, y, z), rotation), color);
   switch (species) {
     case "round":
-      add(new THREE.CylinderGeometry(0.01, 0.015, 0.09, 5), "#826a4b", 0.043);
-      add(new THREE.IcosahedronGeometry(0.055, 1), "#65934d", 0.12);
+      add(new THREE.CylinderGeometry(0.01, 0.015, 0.09, r(5)), "#826a4b", 0.043);
+      add(new THREE.IcosahedronGeometry(0.055, coarse ? 0 : 1), "#65934d", 0.12);
       break;
     case "bush":
       add(new THREE.IcosahedronGeometry(0.035, 0), "#88a75a", 0.025);
       break;
     case "pine":
-      add(new THREE.CylinderGeometry(0.008, 0.012, 0.06, 5), "#6f5238", 0.03);
-      add(new THREE.ConeGeometry(0.06, 0.1, 7), "#2f5e3c", 0.1);
-      add(new THREE.ConeGeometry(0.046, 0.085, 7), "#35684a", 0.16);
-      add(new THREE.ConeGeometry(0.03, 0.065, 7), "#3b7050", 0.215);
+      add(new THREE.CylinderGeometry(0.008, 0.012, 0.06, r(5)), "#6f5238", 0.03);
+      add(new THREE.ConeGeometry(0.06, 0.1, r(7)), "#2f5e3c", 0.1);
+      add(new THREE.ConeGeometry(0.046, 0.085, r(7)), "#35684a", 0.16);
+      add(new THREE.ConeGeometry(0.03, 0.065, r(7)), "#3b7050", 0.215);
       break;
     case "fern":
-      add(new THREE.ConeGeometry(0.03, 0.04, 5), "#3f6b45", 0.02);
+      add(new THREE.ConeGeometry(0.03, 0.04, r(5)), "#3f6b45", 0.02);
       break;
     case "hay":
-      add(new THREE.CylinderGeometry(0.035, 0.035, 0.055, 12), "#d8b35e", 0.035, 0, 0, new THREE.Euler(0, 0, Math.PI / 2));
-      add(new THREE.CylinderGeometry(0.03, 0.03, 0.057, 12), "#c79c48", 0.035, 0, 0, new THREE.Euler(0, 0, Math.PI / 2));
+      add(new THREE.CylinderGeometry(0.035, 0.035, 0.055, r(12)), "#d8b35e", 0.035, 0, 0, new THREE.Euler(0, 0, Math.PI / 2));
+      add(new THREE.CylinderGeometry(0.03, 0.03, 0.057, r(12)), "#c79c48", 0.035, 0, 0, new THREE.Euler(0, 0, Math.PI / 2));
       break;
     case "fence":
       for (const x of [-0.035, 0.035]) add(new THREE.BoxGeometry(0.008, 0.045, 0.008), "#9b865a", 0.022, x);
@@ -114,12 +122,12 @@ export function buildSpecies(species: Species): THREE.BufferGeometry {
       add(new THREE.BoxGeometry(0.08, 0.008, 0.007), "#af9d71", 0.015);
       break;
     case "cactus":
-      add(new THREE.CylinderGeometry(0.014, 0.016, 0.13, 7), "#5f8a4f", 0.065);
-      add(new THREE.SphereGeometry(0.014, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2), "#5f8a4f", 0.13);
-      add(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 6), "#5f8a4f", 0.085, 0.03);
-      add(new THREE.CylinderGeometry(0.009, 0.009, 0.03, 6), "#5f8a4f", 0.064, 0.018, 0, new THREE.Euler(0, 0, Math.PI / 2));
-      add(new THREE.CylinderGeometry(0.008, 0.008, 0.04, 6), "#5f8a4f", 0.07, -0.028);
-      add(new THREE.CylinderGeometry(0.008, 0.008, 0.026, 6), "#5f8a4f", 0.052, -0.016, 0, new THREE.Euler(0, 0, Math.PI / 2));
+      add(new THREE.CylinderGeometry(0.014, 0.016, 0.13, r(7)), "#5f8a4f", 0.065);
+      add(new THREE.SphereGeometry(0.014, r(7), coarse ? 2 : 4, 0, Math.PI * 2, 0, Math.PI / 2), "#5f8a4f", 0.13);
+      add(new THREE.CylinderGeometry(0.009, 0.009, 0.05, r(6)), "#5f8a4f", 0.085, 0.03);
+      add(new THREE.CylinderGeometry(0.009, 0.009, 0.03, r(6)), "#5f8a4f", 0.064, 0.018, 0, new THREE.Euler(0, 0, Math.PI / 2));
+      add(new THREE.CylinderGeometry(0.008, 0.008, 0.04, r(6)), "#5f8a4f", 0.07, -0.028);
+      add(new THREE.CylinderGeometry(0.008, 0.008, 0.026, r(6)), "#5f8a4f", 0.052, -0.016, 0, new THREE.Euler(0, 0, Math.PI / 2));
       break;
     case "rock":
       add(new THREE.DodecahedronGeometry(0.03, 0).scale(1.3, 0.7, 1), "#b86a44", 0.015);

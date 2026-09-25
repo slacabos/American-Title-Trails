@@ -7,6 +7,7 @@ import { makeRegional } from "./groundShader";
 import { GLOW_COLOR, PaintBatch, place, type PropBuilder } from "./paint";
 import { buildLandmark, LANDMARKS } from "./landmarks";
 import { buildSpecies, type Species, speciesFor, vegetationSpots } from "./vegetation";
+import { isFine, LodTracker } from "./lod";
 
 const NIGHT_GLOW = 1.1;
 import { WarehouseComplex, warehouseLayout } from "./warehouseLayout";
@@ -60,6 +61,8 @@ const FIELD_FENCES: Record<string, [Point, Point][]> = {
 export interface SceneryPart {
   geometry: THREE.BufferGeometry;
   material: THREE.Material;
+  /** Thin props that are hidden when zoomed out. */
+  fine?: boolean;
 }
 export interface TileModel {
   parts: SceneryPart[];
@@ -72,6 +75,8 @@ export class SceneryLibrary {
   private textures = new Set<THREE.Texture>();
   private ghosts = new Map<string, TileModel>();
   private ghostGeometry = new Set<THREE.BufferGeometry>();
+  /** Zoom tier shared by every mesh on this canvas. */
+  readonly lod = new LodTracker();
 
   /** Board geometry is owned by its component; shared materials live here. */
   createWarehouses(layout: WarehouseComplex[]): TileModel {
@@ -118,14 +123,15 @@ export class SceneryLibrary {
     return material;
   }
 
-  private species = new Map<Species, THREE.BufferGeometry>();
+  private species = new Map<string, THREE.BufferGeometry>();
 
   /** Shared geometry for one plant species, drawn with the paint material. */
-  getSpecies(kind: Species): THREE.BufferGeometry {
-    let geometry = this.species.get(kind);
+  getSpecies(kind: Species, coarse = false): THREE.BufferGeometry {
+    const key = `${kind}${coarse ? "-coarse" : ""}`;
+    let geometry = this.species.get(key);
     if (!geometry) {
-      geometry = buildSpecies(kind);
-      this.species.set(kind, geometry);
+      geometry = buildSpecies(kind, coarse);
+      this.species.set(key, geometry);
     }
     return geometry;
   }
@@ -242,6 +248,8 @@ export class SceneryLibrary {
     const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
     const paint = new PaintBatch();
     const glow = new PaintBatch();
+    const finePaint = new PaintBatch();
+    const fineGlow = new PaintBatch();
     // Textured or special materials (ground, labels, bridge deck) keep their own batch.
     const add = (
       geometry: THREE.BufferGeometry,
@@ -260,7 +268,11 @@ export class SceneryLibrary {
       position: THREE.Vector3,
       rotation = new THREE.Euler(),
       lit = false,
-    ) => (lit ? glow : paint).add(place(geometry, position, rotation), color);
+    ) => {
+      const fine = isFine(geometry);
+      (lit ? (fine ? fineGlow : glow) : fine ? finePaint : paint)
+        .add(place(geometry, position, rotation), color);
+    };
     const box = (
       x: number,
       y: number,
@@ -525,6 +537,10 @@ export class SceneryLibrary {
     if (painted) parts.push({ geometry: painted, material: this.paintMaterial() });
     const lit = glow.build();
     if (lit) parts.push({ geometry: lit, material: this.glowMaterial() });
+    const finePainted = finePaint.build();
+    if (finePainted) parts.push({ geometry: finePainted, material: this.paintMaterial(), fine: true });
+    const fineLit = fineGlow.build();
+    if (fineLit) parts.push({ geometry: fineLit, material: this.glowMaterial(), fine: true });
     const model = { parts };
     this.models.set(key, model);
     return model;

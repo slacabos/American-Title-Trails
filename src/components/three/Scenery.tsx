@@ -9,14 +9,15 @@ import React, {
   useState,
 } from "react";
 import * as THREE from "three";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { warehouseLayout, warehouseLayoutKey } from "@/rendering/warehouseLayout";
 import type { ITile } from "@/interfaces/ITile";
 import type { ClaimableFeature, TileRecord } from "@/types";
 import { SceneryLibrary, SceneryPart } from "@/rendering/scenery";
 import { cornerWeights } from "@/rendering/regions";
 import { writeRegionAttributes } from "@/rendering/groundShader";
-import { type PlantInstances, plantInstances } from "@/rendering/vegetation";
+import { type PlantInstances, plantInstances, SMALL_SPECIES } from "@/rendering/vegetation";
+import { Lod } from "@/rendering/lod";
 import {
   CORNERS,
   featureAnchor,
@@ -46,8 +47,17 @@ function Instances({
   records: TileRecord[];
   seed?: number;
 }) {
+  const library = useContext(LibraryContext)!;
   const ref = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
+  // Runs before each demand frame, so a zoom change and its tier share a frame.
+  useFrame(({ camera }) => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const lod = library.lod.update(camera.zoom);
+    mesh.visible = !part.fine || lod !== Lod.Far;
+    mesh.castShadow = part.fine ? lod === Lod.Full : true;
+  });
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
@@ -97,6 +107,14 @@ function PlantMesh({ plants }: { plants: PlantInstances }) {
     mesh.computeBoundingSphere();
     invalidate();
   }, [plants, invalidate]);
+  useFrame(({ camera }) => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const lod = library.lod.update(camera.zoom);
+    mesh.geometry = library.getSpecies(plants.species, lod !== Lod.Full);
+    mesh.visible = lod !== Lod.Far || !SMALL_SPECIES.has(plants.species);
+    mesh.castShadow = lod !== Lod.Far;
+  });
   return (
     <instancedMesh
       ref={ref}
