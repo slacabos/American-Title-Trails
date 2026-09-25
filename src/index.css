@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
 @import "tailwindcss";
-@plugin "tailwindcss-animate";
+@import "tw-animate-css";
 
 /* One tabletop palette for the whole app. `index.html` sets `.dark`, so the
    same values live on both selectors. */

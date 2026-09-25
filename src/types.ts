@@ -50,13 +50,6 @@ export interface TileDefinition {
   isStart?: boolean;
 }
 
-export interface PlayerOptions {
-  id?: string;
-  followers?: number;
-  isAI?: boolean;
-  color?: string;
-}
-
 export type AIDifficulty = "easy" | "medium" | "hard" | "expert";
 
 export interface PlayerDefinition {
