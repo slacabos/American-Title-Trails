@@ -30,6 +30,7 @@ import ActivityLog, { type LogEntry } from "./hud/ActivityLog";
 import TimeToggle from "./hud/TimeToggle";
 import useTimeOfDay from "@/hooks/useTimeOfDay";
 import { CircleQuestionMark, Keyboard, Menu, RotateCcw } from "lucide-react";
+import { clearSavedGame, restoreGame, saveGame, type SavedGame } from "@/persistence/savedGame";
 
 const sameFeature = (a: ClaimableFeature, b?: ClaimableFeature) =>
   !!b && a.type === b.type && a.identifier === b.identifier;
@@ -37,20 +38,34 @@ const sameFeature = (a: ClaimableFeature, b?: ClaimableFeature) =>
 const logTime = () =>
   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+const newSeed = () => Math.floor(Math.random() * 2 ** 31);
+
 interface GameBoardProps {
   players: PlayerDefinition[];
+  /** A saved game to continue instead of starting a new one. */
+  resume?: SavedGame;
   onReset: () => void;
 }
 
-const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
+const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
   const { t } = useTranslations();
+  // Every game has a seed, so its moves can be saved and replayed.
+  const [seed] = useState(() => resume?.seed ?? newSeed());
   // One game per mount: App remounts this component for every new game. A
-  // constructor error reaches the surrounding ErrorBoundary.
-  const [game] = useState(() => new Game(players));
+  // constructor or replay error reaches the surrounding ErrorBoundary.
+  const [game] = useState(() => {
+    if (!resume) return new Game(players, { seed });
+    const restored = restoreGame(resume);
+    if (!restored) throw new Error("The saved game could not be restored");
+    return restored;
+  });
   const [gameState, setGameState] = useState<GameState>(() => game.getState());
-  const logIdRef = useRef(1);
+  // A resumed log continues after the saved entries' ids.
+  const firstLogId = resume ? Math.max(0, ...resume.log.map((entry) => entry.id)) + 1 : 0;
+  const logIdRef = useRef(firstLogId + 1);
   const [logs, setLogs] = useState<LogEntry[]>(() => [
-    { id: 0, time: logTime(), message: t("messages.gameStarted") },
+    { id: firstLogId, time: logTime(), message: t(resume ? "messages.gameResumed" : "messages.gameStarted") },
+    ...(resume?.log.slice(0, 19) ?? []),
   ]);
   const [menuOpen, setMenuOpen] = useState(false);
   const { night, toggle: toggleNight } = useTimeOfDay();
@@ -75,6 +90,23 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       setGameState(state);
     });
   }, [game]);
+
+  // Save after every move; a finished game has nothing left to resume.
+  useEffect(() => {
+    if (gameState.isGameOver) {
+      clearSavedGame();
+      return;
+    }
+    const actions = game.getActions();
+    if (actions.length === 0) return;
+    saveGame({
+      seed,
+      players: resume?.players ?? players,
+      actions: [...actions],
+      log: logs,
+      turnNumber: gameState.turnNumber,
+    });
+  }, [game, gameState, logs, seed, players, resume]);
 
   // Each state change is a fresh snapshot, so this recomputes once per change.
   const claimableFeatures = useMemo(

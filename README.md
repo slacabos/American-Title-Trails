@@ -22,6 +22,7 @@ The Vite dev server runs at http://localhost:3000 and opens automatically.
 - Feature claiming for roads, Costcos, McDonald's, and fields (farmers).
 - Farmers stay on the board and score at game end.
 - Real-time scoreboard, activity log, and turn/tile stats.
+- Autosave after every move: an unfinished game can be continued from the setup screen after a reload.
 - Zoom, pan, and hover previews on the board canvas.
 - In-app Help modal backed by markdown content.
 

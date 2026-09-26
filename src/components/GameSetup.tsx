@@ -3,7 +3,7 @@ import { PlayerDefinition, AIDifficulty } from "../types";
 import HelpModal from "./HelpModal";
 import PlayerConfigRow from "./PlayerConfigRow";
 import iconUrl from "@/assets/icon.png";
-import { CircleQuestionMark, Waves } from "lucide-react";
+import { CircleQuestionMark, RotateCcwClock, Waves } from "lucide-react";
 import TimeToggle from "./hud/TimeToggle";
 import useTimeOfDay from "@/hooks/useTimeOfDay";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,20 @@ import {
 } from "@/components/ui/select";
 import useTranslations from "@/hooks/useTranslations";
 import { PLAYER_COLORS } from "@/constants/colors";
+import type { SavedGame } from "@/persistence/savedGame";
 
 interface GameSetupProps {
   onStartGame: (players: PlayerDefinition[]) => void;
+  /** An unfinished game that can be continued. */
+  savedGame?: SavedGame;
+  onResumeGame?: (save: SavedGame) => void;
+  onDiscardSave?: () => void;
 }
 
-const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
+const savedAtLabel = (savedAt: string) =>
+  new Date(savedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+const GameSetup: React.FC<GameSetupProps> = ({ onStartGame, savedGame, onResumeGame, onDiscardSave }) => {
   const { t } = useTranslations();
   const defaultConfigs = (count: number): PlayerDefinition[] =>
     Array.from({ length: count }, (_, i) => ({
@@ -115,6 +123,46 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame }) => {
         </header>
 
         <div className="flex flex-col gap-6 p-6">
+          {savedGame && (
+            <section
+              aria-labelledby="continue-game-title"
+              className="flex flex-col gap-3 rounded-lg border border-border bg-parchment p-4"
+            >
+              <div className="flex items-center gap-2">
+                <RotateCcwClock size={18} className="shrink-0 text-forest" aria-hidden="true" />
+                <h2 id="continue-game-title" className="m-0 text-sm font-semibold">
+                  {t("setup.continueTitle")}
+                </h2>
+              </div>
+              <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-sm">
+                {savedGame.players.map((player) => (
+                  <li key={player.id ?? player.name} className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block h-3 w-3 rounded-full shadow-[0_0_0_2px_#fff]"
+                      style={{ backgroundColor: player.color }}
+                      aria-hidden="true"
+                    />
+                    {player.name}
+                  </li>
+                ))}
+              </ul>
+              <p className="m-0 text-sm text-muted-foreground">
+                {t("setup.continueDetails", {
+                  turn: savedGame.turnNumber,
+                  savedAt: savedAtLabel(savedGame.savedAt),
+                })}
+              </p>
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
+                <Button variant="outline" onClick={onDiscardSave}>
+                  {t("setup.discardGame")}
+                </Button>
+                <Button className="sm:flex-1" onClick={() => onResumeGame?.(savedGame)}>
+                  {t("setup.continueGame")}
+                </Button>
+              </div>
+            </section>
+          )}
+
           <h2 className="m-0 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {t("setup.gameSetup")}
           </h2>

@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GameSetup from "../components/GameSetup";
+import App from "../App";
+import { Game } from "../game";
 import { PlayerDefinition } from "../types";
+import { readSavedGame, saveGame, type SavedGame } from "../persistence/savedGame";
 
 describe("GameSetup Component", () => {
   let mockOnStartGame: Mock<(players: PlayerDefinition[]) => void>;
@@ -144,5 +147,61 @@ describe("GameSetup Component", () => {
     await user.click(screen.getByRole("button", { name: /start game/i }));
     const players = mockOnStartGame.mock.calls[0][0] as PlayerDefinition[];
     expect(players[1].name).toBe("Player 2");
+  });
+
+  describe("continue game", () => {
+    const savedPlayers: PlayerDefinition[] = [
+      { id: "player-1", name: "Ada", isAI: false, color: "#437eaf" },
+      { id: "player-2", name: "Computer 2", isAI: true, aiDifficulty: "easy", color: "#d76543" },
+    ];
+    const savedGame: SavedGame = {
+      version: 1,
+      savedAt: "2026-09-26T10:00:00.000Z",
+      seed: 7,
+      players: savedPlayers,
+      actions: [],
+      log: [],
+      turnNumber: 12,
+    };
+
+    it("offers no saved game when there is none", () => {
+      render(<GameSetup onStartGame={mockOnStartGame} />);
+      expect(screen.queryByRole("button", { name: /continue game/i })).not.toBeInTheDocument();
+    });
+
+    it("shows the saved players and turn, and continues or discards it", async () => {
+      const user = userEvent.setup();
+      const onResume = vi.fn();
+      const onDiscard = vi.fn();
+      render(
+        <GameSetup
+          onStartGame={mockOnStartGame}
+          savedGame={savedGame}
+          onResumeGame={onResume}
+          onDiscardSave={onDiscard}
+        />
+      );
+      expect(screen.getByText("Ada")).toBeInTheDocument();
+      expect(screen.getByText(/Turn 12/)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /continue game/i }));
+      expect(onResume).toHaveBeenCalledWith(savedGame);
+      await user.click(screen.getByRole("button", { name: /discard/i }));
+      expect(onDiscard).toHaveBeenCalled();
+    });
+
+    it("finds a stored game on launch and forgets it when discarded", async () => {
+      const user = userEvent.setup();
+      const game = new Game(savedPlayers, { seed: 7 });
+      const spot = () => game.getValidPlacements()[0];
+      for (let turn = 0; turn < 4 && !spot(); turn++) game.rotateTileClockwise();
+      game.placeTile(spot());
+      saveGame({ seed: 7, players: savedPlayers, actions: [...game.getActions()], log: [], turnNumber: 1 });
+
+      render(<App />);
+      await user.click(screen.getByRole("button", { name: /discard/i }));
+      expect(screen.queryByRole("button", { name: /continue game/i })).not.toBeInTheDocument();
+      expect(readSavedGame()).toBeUndefined();
+      localStorage.clear();
+    });
   });
 });

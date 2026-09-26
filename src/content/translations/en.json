@@ -33,6 +33,10 @@
       "expert": "Expert"
     },
     "startGame": "Start Game",
+    "continueTitle": "Unfinished game",
+    "continueDetails": "Turn {turn} · saved {savedAt}",
+    "continueGame": "Continue game",
+    "discardGame": "Discard",
     "howToPlay": "How to play",
     "readyToPlay": "🎮 Ready to Play!",
     "configureHint": "Configure your game settings and click Start Game.",
@@ -130,6 +134,7 @@
   },
   "messages": {
     "gameStarted": "Game started!",
+    "gameResumed": "Game resumed.",
     "placedTile": "{playerName} placed tile at ({x}, {y})",
     "featuresCompleted": "{count} features completed!",
     "costcoCompleted": "Costco complete! Worth {points} points if claimed.",

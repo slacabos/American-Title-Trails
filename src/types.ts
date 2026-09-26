@@ -165,6 +165,13 @@ export interface GameState {
   scoreBreakdown: ScoreBreakdown;
 }
 
+/** One move in a game's history; replaying them from the seed rebuilds the game. */
+export type GameAction =
+  | { type: "place"; position: Position; orientation: number }
+  | { type: "claim"; feature: TerrainType; identifier?: string }
+  | { type: "skip" }
+  | { type: "discard" };
+
 export interface TilePlacementResult {
   success: boolean;
   completedFeatures: CompletedFeature[];

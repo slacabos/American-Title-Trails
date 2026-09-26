@@ -437,16 +437,20 @@ interface Landing {
 
 /**
  * The tile placed since the scene mounted, while it lands. The board a
- * scene opens on never animates, and reduced motion skips landings.
+ * scene opens on never animates, and reduced motion skips landings. Only a
+ * board that gained a tile animates, so a restored or taken-back game never
+ * drops an older tile again.
  */
 function useLanding(state: GameState) {
   const placed = state.lastPlacedPosition;
   const placedKey = placed ? positionKey(placed) : undefined;
-  const [seenKey, setSeenKey] = useState(placedKey);
+  const tileCount = state.board.getAllTiles().size;
+  const [seen, setSeen] = useState({ key: placedKey, tileCount });
   const [landing, setLanding] = useState<Landing | null>(null);
-  if (placedKey !== seenKey) {
-    setSeenKey(placedKey);
-    setLanding(placed && placedKey && !prefersReducedMotion() ? { key: placedKey, center: placed } : null);
+  if (placedKey !== seen.key || tileCount !== seen.tileCount) {
+    setSeen({ key: placedKey, tileCount });
+    const grew = tileCount > seen.tileCount;
+    setLanding(grew && placed && placedKey && !prefersReducedMotion() ? { key: placedKey, center: placed } : null);
   }
   const done = useCallback(() => setLanding(null), []);
   return { landing, done };

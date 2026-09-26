@@ -17,6 +17,7 @@ import {
   ScoreBreakdown,
   ScoreCategory,
   SCORE_CATEGORIES,
+  GameAction,
 } from "./types";
 import { ScoreManager } from "./managers/ScoreManager";
 import { TurnManager } from "./managers/TurnManager";
@@ -40,6 +41,7 @@ export type AIAction =
 export class Game {
   private state: GameState;
   private pendingCompleted: CompletedFeature[] = [];
+  private readonly actions: GameAction[] = [];
   private onStateChange?: (state: GameState) => void;
   private readonly scoreManager: ScoreManager;
   private readonly turnManager: TurnManager;
@@ -134,6 +136,43 @@ export class Game {
     return { ...this.state };
   }
 
+  /** Every move so far, in order. With the seed and players, enough to rebuild the game. */
+  public getActions(): readonly GameAction[] {
+    return this.actions;
+  }
+
+  /** Plays one recorded move. False when it isn't legal in the current state. */
+  public applyAction(action: GameAction): boolean {
+    if (this.state.isGameOver) return false;
+    switch (action.type) {
+      case "place":
+        return this.placeTile(action.position, action.orientation).success;
+      case "claim":
+        return this.claimFeature(action.feature, action.identifier);
+      case "skip":
+        if (this.state.phase !== GamePhase.CLAIM_FEATURE) return false;
+        this.skipClaim();
+        return true;
+      case "discard":
+        if (this.state.phase !== GamePhase.PLACE_TILE || !this.tileManager.getCurrentTile()) return false;
+        this.discardCurrentTileAndEndTurn();
+        return true;
+    }
+  }
+
+  /**
+   * Rebuilds a game from its setup and moves. Undefined when a move no longer
+   * applies, as with a save from an older tile library.
+   */
+  public static replay(
+    players: PlayerDefinition[],
+    seed: number,
+    actions: readonly GameAction[]
+  ): Game | undefined {
+    const game = new Game(players, { seed });
+    return actions.every((action) => game.applyAction(action)) ? game : undefined;
+  }
+
   public getCurrentPlayer(): PlayerState {
     return this.playerManager.getCurrentPlayer(this.state.currentPlayerIndex);
   }
@@ -196,6 +235,7 @@ export class Game {
 
       // Claims must resolve before completed features are scored.
       this.pendingCompleted = result.completed;
+      this.actions.push({ type: "place", position: { ...position }, orientation: rotatedTile.orientation });
 
       // Check if there are claimable features
       const claimableFeatures =
@@ -292,6 +332,7 @@ export class Game {
         currentPlayer.id
       );
       this.playerManager.decreaseFollowerCount(currentPlayer.id);
+      this.actions.push({ type: "claim", feature: type, ...(identifier !== undefined && { identifier }) });
 
       this.endTurn();
       this.notifyStateChange();
@@ -304,6 +345,7 @@ export class Game {
 
   public skipClaim(): void {
     if (this.state.phase === GamePhase.CLAIM_FEATURE) {
+      this.actions.push({ type: "skip" });
       this.endTurn();
       this.notifyStateChange();
     }
@@ -521,6 +563,7 @@ export class Game {
    * Discard the current tile when no valid placements exist and end the turn.
    */
   private discardCurrentTileAndEndTurn(): void {
+    this.actions.push({ type: "discard" });
     this.tileManager.discardCurrentTile();
     this.syncTileState();
     this.endTurn();
