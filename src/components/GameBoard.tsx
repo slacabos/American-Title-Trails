@@ -20,12 +20,10 @@ import { GAME_RULES } from "../constants/gameRules";
 import Scoreboard from "./hud/Scoreboard";
 import TileDock from "./hud/TileDock";
 import ActivityLog, { type LogEntry } from "./hud/ActivityLog";
-import TimeToggle from "./hud/TimeToggle";
-import SoundToggle from "./hud/SoundToggle";
+import SettingsMenu from "./hud/SettingsMenu";
 import useTimeOfDay from "@/hooks/useTimeOfDay";
 import useSound from "@/hooks/useSound";
 import useGameSounds from "@/hooks/useGameSounds";
-import VfxToggle from "./hud/VfxToggle";
 import useExtraVfx from "@/hooks/useExtraVfx";
 import { CircleQuestionMark, Keyboard, Menu, RotateCcw } from "lucide-react";
 import { clearSavedGame, restoreGame, saveGame, type SavedGame } from "@/persistence/savedGame";
@@ -64,7 +62,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
     { id: firstLogId, time: logTime(), message: t(resume ? "messages.gameResumed" : "messages.gameStarted") },
     ...(resume?.log.slice(0, 19) ?? []),
   ]);
-  const [menuOpen, setMenuOpen] = useState(false);
+  // The menu and the settings share one slot, so opening one closes the other.
+  const [openPanel, setOpenPanel] = useState<"menu" | "settings">();
+  const menuOpen = openPanel === "menu";
   const { night, toggle: toggleNight } = useTimeOfDay();
   const sound = useSound();
   useGameSounds(gameState, sound.play);
@@ -355,7 +355,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
           toggleVfx();
           break;
         case "escape":
-          setMenuOpen(false);
+          setOpenPanel(undefined);
           setCursorAt(undefined);
           break;
       }
@@ -379,15 +379,15 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Close the menu on any click outside it.
+  // Close the menu or the settings on any click outside them.
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!openPanel) return;
     const close = (event: PointerEvent) => {
-      if (!(event.target as Element).closest?.(".hud-menu")) setMenuOpen(false);
+      if (!(event.target as Element).closest?.(".hud-menu")) setOpenPanel(undefined);
     };
     window.addEventListener("pointerdown", close);
     return () => window.removeEventListener("pointerdown", close);
-  }, [menuOpen]);
+  }, [openPanel]);
 
   const tileStats = game.getTileStats();
 
@@ -417,18 +417,16 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
           </div>
           <div className="hud-top-right">
             <ViewToggle view={view} onViewChange={handleViewChange} />
-            <TimeToggle night={night} onToggle={toggleNight} />
-            <SoundToggle enabled={sound.enabled} onToggle={sound.toggle} />
-            <VfxToggle enabled={extraVfx} onToggle={toggleVfx} />
-            <button
-              type="button"
-              className="hud-icon-button"
-              aria-label={t("hud.help")}
-              title={t("hud.help")}
-              onClick={() => setShowHelp(true)}
-            >
-              <CircleQuestionMark size={18} aria-hidden="true" />
-            </button>
+            <SettingsMenu
+              open={openPanel === "settings"}
+              onOpenChange={(open) => setOpenPanel(open ? "settings" : undefined)}
+              night={night}
+              onToggleNight={toggleNight}
+              sound={sound.enabled}
+              onToggleSound={sound.toggle}
+              extraVfx={extraVfx}
+              onToggleVfx={toggleVfx}
+            />
             <div className="hud-menu">
               <button
                 type="button"
@@ -436,7 +434,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
                 aria-label={t("hud.menu")}
                 aria-expanded={menuOpen}
                 aria-haspopup="menu"
-                onClick={() => setMenuOpen((open) => !open)}
+                onClick={() => setOpenPanel(menuOpen ? undefined : "menu")}
               >
                 <Menu size={18} aria-hidden="true" />
               </button>
@@ -446,7 +444,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
                     type="button"
                     role="menuitem"
                     onClick={() => {
-                      setMenuOpen(false);
+                      setOpenPanel(undefined);
                       onReset();
                     }}
                   >
@@ -457,7 +455,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
                     type="button"
                     role="menuitem"
                     onClick={() => {
-                      setMenuOpen(false);
+                      setOpenPanel(undefined);
                       setShowHelp(true);
                     }}
                   >
@@ -468,7 +466,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
                     type="button"
                     role="menuitem"
                     onClick={() => {
-                      setMenuOpen(false);
+                      setOpenPanel(undefined);
                       setShowHelp(true);
                     }}
                   >

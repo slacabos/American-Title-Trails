@@ -69,12 +69,13 @@ Solid-coloured props merge into one vertex-coloured mesh per tile type
 glass's too. Night lighting swaps the sun for a cool moon and darkens the
 table; the UI switches palettes through `:root[data-time="night"]` tokens. The
 choice is stored in `localStorage`, defaults to the system dark-mode setting, and
-toggles from the HUD, the setup screen, or the `N` key.
+toggles from the HUD's settings panel, the setup screen, or the `N` key.
 
 ### Extra effects
 
-The HUD's sparkle button (or `G`) turns on optional effects; the choice is
-stored in `localStorage` and starts off. Today that is animated water: each
+The HUD's settings panel (or `G`) switches optional effects; the choice is
+stored in `localStorage` and starts on, unless the player prefers reduced
+motion. Today that is animated water: each
 river tile gets a depth mask (`paintWaterDepth`, bank to channel centre), and
 the ground shader swaps the painted water for world-space ripples that bend
 the lighting normal, glossy glints, caustics and foam at the banks. Working in
