@@ -85,7 +85,7 @@ function Instances({
     if (!mesh) return;
     const lod = library.lod.update(camera.zoom);
     mesh.visible = !part.fine || lod !== Lod.Far;
-    mesh.castShadow = part.fine ? lod === Lod.Full : true;
+    mesh.castShadow = part.glowOnly ? false : part.fine ? lod === Lod.Full : true;
     animate(mesh);
   });
   useLayoutEffect(() => {

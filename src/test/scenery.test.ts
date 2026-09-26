@@ -92,4 +92,23 @@ describe("night lighting", () => {
     expect(glowing(houses).every((material) => material.emissiveIntensity === 0)).toBe(true);
     library.dispose();
   });
+
+  it("casts a pool of light under each lamppost only at night, without a shadow of its own", () => {
+    const library = new SceneryLibrary();
+    const pools = (id: string) =>
+      library.get(tiles.find((tile) => tile.id === id)!).parts.filter((part) => part.glowOnly);
+    const lampposts = (id: string) => (LANDMARKS[id] ?? []).filter((landmark) => landmark.kind === "lamp").length;
+    const starter = pools("starter-proper");
+    expect(starter).toHaveLength(1);
+    // Two quads (four vertices each) for the starter tile's two lampposts.
+    expect(starter[0].geometry.getAttribute("position").count).toBe(lampposts("starter-proper") * 4);
+    expect(pools("mcdonalds-abbey")).toHaveLength(0);
+    expect(starter[0].material.visible).toBe(false);
+    library.setNight(true);
+    expect(starter[0].material.visible).toBe(true);
+    expect(pools("road-end")[0].material.visible).toBe(true);
+    library.setNight(false);
+    expect(starter[0].material.visible).toBe(false);
+    library.dispose();
+  });
 });

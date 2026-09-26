@@ -9,7 +9,12 @@ import { buildLandmark, LANDMARK_RADIUS, LANDMARKS } from "./landmarks";
 import { buildSpecies, type Species, speciesFor, vegetationSpots } from "./vegetation";
 import { isFine, LodTracker } from "./lod";
 
-const NIGHT_GLOW = 1.1;
+/** Windows, lamps and warehouse glass after dark: bright enough to read as lit. */
+const NIGHT_GLOW = 2;
+/** How strongly a lamppost's pool of light warms the ground at night. */
+const LAMP_POOL_OPACITY = 0.85;
+/** Diameter of a lamppost's pool of light, in tile units. */
+const LAMP_POOL_SIZE = 0.34;
 import { WarehouseComplex, warehouseLayout } from "./warehouseLayout";
 import { canonicalTile, insidePolygon, Point, ROAD_WIDTH, sceneryKey, zonePolygon } from "./tileLayout";
 
@@ -55,6 +60,8 @@ export interface SceneryPart {
   material: THREE.Material;
   /** Thin props that are hidden when zoomed out. */
   fine?: boolean;
+  /** Light cast on the ground, which must not cast a shadow of its own. */
+  glowOnly?: boolean;
 }
 export interface TileModel {
   parts: SceneryPart[];
@@ -190,9 +197,42 @@ export class SceneryLibrary {
     return material;
   }
 
+  /**
+   * A soft warm disc under each lamppost, added onto the ground at night. It
+   * stands in for a real light, which would cost every fragment on the board.
+   */
+  private lampPoolMaterial(): THREE.MeshBasicMaterial {
+    let material = this.materials.get("lamp-pool") as THREE.MeshBasicMaterial | undefined;
+    if (!material) {
+      const size = 64;
+      const data = new Uint8Array(size * size * 4);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const r = Math.min(1, Math.hypot(x + 0.5 - size / 2, y + 0.5 - size / 2) / (size / 2));
+          const i = (y * size + x) * 4;
+          data.set([255, 255, 255, Math.round(255 * (1 - r) ** 1.6)], i);
+        }
+      }
+      const texture = new THREE.DataTexture(data, size, size);
+      texture.needsUpdate = true;
+      this.textures.add(texture);
+      material = new THREE.MeshBasicMaterial({
+        map: texture,
+        color: GLOW_COLOR,
+        transparent: true,
+        opacity: LAMP_POOL_OPACITY,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        visible: this.night,
+      });
+      this.materials.set("lamp-pool", material);
+    }
+    return material;
+  }
+
   private night = false;
 
-  /** Windows, lamps and warehouse glass glow after dark. */
+  /** Windows, lamps and warehouse glass glow after dark, and lampposts light the ground. */
   setNight(night: boolean): void {
     this.night = night;
     this.water.waterNight.value = night ? 1 : 0;
@@ -200,6 +240,8 @@ export class SceneryLibrary {
       const material = this.materials.get(key) as THREE.MeshStandardMaterial | undefined;
       if (material) material.emissiveIntensity = night ? NIGHT_GLOW : 0;
     }
+    const pool = this.materials.get("lamp-pool");
+    if (pool) pool.visible = night;
   }
 
   /** Animated water is an optional extra; off, rivers keep their painted look. */
@@ -472,6 +514,19 @@ export class SceneryLibrary {
     if (painted) parts.push({ geometry: painted, material: this.paintMaterial() });
     const lit = glow.build();
     if (lit) parts.push({ geometry: lit, material: this.glowMaterial() });
+    const lamps = (LANDMARKS[base.id] ?? []).filter((landmark) => landmark.kind === "lamp");
+    if (lamps.length > 0) {
+      const pools = mergeGeometries(
+        lamps.map(({ at: [x, z] }) =>
+          place(
+            new THREE.PlaneGeometry(LAMP_POOL_SIZE, LAMP_POOL_SIZE),
+            new THREE.Vector3(x, 0.003, z),
+            new THREE.Euler(-Math.PI / 2, 0, 0),
+          ),
+        ),
+      );
+      if (pools) parts.push({ geometry: pools, material: this.lampPoolMaterial(), glowOnly: true });
+    }
     const finePainted = finePaint.build();
     if (finePainted) parts.push({ geometry: finePainted, material: this.paintMaterial(), fine: true });
     const fineLit = fineGlow.build();
