@@ -30,7 +30,7 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { PlacementGrid } from "./PlacementGrid";
 import type { CompletedCostco } from "@/rendering/completedCostcos";
 import { SCENE_PALETTE } from "@/rendering/timeOfDay";
-import { gameProgress } from "@/rendering/skyPath";
+import { gameProgress, type SkyTuning } from "@/rendering/skyPath";
 import type { CameraView } from "@/rendering/cameraView";
 import { directionKey, isTypingTarget } from "@/rendering/keyboard";
 import { applyPose, blendPose, VIEW_POSES, VIEW_TRANSITION_MS, type ViewPose } from "@/rendering/cameraPose";
@@ -47,6 +47,8 @@ export interface BoardSceneProps {
   /** The keyboard placement cursor; a pointer hover or touch selection wins. */
   cursor?: Position;
   extraVfx?: boolean;
+  /** Overrides the game's sky, for tuning the light in Storybook. */
+  sky?: SkyTuning & { progress?: number };
 }
 
 function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }) {
@@ -486,6 +488,7 @@ export function BoardScene({
   view = "tabletop",
   cursor,
   extraVfx = false,
+  sky,
 }: BoardSceneProps) {
   const palette = SCENE_PALETTE[night ? "night" : "day"];
   const { t } = useTranslations();
@@ -543,7 +546,7 @@ export function BoardScene({
   const bounds = state.board.getBounds();
   const center: [number, number] = [(bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2];
   const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) + 5;
-  const progress = gameProgress(snapshot.tiles.length, state.tileDeck.length);
+  const progress = sky?.progress ?? gameProgress(snapshot.tiles.length, state.tileDeck.length);
 
   return (
     <div className="tabletop-scene" data-testid="board-3d">
@@ -567,7 +570,7 @@ export function BoardScene({
           onTilePlace={onTilePlace}
           actions={actions}
         />
-        <Daylight center={center} span={span} night={night} progress={progress} />
+        <Daylight center={center} span={span} night={night} progress={progress} tuning={sky} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[center[0], -0.096, center[1]]} receiveShadow>
           <planeGeometry args={[300, 300]} />
           <meshStandardMaterial color={palette.table} roughness={1} />

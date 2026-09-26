@@ -32,6 +32,14 @@ const NIGHT: [Key, Key, Key] = [
   { color: "#b9c4e0", intensity: 0.85, sky: "#7d88a0", ground: "#232c30", ambient: 1.05 },
 ];
 
+/** Multipliers for trying out brighter or dimmer light, e.g. from Storybook. */
+export interface SkyTuning {
+  /** Scales the sun or moon. */
+  keyScale?: number;
+  /** Scales the ambient sky light. */
+  ambientScale?: number;
+}
+
 /** Degrees above the table: never so low that shadows smear across the board. */
 export const SKY_ELEVATION = { day: { low: 24, high: 60 }, night: { low: 26, high: 48 } } as const;
 

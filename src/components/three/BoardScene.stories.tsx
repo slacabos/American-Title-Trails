@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useState } from "react";
 import { expect, waitFor, within } from "storybook/test";
 import { BoardScene } from "./BoardScene";
 import { Game } from "@/game";
@@ -11,6 +11,7 @@ import { positionKey } from "@/rendering/tileLayout";
 import { warehouseExamples } from "@/test/fixtures/warehouseExamples";
 import { completedCostcos } from "@/rendering/completedCostcos";
 import { Tile } from "@/tile";
+import { gameProgress, skyPose } from "@/rendering/skyPath";
 
 function populatedState(count: number): GameState {
   const game = new Game(
@@ -33,13 +34,87 @@ function populatedState(count: number): GameState {
     currentTile: undefined,
   };
 }
-const meta: Meta<typeof BoardScene> = {
+/** Flat sliders for tuning the light; they fill in the board's `sky` override. */
+type BoardStoryArgs = ComponentProps<typeof BoardScene> & {
+  /** Empty follows the story's game; 0 is the first tile, 1 the last. */
+  skyProgress?: number;
+  sunBrightness: number;
+  ambientBrightness: number;
+};
+
+/** The light the sliders produce, in the numbers skyPath.ts uses. */
+function SkyReadout({
+  progress,
+  night,
+  sun,
+  ambient,
+}: {
+  progress: number;
+  night: boolean;
+  sun: number;
+  ambient: number;
+}) {
+  const pose = skyPose(progress, night);
+  const degrees = (radians: number) => Math.round((radians * 180) / Math.PI);
+  const rows: [string, string][] = [
+    ["progress", progress.toFixed(2)],
+    ["elevation", `${degrees(Math.asin(pose.direction.y))}°`],
+    ["from", `${degrees(Math.atan2(pose.direction.z, pose.direction.x))}° (0 east, 90 south)`],
+    [night ? "moon" : "sun", `${(pose.intensity * sun).toFixed(2)}  #${pose.color.getHexString()}`],
+    ["ambient", `${(pose.ambient * ambient).toFixed(2)}  #${pose.sky.getHexString()} / #${pose.ground.getHexString()}`],
+  ];
+  return (
+    <dl
+      style={{
+        position: "absolute",
+        top: 12,
+        left: 12,
+        margin: 0,
+        padding: "8px 12px",
+        display: "grid",
+        gridTemplateColumns: "auto auto",
+        gap: "2px 12px",
+        font: "12px/1.4 ui-monospace, monospace",
+        background: "rgb(255 255 255 / 0.85)",
+        color: "#1f2e27",
+        borderRadius: 8,
+      }}
+    >
+      {rows.map(([label, value]) => (
+        <div key={label} style={{ display: "contents" }}>
+          <dt>{label}</dt>
+          <dd style={{ margin: 0 }}>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+const meta: Meta<BoardStoryArgs> = {
   title: "Game/3D Tabletop",
   component: BoardScene,
   parameters: { layout: "fullscreen" },
+  argTypes: {
+    skyProgress: { control: { type: "range", min: 0, max: 1, step: 0.01 } },
+    sunBrightness: { control: { type: "range", min: 0.4, max: 1.6, step: 0.05 } },
+    ambientBrightness: { control: { type: "range", min: 0.4, max: 1.6, step: 0.05 } },
+    sky: { table: { disable: true } },
+  },
+  render: ({ skyProgress, sunBrightness, ambientBrightness, ...args }) => {
+    const progress = skyProgress ?? gameProgress(args.state.board.getAllTiles().size, args.state.tileDeck.length);
+    return (
+      <>
+        <BoardScene
+          {...args}
+          sky={{ progress: skyProgress, keyScale: sunBrightness, ambientScale: ambientBrightness }}
+        />
+        <SkyReadout progress={progress} night={!!args.night} sun={sunBrightness} ambient={ambientBrightness} />
+      </>
+    );
+  },
   decorators: [
     (Story) => (
-      <div style={{ height: "85vh", minHeight: 600 }}>
+      <div style={{ position: "relative", height: "85vh", minHeight: 600 }}>
         <Story />
       </div>
     ),
@@ -48,6 +123,8 @@ const meta: Meta<typeof BoardScene> = {
     onTilePlace: () => {},
     onUnavailable: () => {},
     state: populatedState(24),
+    sunBrightness: 1,
+    ambientBrightness: 1,
   },
 };
 export default meta;
