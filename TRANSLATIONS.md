@@ -1,194 +1,70 @@
-# Translations System
+# Translations
 
-This document explains how to use the internationalization (i18n) system in American Tile Trails.
+How user-facing text works in American Tile Trails, and what adding a language involves.
 
-## Overview
-
-The game uses a JSON-based translation system that allows for easy localization into different languages. All user-facing strings are stored in `src/translations.json` and accessed through the `useTranslations` hook.
-
-## Files Structure
+## Where text lives
 
 ```
 src/
-├── translations.json          # All translation strings
-├── hooks/
-│   └── useTranslations.ts     # Translation hook
-├── types/
-│   └── json.d.ts             # Type declarations for JSON imports
-└── examples/
-    └── translation-usage.ts   # Usage examples
+├── content/
+│   ├── translations/
+│   │   ├── en.json        # Every UI string
+│   │   └── index.ts       # Registers each language's JSON
+│   └── help/
+│       ├── en.md          # Help screen text (edit this)
+│       ├── en.ts          # Generated from en.md; don't edit by hand
+│       └── index.ts       # Registers each language's help
+└── hooks/
+    └── useTranslations.ts # t(), with {placeholder} interpolation
 ```
 
-## Usage
+English is the only language so far.
 
-### 1. Import the hook
-
-```tsx
-import useTranslations from "../hooks/useTranslations";
-```
-
-### 2. Use in your component
+## Using strings
 
 ```tsx
+import useTranslations from "@/hooks/useTranslations";
+
 const { t } = useTranslations();
 
-// Simple translation
-<h1>{t('app.title')}</h1>
-
-// Translation with variables
-<p>{t('messages.placedTile', { playerName: 'John', x: 5, y: 3 })}</p>
+<h1>{t("app.title")}</h1>
+<p>{t("messages.placedTile", { playerName: "Ada", x: 1, y: 2 })}</p>
+// "Ada placed tile at (1, 2)"
 ```
 
-## Translation Keys Structure
+- Keys are dot paths into the JSON. Placeholders use `{name}`; a placeholder with no value is left as is.
+- A missing key logs a console warning and shows the key itself, so gaps are easy to spot.
+- `t` is stable between renders unless the language changes, so it's safe in dependency arrays.
 
-The translations are organized hierarchically:
+The top-level groups in `en.json` are `app`, `setup`, `game`, `features`, `gameOver`, `scoreboard`, `activityLog`, `quickGuide`, `messages`, `errors`, `help`, `board`, `hud` and `shortcuts`. The in-game HUD mostly uses `hud`, `messages` and `shortcuts`; the setup screen uses `setup`.
 
-- `app.*` - Application-level strings (title, tagline)
-- `setup.*` - Game setup screen strings
-- `game.*` - Main game interface strings
-- `features.*` - Feature claiming strings
-- `gameOver.*` - Game over screen strings
-- `scoreboard.*` - Player scores and stats
-- `activityLog.*` - Activity log strings
-- `quickGuide.*` - Quick reference guide
-- `messages.*` - User feedback messages
-- `errors.*` - Error messages
-- `help.*` - Comprehensive help documentation
+## Adding or changing a string
 
-## Examples
+1. Add the key to `src/content/translations/en.json`, in the group for that part of the UI.
+2. Use `t("group.key")` in the component; never hard-code visible text.
+3. Name placeholders by meaning: `{playerName}` rather than `{name}`, and reuse the same names across similar messages.
 
-### Basic Usage
+## Editing the help screen
 
-```tsx
-// Before
-<h2>Game Setup</h2>
+Edit `src/content/help/en.md`, then regenerate the TypeScript module the app imports:
 
-// After
-<h2>{t('setup.gameSetup')}</h2>
+```bash
+npm run sync-help-content               # English
+node scripts/sync-help-content.js es    # Another language
 ```
 
-### With Variables
+Commit both the `.md` and the generated `.ts`.
 
-```tsx
-// Before
-<p>You have {followers} followers remaining.</p>
+## Adding a language
 
-// After
-<p>{t('features.claimHint', { followers })}</p>
-```
+The file format is ready for more languages, but the app doesn't let you switch yet. For Spanish, for example:
 
-### Player Names
+1. **Strings:** copy `en.json` to `es.json`, translate the values (not the keys or placeholders), and register it in `src/content/translations/index.ts`.
+2. **Help:** write `src/content/help/es.md`, run `node scripts/sync-help-content.js es`, and register it in `src/content/help/index.ts`.
+3. **Language type:** `useTranslations.ts` declares `type Language = "en"`. Widen it, ideally by deriving it from the registered translations.
+4. **Share the choice:** each `useTranslations()` call currently keeps its own `language` state, so `changeLanguage` only affects one component. Move the choice into shared state that's remembered. Follow the pattern the game already uses for day/night and sound (`src/rendering/timeOfDay.ts` + `src/hooks/useTimeOfDay.ts`): one `localStorage` key, plus a custom event that keeps every hook in sync. Default to the browser's language when it's supported.
+5. **Help modal:** `HelpModal.tsx` always shows `helpContent.en`. Make it use the current language.
+6. **Picker:** add a language control to the setup screen, and to the HUD if useful.
+7. **Check lengths:** translations are often longer than English. Check the setup screen, the tile dock and the scoreboard in Storybook at phone width.
 
-```tsx
-// Before
-name: i === 0 ? "You" : `Player ${i + 1}`;
-
-// After
-name: i === 0
-  ? t("setup.defaultPlayerName")
-  : t("setup.defaultPlayerNameTemplate", { number: i + 1 });
-```
-
-### Log Messages
-
-```tsx
-// Before
-addLog(`${playerName} placed tile at (${x}, ${y})`);
-
-// After
-addLog(t("messages.placedTile", { playerName, x, y }));
-```
-
-## Adding New Languages
-
-To add a new language (e.g., Spanish):
-
-1. Add the language code to the `translations.json`:
-
-```json
-{
-  "en": {
-    /* existing English translations */
-  },
-  "es": {
-    "app": {
-      "title": "Senderos de Azulejos Americanos",
-      "tagline": "Abadías de McDonald's, castillos de Costco y carreteras transcontinentales."
-    }
-    // ... rest of Spanish translations
-  }
-}
-```
-
-2. Update the `Language` type in `useTranslations.ts`:
-
-```typescript
-type Language = "en" | "es";
-```
-
-3. Add language selection UI:
-
-```tsx
-const { changeLanguage, availableLanguages } = useTranslations();
-
-<select onChange={(e) => changeLanguage(e.target.value as Language)}>
-  {availableLanguages.map((lang) => (
-    <option key={lang} value={lang}>
-      {lang.toUpperCase()}
-    </option>
-  ))}
-</select>;
-```
-
-## Variable Interpolation
-
-The system supports variable substitution using `{variableName}` syntax:
-
-```json
-{
-  "messages": {
-    "placedTile": "{playerName} placed tile at ({x}, {y})",
-    "featuresCompleted": "{count} features completed!"
-  }
-}
-```
-
-Usage:
-
-```tsx
-t("messages.placedTile", { playerName: "Alice", x: 1, y: 2 });
-// Result: "Alice placed tile at (1, 2)"
-```
-
-## Best Practices
-
-1. **Use semantic keys**: Prefer `setup.gameSetup` over `labels.gameSetup`
-2. **Group related strings**: Keep UI sections together in the hierarchy
-3. **Include context in variables**: Use descriptive variable names like `{playerName}` not `{name}`
-4. **Maintain consistency**: Use the same variable names across similar messages
-5. **Test thoroughly**: Verify that variable substitution works correctly
-6. **Handle missing translations**: The hook will warn about missing keys and return the key as fallback
-
-## Migration Strategy
-
-To migrate existing components:
-
-1. Identify all hardcoded strings
-2. Add corresponding entries to `translations.json`
-3. Replace strings with `t()` calls
-4. Test that the UI still works correctly
-5. Check console for any missing translation warnings
-
-## Performance Considerations
-
-- Translations are loaded once and cached
-- The `t()` function is memoized with `useCallback`
-- No network requests are made after initial load
-- Consider lazy loading for large translation files
-
-## Development Tips
-
-- Use browser dev tools to search for hardcoded strings
-- Add console warnings for missing translations during development
-- Consider using TypeScript string literal types for translation keys in larger projects
-- Test with longer translations to ensure UI layouts remain functional
+Some strings are built from parts, such as a feature type inside a claim label: `` t("hud.claim", { type: t(`hud.featureTypes.${type}`) }) ``. Check that the sentence still reads naturally in the new language, and give it its own key if it doesn't.

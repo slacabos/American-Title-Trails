@@ -58,12 +58,13 @@ For the full guide, see `src/content/help/en.md` (the in-app Help modal uses thi
 
 ## Technology stack
 
-- TypeScript + React 18
-- Vite + Tailwind CSS v4
+- TypeScript 6 + React 19
+- three.js with React Three Fiber for the 3D board (procedural, no model files)
+- Vite 8 + Tailwind CSS v4
 - Radix UI primitives
-- HTML5 Canvas for board rendering
-- Storybook for UI development
-- Vitest + Playwright for tests
+- Web Audio API for synthesized sound
+- Storybook 10 for UI development
+- Vitest + Playwright for tests, with GitHub Actions CI
 
 ## Development commands
 
@@ -84,8 +85,9 @@ npm run preview
 npx tsc --noEmit
 
 # Tests
-npm run test
+npm run test            # Unit tests, including the AI balance simulation
 npm run test:ui
+npm run test:browser    # Playwright end-to-end tests
 npm run test:coverage
 
 # Linting
@@ -107,7 +109,7 @@ npm run sync-help-content en
 
 ## Localization
 
-UI strings live in `src/content/translations/en.json` and are accessed via `src/hooks/useTranslations.ts`. The help content is markdown in `src/content/help/en.md` and can be synced to TS with `npm run sync-help-content en`.
+UI strings live in `src/content/translations/en.json` and are accessed via `src/hooks/useTranslations.ts`. The help content is markdown in `src/content/help/en.md` and can be synced to TS with `npm run sync-help-content en`. See [TRANSLATIONS.md](TRANSLATIONS.md) for adding a language.
 
 ### 3D tabletop
 
@@ -126,9 +128,10 @@ responding, the board shows a **Try again** button and the game state is kept.
 - **Keyboard:** arrow keys or `WASD` move a placement cursor between legal
   spaces and `Enter` places the tile; `E` and `Q` rotate clockwise and
   counter-clockwise. In the claim phase `Up`/`Down` (or `W`/`S`) choose a
-  feature, `Enter` or `1`–`9` claim it, and `X` skips. `+`/`-` zoom,
-  `Shift+Arrows`/`Shift+WASD` pan, `F` fits, `V` switches view, `N` toggles
-  night and `?` opens help, which lists every shortcut.
+  feature, `Enter` or `1`–`9` claim it, `X` skips, and `U` or `Ctrl/⌘+Z`
+  takes the tile back. `+`/`-` zoom, `Shift+Arrows`/`Shift+WASD` pan, `F`
+  fits, `V` switches view, `N` toggles night, `M` mutes sound and `?` opens
+  help, which lists every shortcut.
 - **Rotation:** use the rotation buttons or the keys above before placing.
 - **Claims:** hover or focus a claim button to highlight its feature. Standing
   pawns mark ordinary followers; reclining pawns mark farmers. Gold signs mark
