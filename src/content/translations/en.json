@@ -369,14 +369,14 @@
   },
   "hud": {
     "yourTile": "Your tile",
-    "rotateCw": "Rotate clockwise (R)",
-    "rotateCcw": "Rotate counter-clockwise (Shift+R)",
+    "rotateCw": "Rotate clockwise (E)",
+    "rotateCcw": "Rotate counter-clockwise (Q)",
     "placeHint3d": "Click a green space to place · Drag to pan · Scroll or pinch to zoom",
     "claimTitle": "Claim a feature",
     "claimHint": "Place a follower to score when it completes · {count} left",
     "claim": "Claim {type}",
     "placeFarmer": "Place farmer",
-    "skip": "Skip (S)",
+    "skip": "Skip (X)",
     "thinking": "Thinking…",
     "waitingFor": "Waiting for {name}…",
     "scores": "Scores",
@@ -399,7 +399,7 @@
     },
     "switchToNight": "Switch to night",
     "switchToDay": "Switch to day",
-    "keyboardHint": "Arrows + Enter to place · R rotate · ? all keys",
+    "keyboardHint": "Arrows/WASD + Enter to place · Q/E rotate · ? all keys",
     "shortcuts": "Keyboard shortcuts"
   },
   "shortcuts": {
@@ -417,6 +417,12 @@
     "view": "Switch between Tabletop and Drone",
     "night": "Switch day / night",
     "cancel": "Clear the cursor, close menus",
-    "help": "Show or hide help"
+    "help": "Show or hide help",
+    "groups": {
+      "placing": "Placing tiles",
+      "claiming": "Claiming",
+      "camera": "Camera",
+      "general": "General"
+    }
   }
 }

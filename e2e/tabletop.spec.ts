@@ -418,13 +418,13 @@ test("the production game keeps its current tile when switching camera views", a
   await page.waitForTimeout(300);
   const preview = page.locator(".tabletop-tile-preview canvas");
   const original = await preview.screenshot();
-  await page.getByTitle("Rotate clockwise (R)", { exact: true }).click();
+  await page.getByTitle("Rotate clockwise (E)", { exact: true }).click();
   await expect.poll(async () => (await preview.screenshot()).equals(original)).toBe(false);
-  await page.getByTitle("Rotate counter-clockwise (Shift+R)", { exact: true }).click();
+  await page.getByTitle("Rotate counter-clockwise (Q)", { exact: true }).click();
   await expect.poll(async () => (await preview.screenshot()).equals(original)).toBe(true);
-  await page.keyboard.press("r");
+  await page.keyboard.press("e");
   await expect.poll(async () => (await preview.screenshot()).equals(original)).toBe(false);
-  await page.keyboard.press("Shift+R");
+  await page.keyboard.press("q");
   await expect.poll(async () => (await preview.screenshot()).equals(original)).toBe(true);
   await page.screenshot({
     path: "test-results/tabletop-game.png",
@@ -476,7 +476,7 @@ test("a whole turn can be played from the keyboard", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page.getByText("1/62 tiles")).toBeVisible();
   // Claim with the keyboard if offered, otherwise the turn has already passed.
-  if (await page.getByText("Claim a feature").isVisible()) await page.keyboard.press("s");
+  if (await page.getByText("Claim a feature").isVisible()) await page.keyboard.press("x");
   await expect(page.getByText(/Waiting for|Thinking/).first()).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -2,10 +2,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   activatesOnEnter,
   arrowDirection,
+  directionKey,
   isArrowKey,
   isTypingTarget,
   nearestLegal,
   nextLegal,
+  SHORTCUT_GROUPS,
   SHORTCUTS,
 } from "@/rendering/keyboard";
 import en from "@/content/translations/en.json";
@@ -32,6 +34,14 @@ describe("arrow directions", () => {
     const [rx, ry] = arrowDirection("ArrowRight", "tabletop");
     expect(rx).toBeCloseTo(Math.SQRT1_2);
     expect(ry).toBeCloseTo(-Math.SQRT1_2);
+  });
+
+  it("map WASD onto the arrows, in either case", () => {
+    expect(["w", "a", "s", "d", "W", "D"].map(directionKey)).toEqual([
+      "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp", "ArrowRight",
+    ]);
+    expect(directionKey("ArrowLeft")).toBe("ArrowLeft");
+    expect(["e", "q", "x", "Enter"].map(directionKey)).toEqual([undefined, undefined, undefined, undefined]);
   });
 
   it("recognise only the four arrows", () => {
@@ -90,8 +100,18 @@ describe("focus guards", () => {
 });
 
 describe("shortcut list", () => {
-  it("has a translated label for every shortcut", () => {
-    const labels = en.shortcuts as Record<string, string>;
-    for (const { action } of SHORTCUTS) expect(labels[action.split(".")[1]], action).toBeTruthy();
+  const label = (key: string) =>
+    key.split(".").reduce<unknown>((node, part) => (node as Record<string, unknown>)?.[part], en);
+
+  it("has a translated title for every group and label for every shortcut", () => {
+    for (const group of SHORTCUT_GROUPS) {
+      expect(typeof label(group.title), group.title).toBe("string");
+      for (const { action } of group.shortcuts) expect(typeof label(action), action).toBe("string");
+    }
+  });
+
+  it("lists every shortcut exactly once", () => {
+    const actions = SHORTCUTS.map(({ action }) => action);
+    expect(new Set(actions).size).toBe(actions.length);
   });
 });

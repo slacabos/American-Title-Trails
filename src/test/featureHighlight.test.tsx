@@ -36,7 +36,7 @@ const players = [
 
 function placeTile() {
   for (let rotation = 0; rotation < 4 && screen.getByRole("button", { name: "Place test tile" }).hasAttribute("disabled"); rotation++) {
-    fireEvent.click(screen.getByTitle("Rotate clockwise (R)"));
+    fireEvent.click(screen.getByTitle("Rotate clockwise (E)"));
   }
   expect(screen.getByRole("button", { name: "Place test tile" })).toBeEnabled();
   fireEvent.click(screen.getByRole("button", { name: "Place test tile" }));
@@ -57,7 +57,7 @@ describe("claim highlight lifetime", () => {
     expect(screen.getByTestId("highlight")).toHaveTextContent("costco_");
     // Removing a focused/hovered node need not dispatch blur or mouseleave.
     if (action === "claim") fireEvent.click(button!);
-    else fireEvent.keyDown(window, { key: "s" });
+    else fireEvent.keyDown(window, { key: "x" });
     expect(screen.getByTestId("highlight")).toHaveTextContent("none");
     placeTile();
     expect(screen.getByTestId("highlight")).toHaveTextContent("none");

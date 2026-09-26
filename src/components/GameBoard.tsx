@@ -14,7 +14,7 @@ import { readCameraView, saveCameraView, type CameraView } from "@/rendering/cam
 import {
   activatesOnEnter,
   arrowDirection,
-  isArrowKey,
+  directionKey,
   isTypingTarget,
   nearestLegal,
   nextLegal,
@@ -201,20 +201,22 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       const claiming = human && phase === GamePhase.CLAIM_FEATURE;
       const modified = e.ctrlKey || e.metaKey || e.altKey;
 
-      // Shift+arrows pan the camera; the board scene handles those.
-      if (isArrowKey(e.key)) {
+      // Arrows and WASD move the cursor or the claim choice. With Shift they
+      // pan the camera, which the board scene handles.
+      const direction = directionKey(e.key);
+      if (direction) {
         if (modified || e.shiftKey) return;
         if (placing && legal.length) {
           e.preventDefault();
           const position = cursor
-            ? nextLegal(cursor, legal, arrowDirection(e.key, view))
+            ? nextLegal(cursor, legal, arrowDirection(direction, view))
             : nearestLegal(legal, gameState.lastPlacedPosition)!;
           setCursorAt({ turn: turnKey, position });
-        } else if (claiming && claimableFeatures.length && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        } else if (claiming && claimableFeatures.length && (direction === "ArrowUp" || direction === "ArrowDown")) {
           e.preventDefault();
           const count = claimableFeatures.length;
           const index = claimableFeatures.findIndex((feature) => sameFeature(feature, highlightedFeature));
-          const step = e.key === "ArrowDown" ? 1 : -1;
+          const step = direction === "ArrowDown" ? 1 : -1;
           const next = index < 0 ? (step > 0 ? 0 : count - 1) : (index + step + count) % count;
           setHighlightedFeature(claimableFeatures[next]);
         }
@@ -242,17 +244,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       }
 
       switch (e.key.toLowerCase()) {
-        case "r":
-          if (e.shiftKey) handleRotateCounterClockwise();
-          else handleRotateClockwise();
-          break;
         case "e":
           handleRotateClockwise();
           break;
         case "q":
           handleRotateCounterClockwise();
           break;
-        case "s":
+        case "x":
           if (claiming) handleSkipClaim();
           break;
         case "n":

@@ -119,10 +119,11 @@ responding, the board shows a **Try again** button and the game state is kept.
 - **Tablet:** drag to pan or pinch to zoom. Tap a legal space to preview, then
   press **Place tile**; **Cancel** dismisses the preview. A light grid fades into
   the tabletop around the board, with stronger outlines for legal placements.
-- **Keyboard:** arrow keys move a placement cursor between legal spaces and
-  `Enter` places the tile; `R`/`E` and `Shift+R`/`Q` rotate. In the claim phase
-  `Up`/`Down` choose a feature, `Enter` or `1`–`9` claim it, and `S` skips.
-  `+`/`-` zoom, `Shift+Arrows` pan, `F` fits, `V` switches view, `N` toggles
+- **Keyboard:** arrow keys or `WASD` move a placement cursor between legal
+  spaces and `Enter` places the tile; `E` and `Q` rotate clockwise and
+  counter-clockwise. In the claim phase `Up`/`Down` (or `W`/`S`) choose a
+  feature, `Enter` or `1`–`9` claim it, and `X` skips. `+`/`-` zoom,
+  `Shift+Arrows`/`Shift+WASD` pan, `F` fits, `V` switches view, `N` toggles
   night and `?` opens help, which lists every shortcut.
 - **Rotation:** use the rotation buttons or the keys above before placing.
 - **Claims:** hover or focus a claim button to highlight its feature. Standing

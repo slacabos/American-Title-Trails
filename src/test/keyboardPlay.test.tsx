@@ -83,7 +83,7 @@ describe("keyboard play", () => {
       aimCursor();
       key("Enter");
       if (screen.queryAllByRole("button", { name: /^(Claim|Place farmer)/ }).length) break;
-      key("s");
+      key("x");
     }
     const options = screen.getAllByRole("button", { name: /^(Claim|Place farmer)/ });
     key("ArrowDown");
@@ -106,7 +106,7 @@ describe("keyboard play", () => {
       aimCursor();
       key("Enter");
       if (screen.queryAllByRole("button", { name: /^(Claim|Place farmer)/ }).length) break;
-      key("s");
+      key("x");
     }
     key("1");
     expect(screen.queryAllByRole("button", { name: /^(Claim|Place farmer)/ })).toHaveLength(0);
@@ -123,7 +123,7 @@ describe("keyboard play", () => {
     expect(text("cursor")).toBe("none");
   });
 
-  it("leaves keys alone while help is open, and Ctrl+R to the browser", () => {
+  it("leaves keys alone while help is open, and Ctrl+letter to the browser", () => {
     render(<GameBoard players={players} onReset={() => {}} />);
     key("?");
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -133,18 +133,60 @@ describe("keyboard play", () => {
     expect(text("tiles")).toBe("1");
     key("?");
     const before = legal().join(" ");
-    key("r", { ctrlKey: true });
+    key("e", { ctrlKey: true });
     expect(legal().join(" ")).toBe(before);
   });
 
   it("lets a focused button keep Enter", () => {
     render(<GameBoard players={players} onReset={() => {}} />);
     aimCursor();
-    const rotate = screen.getByTitle("Rotate clockwise (R)");
+    const rotate = screen.getByTitle("Rotate clockwise (E)");
     rotate.focus();
     act(() => {
       fireEvent.keyDown(rotate, { key: "Enter" });
     });
     expect(text("tiles")).toBe("1");
+  });
+
+  it("moves the cursor with WASD exactly like the arrows", () => {
+    render(<GameBoard players={players} onReset={() => {}} />);
+    aimCursor();
+    const route = (keys: string[]) =>
+      keys.map((k) => {
+        key(k);
+        return text("cursor");
+      });
+    const byArrows = route(["ArrowRight", "ArrowUp", "ArrowLeft", "ArrowDown"]);
+    key("Escape");
+    key("ArrowDown");
+    const byWasd = route(["d", "w", "a", "s"]);
+    expect(byWasd).toEqual(byArrows);
+    // With Shift, WASD pans the camera and leaves the cursor alone.
+    const cursor = text("cursor");
+    key("W", { shiftKey: true });
+    expect(text("cursor")).toBe(cursor);
+  });
+
+  it("rotates with Q and E only, and skips claims with X", () => {
+    render(<GameBoard players={players} onReset={() => {}} />);
+    const turn = () => legal().join(" ");
+    const start = turn();
+    key("r");
+    expect(turn()).toBe(start);
+    key("e");
+    key("q");
+    expect(turn()).toBe(start);
+    for (let t = 0; t < 20; t++) {
+      aimCursor();
+      key("Enter");
+      if (screen.queryAllByRole("button", { name: /^(Claim|Place farmer)/ }).length) break;
+      key("x");
+    }
+    const options = screen.getAllByRole("button", { name: /^(Claim|Place farmer)/ });
+    key("s");
+    expect(options[0]).toHaveAttribute("aria-current", "true");
+    key("x");
+    expect(screen.queryAllByRole("button", { name: /^(Claim|Place farmer)/ })).toHaveLength(0);
+    expect(screen.getByText(/skipped claiming/)).toBeInTheDocument();
   });
 });

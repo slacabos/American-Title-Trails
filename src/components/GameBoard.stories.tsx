@@ -34,10 +34,10 @@ export const SceneryGame: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await canvas.findByTestId("board-3d");
-    await userEvent.click(canvas.getByTitle("Rotate clockwise (R)"));
-    await userEvent.click(canvas.getByTitle("Rotate counter-clockwise (Shift+R)"));
-    await userEvent.keyboard("r");
-    await userEvent.keyboard("{Shift>}r{/Shift}");
+    await userEvent.click(canvas.getByTitle("Rotate clockwise (E)"));
+    await userEvent.click(canvas.getByTitle("Rotate counter-clockwise (Q)"));
+    await userEvent.keyboard("e");
+    await userEvent.keyboard("q");
     await userEvent.click(canvas.getByRole("button", { name: "Drone" }));
     await expect(canvas.getByRole("button", { name: "Drone" })).toHaveAttribute("aria-pressed", "true");
     await userEvent.click(canvas.getByRole("button", { name: "Tabletop" }));

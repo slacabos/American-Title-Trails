@@ -5,23 +5,63 @@ export type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 export const isArrowKey = (key: string): key is ArrowKey =>
   key === "ArrowUp" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowRight";
 
-/** Every shortcut, in the order the help screen lists them. */
-export const SHORTCUTS: { keys: string[]; action: string }[] = [
-  { keys: ["←", "↑", "→", "↓"], action: "shortcuts.moveCursor" },
-  { keys: ["Enter", "Space"], action: "shortcuts.place" },
-  { keys: ["R", "E"], action: "shortcuts.rotateClockwise" },
-  { keys: ["Shift+R", "Q"], action: "shortcuts.rotateCounterClockwise" },
-  { keys: ["↑", "↓", "1–9"], action: "shortcuts.chooseClaim" },
-  { keys: ["Enter"], action: "shortcuts.claim" },
-  { keys: ["S"], action: "shortcuts.skip" },
-  { keys: ["+", "−"], action: "shortcuts.zoom" },
-  { keys: ["Shift+Arrows"], action: "shortcuts.pan" },
-  { keys: ["F"], action: "shortcuts.fit" },
-  { keys: ["V"], action: "shortcuts.view" },
-  { keys: ["N"], action: "shortcuts.night" },
-  { keys: ["Esc"], action: "shortcuts.cancel" },
-  { keys: ["?"], action: "shortcuts.help" },
+const WASD: Record<string, ArrowKey> = { w: "ArrowUp", a: "ArrowLeft", s: "ArrowDown", d: "ArrowRight" };
+
+/** The direction an arrow key or its WASD twin points, if it is one. */
+export function directionKey(key: string): ArrowKey | undefined {
+  return isArrowKey(key) ? key : WASD[key.toLowerCase()];
+}
+
+export interface Shortcut {
+  /** Keys to show, one line per group of alternatives. */
+  keys: string[][];
+  /** A key held with every key in `keys`, shown once in front of them. */
+  modifier?: string;
+  action: string;
+}
+
+const DIRECTIONS = [["←", "↑", "→", "↓"], ["W", "A", "S", "D"]];
+
+/** Every shortcut, grouped the way the help screen shows them. */
+export const SHORTCUT_GROUPS: { title: string; shortcuts: Shortcut[] }[] = [
+  {
+    title: "shortcuts.groups.placing",
+    shortcuts: [
+      { keys: DIRECTIONS, action: "shortcuts.moveCursor" },
+      { keys: [["Enter", "Space"]], action: "shortcuts.place" },
+      { keys: [["E"]], action: "shortcuts.rotateClockwise" },
+      { keys: [["Q"]], action: "shortcuts.rotateCounterClockwise" },
+    ],
+  },
+  {
+    title: "shortcuts.groups.claiming",
+    shortcuts: [
+      { keys: [["↑", "↓", "W", "S"], ["1–9"]], action: "shortcuts.chooseClaim" },
+      { keys: [["Enter"]], action: "shortcuts.claim" },
+      { keys: [["X"]], action: "shortcuts.skip" },
+    ],
+  },
+  {
+    title: "shortcuts.groups.camera",
+    shortcuts: [
+      { modifier: "Shift", keys: DIRECTIONS, action: "shortcuts.pan" },
+      { keys: [["+", "−"]], action: "shortcuts.zoom" },
+      { keys: [["F"]], action: "shortcuts.fit" },
+      { keys: [["V"]], action: "shortcuts.view" },
+    ],
+  },
+  {
+    title: "shortcuts.groups.general",
+    shortcuts: [
+      { keys: [["N"]], action: "shortcuts.night" },
+      { keys: [["Esc"]], action: "shortcuts.cancel" },
+      { keys: [["?"]], action: "shortcuts.help" },
+    ],
+  },
 ];
+
+/** Every shortcut in help-screen order. */
+export const SHORTCUTS: Shortcut[] = SHORTCUT_GROUPS.flatMap((group) => group.shortcuts);
 
 type Direction = readonly [number, number];
 const SQRT_HALF = Math.SQRT1_2;

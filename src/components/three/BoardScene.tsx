@@ -36,7 +36,7 @@ import { PlacementGrid } from "./PlacementGrid";
 import type { CompletedCostco } from "@/rendering/completedCostcos";
 import { SCENE_PALETTE } from "@/rendering/timeOfDay";
 import type { CameraView } from "@/rendering/cameraView";
-import { isArrowKey, isTypingTarget } from "@/rendering/keyboard";
+import { directionKey, isTypingTarget } from "@/rendering/keyboard";
 import {
   applyPose,
   blendPose,
@@ -456,10 +456,11 @@ export function BoardScene({
       if (event.key === "+" || event.key === "=") camera.zoom(1.2);
       else if (event.key === "-" || event.key === "_") camera.zoom(1 / 1.2);
       else if (event.key === "f" || event.key === "F") camera.fit();
-      else if (event.shiftKey && isArrowKey(event.key)) {
+      else if (event.shiftKey && directionKey(event.key)) {
         event.preventDefault();
-        const right = event.key === "ArrowRight" ? PAN_STEP : event.key === "ArrowLeft" ? -PAN_STEP : 0;
-        const up = event.key === "ArrowUp" ? PAN_STEP : event.key === "ArrowDown" ? -PAN_STEP : 0;
+        const direction = directionKey(event.key);
+        const right = direction === "ArrowRight" ? PAN_STEP : direction === "ArrowLeft" ? -PAN_STEP : 0;
+        const up = direction === "ArrowUp" ? PAN_STEP : direction === "ArrowDown" ? -PAN_STEP : 0;
         camera.pan(right, up);
       }
     };
