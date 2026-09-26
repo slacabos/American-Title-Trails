@@ -429,6 +429,7 @@
     "view": "Switch between Tabletop and Drone",
     "night": "Switch day / night",
     "sound": "Sound on / off",
+    "effects": "Extra effects on / off",
     "cancel": "Clear the cursor, close menus",
     "help": "Show or hide help",
     "groups": {

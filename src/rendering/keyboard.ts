@@ -59,6 +59,7 @@ export const SHORTCUT_GROUPS: { title: string; shortcuts: Shortcut[] }[] = [
     shortcuts: [
       { keys: [["N"]], action: "shortcuts.night" },
       { keys: [["M"]], action: "shortcuts.sound" },
+      { keys: [["G"]], action: "shortcuts.effects" },
       { keys: [["Esc"]], action: "shortcuts.cancel" },
       { keys: [["?"]], action: "shortcuts.help" },
     ],

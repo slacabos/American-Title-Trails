@@ -10,7 +10,7 @@ export function VfxToggle({ enabled, onToggle }: { enabled: boolean; onToggle: (
       type="button"
       className="hud-icon-button hud-vfx-toggle"
       aria-label={label}
-      title={`${label} (V)`}
+      title={`${label} (G)`}
       aria-pressed={enabled}
       onClick={onToggle}
     >

@@ -69,8 +69,6 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
   const sound = useSound();
   useGameSounds(gameState, sound.play);
   const { extraVfx, toggle: toggleVfx } = useExtraVfx();
-  const toggleVfxRef = useRef(toggleVfx);
-  toggleVfxRef.current = toggleVfx;
   const stageRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLElement>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -353,9 +351,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
         case "v":
           handleViewChange(view === "drone" ? "tabletop" : "drone");
           break;
-        case "v":
-        case "V":
-          toggleVfxRef.current();
+        case "g":
+          toggleVfx();
           break;
         case "escape":
           setMenuOpen(false);

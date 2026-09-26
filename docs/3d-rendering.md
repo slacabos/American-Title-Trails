@@ -73,7 +73,7 @@ toggles from the HUD, the setup screen, or the `N` key.
 
 ### Extra effects
 
-The HUD's sparkle button (or `V`) turns on optional effects; the choice is
+The HUD's sparkle button (or `G`) turns on optional effects; the choice is
 stored in `localStorage` and starts off. Today that is animated water: each
 river tile gets a depth mask (`paintWaterDepth`, bank to channel centre), and
 the ground shader swaps the painted water for world-space ripples that bend
