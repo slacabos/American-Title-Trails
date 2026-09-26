@@ -29,8 +29,10 @@ jobs:
       - run: npm run format:check
       - run: npx tsc --noEmit
       - run: npm run lint
-      # Includes the AI balance simulation.
-      - run: npm test
+      # The AI balance simulation is left out: the Hard and Expert AIs search
+      # on a time budget, so on slow shared runners it measures the machine.
+      # Run it locally with `npm run test:ai-sim` when tuning the AI.
+      - run: npx vitest run --exclude src/test/ai.sim.test.ts
       - run: npm run build
 
   browser:
