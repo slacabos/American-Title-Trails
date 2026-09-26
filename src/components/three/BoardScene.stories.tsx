@@ -89,6 +89,34 @@ export const TileLanding: Story = {
     );
   },
 };
+// Each point of the game is played out once from the same seed, then reused.
+const statesByTiles = new Map<number, GameState>();
+let deckSize: number | undefined;
+function stateAtProgress(progress: number): GameState {
+  deckSize ??= populatedState(Infinity).board.getAllTiles().size;
+  const tiles = Math.max(1, Math.round(progress * deckSize));
+  if (!statesByTiles.has(tiles)) statesByTiles.set(tiles, populatedState(tiles));
+  return statesByTiles.get(tiles)!;
+}
+
+/**
+ * Drag through a whole game: the board grows tile by tile and the sun (or the
+ * moon, at night) moves with it, as it would while playing.
+ */
+export const GameProgress: StoryObj<{ progress: number; night: boolean; extraVfx: boolean }> = {
+  args: { progress: 0.5, night: false, extraVfx: false },
+  argTypes: { progress: { control: { type: "range", min: 0, max: 1, step: 0.01 } } },
+  render: ({ progress, night, extraVfx }) => (
+    <BoardScene
+      state={stateAtProgress(progress)}
+      onTilePlace={() => {}}
+      onUnavailable={() => {}}
+      night={night}
+      extraVfx={extraVfx}
+    />
+  ),
+};
+
 export const FullDeck: Story = { args: { state: populatedState(Infinity) } };
 export const DroneView: Story = { args: { state: populatedState(Infinity), view: "drone" } };
 
@@ -153,7 +181,9 @@ export const AllTilesAndRotations: Story = {
       board: gallery,
       lastPlacedPosition: undefined,
     },
+    skyProgress: 0.5,
   },
+  argTypes: { skyProgress: { control: { type: "range", min: 0, max: 1, step: 0.01 } } },
   parameters: {
     docs: {
       description: {

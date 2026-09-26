@@ -13,16 +13,16 @@ const params = new URLSearchParams(location.search);
 const night = params.has("night");
 const extraVfx = params.has("vfx");
 document.documentElement.dataset.time = night ? "night" : "day";
+// `?full` plays the whole deck; `?turns=N` plays N turns, e.g. to reach mid-game.
+const turns = params.has("full") ? 500 : Number(params.get("turns") ?? 0);
 const game = new Game(
   [
-    { id: "p1", name: "One", color: "#437eaf", isAI: params.has("full") },
-    { id: "p2", name: "Two", color: "#d76543", isAI: params.has("full") },
+    { id: "p1", name: "One", color: "#437eaf", isAI: turns > 0 },
+    { id: "p2", name: "Two", color: "#d76543", isAI: turns > 0 },
   ],
   { seed: Number(params.get("seed") ?? 17) },
 );
-if (params.has("full")) {
-  for (let step = 0; step < 500 && !game.getState().isGameOver; step++) game.processAITurn();
-}
+for (let step = 0; step < turns && !game.getState().isGameOver; step++) game.processAITurn();
 function Harness() {
   const [state, setState] = useState(game.getState());
   const [view, setView] = useState<CameraView>(readCameraView);

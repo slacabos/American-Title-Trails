@@ -66,10 +66,32 @@ placement ghost and the tile preview always show meadow.
 Solid-coloured props merge into one vertex-coloured mesh per tile type
 (`paint.ts`). A second mesh holds windows and lamps. At night,
 `SceneryLibrary.setNight()` turns on their emissive glow, and the warehouse
-glass's too. Night lighting swaps the sun for a cool moon and darkens the
-table; the UI switches palettes through `:root[data-time="night"]` tokens. The
-choice is stored in `localStorage`, defaults to the system dark-mode setting, and
-toggles from the HUD's settings panel, the setup screen, or the `N` key.
+glass's too, and each lamppost casts a soft warm pool of light on the ground (an
+additive disc, cheaper than a real light). Night lighting swaps the sun for a
+cool moon and darkens the table; the UI switches palettes through
+`:root[data-time="night"]` tokens. The choice is stored in `localStorage`,
+defaults to the system dark-mode setting, and toggles from the HUD's settings
+panel, the setup screen, or the `N` key.
+
+### Sun, moon and grounding shade
+
+The key light follows the game (`skyPose` in `skyPath.ts`). Progress is the
+share of the deck on the board, so a resumed game gets the same sky. The sun
+rises in the east (+x) at the first tile, crosses the south (+z) at midday and
+sets in the west as the deck runs out. Its colour runs from soft morning light
+through white midday to golden hour. At night the moon makes the same crossing,
+lower, cooler and dimmer. A night game opens at dusk and ends at dawn, in soft
+mauve light under a violet sky; the twilight eases out quickly, so moonlight
+fills the middle. Elevation never drops below about 24°, so shadows stay on the
+board. The light moves a little with each placed tile and does not animate, so
+an idle board stays idle. The tile preview keeps the midday light.
+
+Props are shaded where they meet the ground, at no runtime cost.
+`PaintBatch` darkens vertex colours near y = 0 (`groundShade` in `paint.ts`),
+leaving the tile's slab below the surface alone. Each tile type's ground
+texture also gets a soft contact shadow under every plant spot and landmark
+(`paintContactShadows` in `scenery.ts`). It is painted into the colour map only,
+so the regional tint still applies over it.
 
 ### Extra effects
 

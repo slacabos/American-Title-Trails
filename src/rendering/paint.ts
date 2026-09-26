@@ -1,6 +1,22 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
+/** How much lighter a prop's base is than its top: 1 means no darkening. */
+export const GROUND_SHADE = 0.74;
+/** Height, in tile units, over which a prop climbs out of its grounding shade. */
+const SHADE_HEIGHT = 0.045;
+
+/**
+ * Baked ambient occlusion: props darken where they meet the ground, so they sit
+ * on the tile instead of floating. The tile's own slab, below the surface, keeps
+ * its colour.
+ */
+export function groundShade(y: number): number {
+  if (y < -0.001) return 1;
+  const t = Math.min(1, y / SHADE_HEIGHT);
+  return GROUND_SHADE + (1 - GROUND_SHADE) * t * t * (3 - 2 * t);
+}
+
 /**
  * Solid-coloured props merge into one vertex-coloured mesh per tile type, so
  * adding a prop or a colour never adds a draw call.
@@ -8,7 +24,11 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 export class PaintBatch {
   private geometries: THREE.BufferGeometry[] = [];
 
-  /** Omit `color` to keep a geometry's existing vertex colours. */
+  /**
+   * Omit `color` to keep a geometry's existing vertex colours, including their
+   * grounding shade. Positions must already be in tile space, with the surface
+   * at y = 0.
+   */
   add(geometry: THREE.BufferGeometry, color?: string): void {
     // Mixed indexed (boxes) and non-indexed (icosahedra) geometry cannot merge.
     const flat = geometry.index ? geometry.toNonIndexed() : geometry;
@@ -24,11 +44,13 @@ export class PaintBatch {
       return;
     }
     const tint = new THREE.Color(color ?? "#ffffff");
-    const colors = new Float32Array(flat.getAttribute("position").count * 3);
-    for (let i = 0; i < colors.length; i += 3) {
-      colors[i] = tint.r;
-      colors[i + 1] = tint.g;
-      colors[i + 2] = tint.b;
+    const position = flat.getAttribute("position");
+    const colors = new Float32Array(position.count * 3);
+    for (let i = 0; i < position.count; i++) {
+      const shade = groundShade(position.getY(i));
+      colors[i * 3] = tint.r * shade;
+      colors[i * 3 + 1] = tint.g * shade;
+      colors[i * 3 + 2] = tint.b * shade;
     }
     flat.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
     this.geometries.push(flat);
