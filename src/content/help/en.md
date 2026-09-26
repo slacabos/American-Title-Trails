@@ -6,7 +6,7 @@
 
 ## 🌟 Overview
 
-American Title Trails is a tile-placement strategy game inspired by Carcassonne, set in the American landscape. Players take turns placing tiles to build roads, Costco shopping areas, and McDonald's restaurants while claiming features with followers to score points.
+American Tile Trails is a tile-placement strategy game inspired by Carcassonne, set in the American landscape. Players take turns placing tiles to build roads, Costco shopping areas, and McDonald's restaurants while claiming features with followers to score points.
 
 ---
 

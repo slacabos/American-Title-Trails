@@ -1,6 +1,6 @@
 # Translations System
 
-This document explains how to use the internationalization (i18n) system in American Title Trails.
+This document explains how to use the internationalization (i18n) system in American Tile Trails.
 
 ## Overview
 

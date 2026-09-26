@@ -1,5 +1,5 @@
 /**
- * AI Strategy interface and types for American Title Trails.
+ * AI Strategy interface and types for American Tile Trails.
  *
  * This module defines the contract that all AI implementations must follow,
  * enabling a strategy pattern for different difficulty levels.

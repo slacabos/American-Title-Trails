@@ -1,5 +1,5 @@
 /**
- * AI module exports for American Title Trails.
+ * AI module exports for American Tile Trails.
  *
  * Provides AI strategies at different difficulty levels
  * using the strategy pattern.
