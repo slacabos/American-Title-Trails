@@ -25,6 +25,8 @@ import SoundToggle from "./hud/SoundToggle";
 import useTimeOfDay from "@/hooks/useTimeOfDay";
 import useSound from "@/hooks/useSound";
 import useGameSounds from "@/hooks/useGameSounds";
+import VfxToggle from "./hud/VfxToggle";
+import useExtraVfx from "@/hooks/useExtraVfx";
 import { CircleQuestionMark, Keyboard, Menu, RotateCcw } from "lucide-react";
 import { clearSavedGame, restoreGame, saveGame, type SavedGame } from "@/persistence/savedGame";
 
@@ -66,6 +68,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
   const { night, toggle: toggleNight } = useTimeOfDay();
   const sound = useSound();
   useGameSounds(gameState, sound.play);
+  const { extraVfx, toggle: toggleVfx } = useExtraVfx();
+  const toggleVfxRef = useRef(toggleVfx);
+  toggleVfxRef.current = toggleVfx;
   const stageRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLElement>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -248,7 +253,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
   // When a rotation makes its spot illegal it snaps to the nearest legal one.
   const turnKey = `${gameState.turnNumber}:${phase}:${currentPlayerIndex}`;
   const legal = useMemo(() => boardSnapshot(gameState).legal, [gameState]);
-  const [cursorAt, setCursorAt] = useState<{ turn: string; position: Position }>();
+  const [cursorAt, setCursorAt] = useState<{
+    turn: string;
+    position: Position;
+  }>();
   const cursor =
     cursorAt?.turn !== turnKey
       ? undefined
@@ -345,6 +353,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
         case "v":
           handleViewChange(view === "drone" ? "tabletop" : "drone");
           break;
+        case "v":
+        case "V":
+          toggleVfxRef.current();
+          break;
         case "escape":
           setMenuOpen(false);
           setCursorAt(undefined);
@@ -394,6 +406,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
         highlightedFeature={highlightedFeature}
         cursor={cursor}
         night={night}
+        extraVfx={extraVfx}
       />
 
       <div className="hud">
@@ -409,6 +422,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
             <ViewToggle view={view} onViewChange={handleViewChange} />
             <TimeToggle night={night} onToggle={toggleNight} />
             <SoundToggle enabled={sound.enabled} onToggle={sound.toggle} />
+            <VfxToggle enabled={extraVfx} onToggle={toggleVfx} />
             <button
               type="button"
               className="hud-icon-button"
@@ -495,6 +509,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
             onHighlight={setHighlightedFeature}
             highlighted={highlightedFeature}
             night={night}
+            extraVfx={extraVfx}
           />
         </div>
       </div>

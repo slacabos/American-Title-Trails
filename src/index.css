@@ -418,6 +418,10 @@ body {
 .hud-icon-button:hover {
   background: var(--sage-soft);
 }
+.hud-vfx-toggle[aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
 
 .brand-chip {
   display: flex;

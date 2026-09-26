@@ -408,6 +408,8 @@
     "switchToDay": "Switch to day",
     "muteSound": "Mute sound",
     "unmuteSound": "Turn sound on",
+    "enableExtraVfx": "Turn on extra effects",
+    "disableExtraVfx": "Turn off extra effects",
     "keyboardHint": "Arrows/WASD + Enter to place · Q/E rotate · ? all keys",
     "shortcuts": "Keyboard shortcuts"
   },

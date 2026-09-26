@@ -472,6 +472,23 @@ export function NightLights({ night }: { night: boolean }) {
   return null;
 }
 
+/** Drives the animated water while extra effects are on; idle frames stay on demand otherwise. */
+export function WaterMotion({ enabled }: { enabled: boolean }) {
+  const library = useContext(LibraryContext)!;
+  const invalidate = useThree((state) => state.invalidate);
+  useLayoutEffect(() => {
+    library.setExtraVfx(enabled);
+    invalidate();
+  }, [library, enabled, invalidate]);
+  useFrame(({ clock }) => {
+    if (!enabled) return;
+    library.water.waterTime.value = clock.elapsedTime;
+    // Requesting the next frame from inside this one keeps the demand loop running.
+    invalidate();
+  });
+  return null;
+}
+
 /** Warm sun by day; a cool, dim moon at night. Shadows are cast in both. */
 export function Daylight({
   center = [0, 0],

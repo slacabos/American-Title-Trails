@@ -20,6 +20,7 @@ interface TileDockProps {
   /** The option Enter would claim, chosen with the arrow keys or the pointer. */
   highlighted?: ClaimableFeature;
   night?: boolean;
+  extraVfx?: boolean;
 }
 
 /** The current tile and whatever the active player can do with it. */
@@ -35,6 +36,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
     onHighlight,
     highlighted,
     night = false,
+    extraVfx = false,
   },
   ref,
 ) {
@@ -55,7 +57,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
       {/* The preview stays mounted through the claim phase; recreating WebGL
           contexts every turn can exhaust the device's graphics resources. */}
       <div className="tile-dock-preview" hidden={!state.currentTile}>
-        <CurrentTilePreview tile={state.currentTile} night={night} />
+        <CurrentTilePreview tile={state.currentTile} night={night} extraVfx={extraVfx} />
       </div>
       <div className="tile-dock-body">
         {state.currentTile && <div className="tile-dock-name">{state.currentTile.name}</div>}

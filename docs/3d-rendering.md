@@ -71,6 +71,18 @@ table; the UI switches palettes through `:root[data-time="night"]` tokens. The
 choice is stored in `localStorage`, defaults to the system dark-mode setting, and
 toggles from the HUD, the setup screen, or the `N` key.
 
+### Extra effects
+
+The HUD's sparkle button (or `V`) turns on optional effects; the choice is
+stored in `localStorage` and starts off. Today that is animated water: each
+river tile gets a depth mask (`paintWaterDepth`, bank to channel centre), and
+the ground shader swaps the painted water for world-space ripples that bend
+the lighting normal, glossy glints, caustics and foam at the banks. Working in
+world space keeps the pattern continuous across tiles. All ground materials
+share one set of water uniforms on the `SceneryLibrary`. `WaterMotion` advances
+the clock and requests the next frame only while effects are on, so with them
+off the canvas stays on demand rendering with the static painted water.
+
 Stored road/store claims use cardinal directions, and field claims use corners.
 They are resolved to the matching feature before placing followers. Claims match exact tile coordinates, including
 negative positions. Feature anchors deliberately avoid centroids that could sit

@@ -1,9 +1,9 @@
-import { hasRiverBridge, paintRiver, restaurantPosition, tileRoadPath } from "./riverLayout";
+import { hasRiverBridge, paintRiver, paintWaterDepth, restaurantPosition, tileRoadPath } from "./riverLayout";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { ITile } from "@/interfaces/ITile";
 import { buildWarehouses } from "./warehouseGeometry";
-import { makeRegional } from "./groundShader";
+import { createWaterUniforms, makeRegional } from "./groundShader";
 import { GLOW_COLOR, PaintBatch, place, type PropBuilder } from "./paint";
 import { buildLandmark, LANDMARKS } from "./landmarks";
 import { buildSpecies, type Species, speciesFor, vegetationSpots } from "./vegetation";
@@ -69,6 +69,8 @@ export class SceneryLibrary {
   private ghostGeometry = new Set<THREE.BufferGeometry>();
   /** Zoom tier shared by every mesh on this canvas. */
   readonly lod = new LodTracker();
+  /** Animated-water switches and clock, shared by every ground material. */
+  readonly water = createWaterUniforms();
 
   /** Board geometry is owned by its component; shared materials live here. */
   createWarehouses(layout: WarehouseComplex[]): TileModel {
@@ -193,10 +195,16 @@ export class SceneryLibrary {
   /** Windows, lamps and warehouse glass glow after dark. */
   setNight(night: boolean): void {
     this.night = night;
+    this.water.waterNight.value = night ? 1 : 0;
     for (const key of ["glow", "warehouse-glass"]) {
       const material = this.materials.get(key) as THREE.MeshStandardMaterial | undefined;
       if (material) material.emissiveIntensity = night ? NIGHT_GLOW : 0;
     }
+  }
+
+  /** Animated water is an optional extra; off, rivers keep their painted look. */
+  setExtraVfx(enabled: boolean): void {
+    this.water.waterOn.value = enabled ? 1 : 0;
   }
 
   private label(kind: "costco" | "mcdonalds"): THREE.Material {
@@ -287,7 +295,11 @@ export class SceneryLibrary {
       map: groundTextures.map,
       roughness: 1,
     });
-    makeRegional(groundMaterial, groundTextures.mask);
+    makeRegional(
+      groundMaterial,
+      groundTextures.mask,
+      groundTextures.water && { depth: groundTextures.water, uniforms: this.water },
+    );
     this.materials.set(`ground-${key}`, groundMaterial);
     add(new THREE.PlaneGeometry(1, 1), groundMaterial, new THREE.Vector3(0, 0, 0), new THREE.Euler(-Math.PI / 2, 0, 0));
 
@@ -469,7 +481,7 @@ export class SceneryLibrary {
     return model;
   }
 
-  private ground(tile: ITile): { map: THREE.Texture; mask: THREE.Texture } {
+  private ground(tile: ITile): { map: THREE.Texture; mask: THREE.Texture; water?: THREE.Texture } {
     const canvas = document.createElement("canvas");
     canvas.width = 512;
     canvas.height = 512;
@@ -515,7 +527,18 @@ export class SceneryLibrary {
     const mask = new THREE.CanvasTexture(maskCanvas);
     this.textures.add(texture);
     this.textures.add(mask);
-    return { map: texture, mask };
+    if (!tile.river) return { map: texture, mask };
+    const waterCanvas = document.createElement("canvas");
+    waterCanvas.width = waterCanvas.height = 256;
+    const waterCtx = waterCanvas.getContext("2d")!;
+    waterCtx.fillStyle = "#000000";
+    waterCtx.fillRect(0, 0, 256, 256);
+    waterCtx.translate(128, 128);
+    waterCtx.scale(256, 256);
+    paintWaterDepth(waterCtx, tile);
+    const water = new THREE.CanvasTexture(waterCanvas);
+    this.textures.add(water);
+    return { map: texture, mask, water };
   }
 
   /** Release the canvas's geometry, materials, and textures on unmount. */

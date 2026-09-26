@@ -11,6 +11,7 @@ import "../src/index.css";
 
 const params = new URLSearchParams(location.search);
 const night = params.has("night");
+const extraVfx = params.has("vfx");
 document.documentElement.dataset.time = night ? "night" : "day";
 const game = new Game(
   [
@@ -31,9 +32,23 @@ function Harness() {
   }, []);
   const fallback = useCallback(() => setUnavailable(true), []);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 260px", gap: 12, padding: 12 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) 260px",
+        gap: 12,
+        padding: 12,
+      }}
+    >
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
           <BoardStatus className="hud-panel" state={state} />
           <ViewToggle
             view={view}
@@ -52,11 +67,12 @@ function Harness() {
             onRetry={() => setUnavailable(false)}
             onTilePlace={(position) => game.placeTile(position)}
             night={night}
+            extraVfx={extraVfx}
           />
         </div>
       </div>
       <aside>
-        <CurrentTilePreview tile={state.currentTile} night={night} />
+        <CurrentTilePreview tile={state.currentTile} mode={mode} night={night} extraVfx={extraVfx} />
         <button onClick={() => game.rotateTileClockwise()}>Rotate tile</button>
         {state.phase === GamePhase.CLAIM_FEATURE && (
           <>
