@@ -106,7 +106,7 @@ npm run sync-help-content en
 
 ## Requirements
 
-- Node >= 20.19.5
+- Node 22.22.2+ or 24.15+ (`.nvmrc` pins 24.19.0)
 - npm >= 10.8.2
 
 ## Localization

@@ -41,6 +41,11 @@ declare global {
 }
 async function ready(page: Page, suffix = "") {
   await page.goto(`/e2e/tabletop.html${suffix}`);
+  await sceneReady(page);
+}
+
+/** Waits until the 3D scene has registered and drawn, which lags the canvas on slow machines. */
+async function sceneReady(page: Page) {
   await expect(page.getByTestId("board-3d")).toBeVisible();
   await expect
     .poll(() =>
@@ -345,7 +350,7 @@ test("the drone view looks straight down with north up, places tiles and is reme
   await page.screenshot({ path: "test-results/tabletop-drone.png" });
 
   await page.reload();
-  await expect(page.getByTestId("board-3d")).toBeVisible();
+  await sceneReady(page);
   await expect(page.getByRole("button", { name: "Drone" })).toHaveAttribute("aria-pressed", "true");
   await expect.poll(overhead).toBeLessThan(0.01);
   await page.getByRole("button", { name: "Tabletop" }).click();

@@ -7,7 +7,7 @@ American Tile Trails is a Carcassonne-inspired tile-placement board game built w
 ### Quick Start
 
 ```bash
-npm install          # Install dependencies
+npm install          # Install dependencies (Node 24, see .nvmrc; also installs the git hooks)
 npm run dev          # Dev server at http://localhost:3000 (next free port if taken)
 npm test             # Vitest unit tests (includes the AI balance simulation)
 npm run test:browser # Playwright end-to-end tests in Chromium
