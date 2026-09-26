@@ -117,12 +117,7 @@ export const GameProgress: StoryObj<{ progress: number; night: boolean; extraVfx
   ),
 };
 
-/** The sun rises in the east as a game starts and sets in the west as the deck runs out. */
-export const Morning: Story = { args: { state: populatedState(4) } };
-/** The last tile placed: golden hour. */
 export const FullDeck: Story = { args: { state: populatedState(Infinity) } };
-export const MoonriseAtNight: Story = { args: { state: populatedState(4), night: true } };
-export const MoonsetAtNight: Story = { args: { state: populatedState(Infinity), night: true } };
 export const DroneView: Story = { args: { state: populatedState(Infinity), view: "drone" } };
 
 const warehouseBoard = new Board();
