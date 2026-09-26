@@ -143,3 +143,6 @@ storybook-static
 # Browser verification artifacts
 test-results/
 playwright-report/
+
+# Local planning notes
+plans/
