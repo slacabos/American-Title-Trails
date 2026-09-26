@@ -5,14 +5,7 @@ import type { PropBuilder } from "./paint";
 import { nearRiver, restaurantPosition, tileRoadPath } from "./riverLayout";
 import { featureAnchor, insidePolygon, Point, ROAD_WIDTH, zonePolygon } from "./tileLayout";
 
-export type LandmarkKind =
-  | "billboard"
-  | "overlook"
-  | "barn"
-  | "house"
-  | "menu-board"
-  | "picnic"
-  | "lamp";
+export type LandmarkKind = "billboard" | "overlook" | "barn" | "house" | "menu-board" | "picnic" | "lamp";
 
 export interface Landmark {
   kind: LandmarkKind;
@@ -106,11 +99,7 @@ export function buildLandmark(props: PropBuilder, { kind, at: [x, z], yaw = 0 }:
       for (const dx of [-0.066, 0.066]) block(dx, 0.04, 0.04, 0.008, 0.05, 0.008, WOOD);
       block(0, 0.062, 0.04, 0.14, 0.006, 0.006, WOOD);
       block(0, 0.03, -0.015, 0.07, 0.01, 0.022, WOOD);
-      props.shape(
-        new THREE.CylinderGeometry(0.006, 0.006, 0.07, 6),
-        METAL,
-        point(0.045, 0.05, 0.02),
-      );
+      props.shape(new THREE.CylinderGeometry(0.006, 0.006, 0.07, 6), METAL, point(0.045, 0.05, 0.02));
       props.shape(
         new THREE.CylinderGeometry(0.009, 0.012, 0.045, 8),
         "#3d4a4c",
@@ -125,7 +114,11 @@ export function buildLandmark(props: PropBuilder, { kind, at: [x, z], yaw = 0 }:
       block(0, 0.035, 0.063, 0.042, 0.062, 0.003, "#7c2b22");
       block(0.05, 0.065, 0.062, 0.02, 0.018, 0.003, "#f6cf73", true);
       props.shape(new THREE.CylinderGeometry(0.035, 0.035, 0.19, 12), "#c9ccc4", point(0.14, 0.095, -0.01));
-      props.shape(new THREE.SphereGeometry(0.035, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), "#8e9a97", point(0.14, 0.19, -0.01));
+      props.shape(
+        new THREE.SphereGeometry(0.035, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+        "#8e9a97",
+        point(0.14, 0.19, -0.01),
+      );
       break;
     case "house":
       block(0, 0.035, 0, 0.11, 0.07, 0.08, "#eadfc8");

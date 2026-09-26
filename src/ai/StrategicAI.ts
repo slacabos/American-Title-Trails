@@ -10,18 +10,8 @@ import { ScoreManager } from "../managers/ScoreManager";
 import { FeatureClaimManager } from "../managers/FeatureClaimManager";
 import type { Position, PlayerState, GameState, ClaimableFeature } from "../types";
 import type { IBoard, ITile } from "../interfaces";
-import type {
-  AIStrategy,
-  AIDifficulty,
-  AIContext,
-  TilePlacement,
-  MeeplePlacement,
-  AIDecision,
-} from "./AIStrategy";
-import {
-  TilePlacementEvaluator,
-  FeatureAnalyzer,
-} from "./evaluators";
+import type { AIStrategy, AIDifficulty, AIContext, TilePlacement, MeeplePlacement, AIDecision } from "./AIStrategy";
+import { TilePlacementEvaluator, FeatureAnalyzer } from "./evaluators";
 import type { EvaluationWeights, FeatureValueEstimate } from "./evaluators";
 import type { RNG } from "../utils/rng";
 
@@ -75,8 +65,7 @@ export class StrategicAI implements AIStrategy {
   evaluateTilePlacements(context: AIContext): TilePlacement[] {
     this.searchStartTime = Date.now();
 
-    const { board, currentTile, currentPlayer, allPlayers, validPlacements } =
-      context;
+    const { board, currentTile, currentPlayer, allPlayers, validPlacements } = context;
 
     // Get base evaluations
     const baseScores = this.evaluator.evaluateAllPlacements(
@@ -84,7 +73,7 @@ export class StrategicAI implements AIStrategy {
       currentTile,
       validPlacements,
       currentPlayer.id,
-      allPlayers
+      allPlayers,
     );
 
     // Apply strategic adjustments
@@ -97,7 +86,7 @@ export class StrategicAI implements AIStrategy {
         currentTile.rotate(score.rotation),
         score.position,
         currentPlayer,
-        allPlayers
+        allPlayers,
       );
 
       // Look-ahead bonus (if time permits)
@@ -126,17 +115,11 @@ export class StrategicAI implements AIStrategy {
   /**
    * Evaluate meeple placement with strategic considerations.
    */
-  evaluateMeeplePlacement(
-    context: AIContext,
-    placedPosition: Position
-  ): MeeplePlacement | null {
+  evaluateMeeplePlacement(context: AIContext, placedPosition: Position): MeeplePlacement | null {
     const { board, currentPlayer, claimableFeatures, gameState } = context;
 
     // Strategic follower management
-    const followerThreshold = this.calculateFollowerThreshold(
-      currentPlayer,
-      gameState
-    );
+    const followerThreshold = this.calculateFollowerThreshold(currentPlayer, gameState);
 
     if (currentPlayer.followers === 0) {
       return null;
@@ -159,11 +142,7 @@ export class StrategicAI implements AIStrategy {
     };
 
     for (const feature of claimableFeatures) {
-      const estimate = analyzer.estimateFeatureValue(
-        feature.type,
-        placedPosition,
-        feature.identifier
-      );
+      const estimate = analyzer.estimateFeatureValue(feature.type, placedPosition, feature.identifier);
 
       // A completed feature pays now and immediately returns its follower.
       if (estimate.isComplete && estimate.currentPoints > 0) {
@@ -179,16 +158,9 @@ export class StrategicAI implements AIStrategy {
       let score = estimate.totalValue;
 
       // Strategic scoring adjustments
-      score = this.applyStrategicMeepleModifiers(
-        score,
-        feature,
-        estimate,
-        gameState,
-        currentPlayer
-      );
+      score = this.applyStrategicMeepleModifiers(score, feature, estimate, gameState, currentPlayer);
 
-      const baseThreshold =
-        thresholds[feature.type as keyof typeof thresholds] || 4;
+      const baseThreshold = thresholds[feature.type as keyof typeof thresholds] || 4;
       const remainingTurns = Math.ceil((gameState.tileDeck.length + 1) / context.allPlayers.length);
       const useRemainingSupply = gameState.drawStage === "land" && remainingTurns <= currentPlayer.followers;
       if (useRemainingSupply) score = Math.max(score, estimate.currentPoints);
@@ -232,25 +204,19 @@ export class StrategicAI implements AIStrategy {
     tile: ITile,
     position: Position,
     currentPlayer: PlayerState,
-    allPlayers: PlayerState[]
+    allPlayers: PlayerState[],
   ): number {
     let defensiveScore = 0;
     const claims = board.getFeatureClaims();
-    const opponentIds = allPlayers
-      .filter((p) => p.id !== currentPlayer.id)
-      .map((p) => p.id);
+    const opponentIds = allPlayers.filter((p) => p.id !== currentPlayer.id).map((p) => p.id);
 
     // Check for opportunities to join opponent features (majority rule competition)
     const preview = board.previewPlacement(tile, position);
     if (preview) {
       for (const completed of preview.completed) {
         if (completed.claimedBy) {
-          const opponentClaims = completed.claimedBy.filter((id) =>
-            opponentIds.includes(id)
-          );
-          const ourClaims = completed.claimedBy.filter(
-            (id) => id === currentPlayer.id
-          );
+          const opponentClaims = completed.claimedBy.filter((id) => opponentIds.includes(id));
+          const ourClaims = completed.claimedBy.filter((id) => id === currentPlayer.id);
 
           // Bonus for completing features that benefit us over opponents
           if (ourClaims.length >= opponentClaims.length && ourClaims.length > 0) {
@@ -277,7 +243,7 @@ export class StrategicAI implements AIStrategy {
         const opponentClaimsNearby = claims.filter(
           (claim) =>
             claim.players.some((p) => opponentIds.includes(p)) &&
-            claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`
+            claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`,
         );
 
         for (const claim of opponentClaimsNearby) {
@@ -321,12 +287,7 @@ export class StrategicAI implements AIStrategy {
 
     // Evaluate future completion potential
     // (simplified - just check if placement creates good continuation opportunities)
-    const futurePotential = this.estimateFuturePotential(
-      board,
-      tile,
-      position,
-      currentPlayer.id
-    );
+    const futurePotential = this.estimateFuturePotential(board, tile, position, currentPlayer.id);
     lookAheadScore += futurePotential * 0.2;
 
     // Compare the actual claim available after placement, including separate
@@ -334,12 +295,21 @@ export class StrategicAI implements AIStrategy {
     if (currentPlayer.followers > 0) {
       const future = new Board(board);
       future.placeTile(tile, position);
-      const claimableFeatures = new FeatureClaimManager().getClaimableFeatures(tile)
-        .filter(feature => future.canClaimFeature(feature.type, position, feature.identifier));
-      const claim = this.evaluateMeeplePlacement({
-        board: future, currentTile: tile, currentPlayer, allPlayers,
-        gameState, validPlacements: [], claimableFeatures,
-      }, position);
+      const claimableFeatures = new FeatureClaimManager()
+        .getClaimableFeatures(tile)
+        .filter((feature) => future.canClaimFeature(feature.type, position, feature.identifier));
+      const claim = this.evaluateMeeplePlacement(
+        {
+          board: future,
+          currentTile: tile,
+          currentPlayer,
+          allPlayers,
+          gameState,
+          validPlacements: [],
+          claimableFeatures,
+        },
+        position,
+      );
       if (claim) {
         const value = new FeatureAnalyzer(future).estimateFeatureValue(claim.type, position, claim.identifier);
         // Immediate completions are already included in the placement score.
@@ -354,7 +324,8 @@ export class StrategicAI implements AIStrategy {
         if (claim.type !== "mcdonalds") continue;
         const [x, y] = claim.edge.split(":")[0].split(",").map(Number);
         if (Math.abs(x - position.x) > 1 || Math.abs(y - position.y) > 1) continue;
-        if (preview.completed.some(feature => feature.type === "mcdonalds" && feature.tiles.has(claim.edge))) continue;
+        if (preview.completed.some((feature) => feature.type === "mcdonalds" && feature.tiles.has(claim.edge)))
+          continue;
         lookAheadScore += claim.players.includes(currentPlayer.id) ? 3 : -3;
       }
     }
@@ -365,12 +336,7 @@ export class StrategicAI implements AIStrategy {
   /**
    * Estimate future potential from a placement.
    */
-  private estimateFuturePotential(
-    board: IBoard,
-    tile: ITile,
-    position: Position,
-    _playerId: string
-  ): number {
+  private estimateFuturePotential(board: IBoard, tile: ITile, position: Position, _playerId: string): number {
     let potential = 0;
 
     // Bonus for creating open features that we could continue
@@ -408,18 +374,13 @@ export class StrategicAI implements AIStrategy {
       { x: position.x + 1, y: position.y + 1 },
     ];
 
-    return surroundingPositions.filter(
-      (pos) => board.getTile(pos) === undefined
-    ).length;
+    return surroundingPositions.filter((pos) => board.getTile(pos) === undefined).length;
   }
 
   /**
    * Calculate follower threshold based on game state.
    */
-  private calculateFollowerThreshold(
-    _player: PlayerState,
-    gameState: GameState
-  ): number {
+  private calculateFollowerThreshold(_player: PlayerState, gameState: GameState): number {
     const totalTiles = 72;
     const tilesRemaining = gameState.tileDeck?.length ?? 0;
     const gameProgress = 1 - tilesRemaining / totalTiles;
@@ -446,7 +407,7 @@ export class StrategicAI implements AIStrategy {
     feature: ClaimableFeature,
     estimate: FeatureValueEstimate,
     gameState: GameState,
-    player: PlayerState
+    player: PlayerState,
   ): number {
     let adjustedScore = score;
 
@@ -506,10 +467,7 @@ export class StrategicAI implements AIStrategy {
   /**
    * Get neighbor position in a direction.
    */
-  private getNeighborPosition(
-    position: Position,
-    direction: string
-  ): Position {
+  private getNeighborPosition(position: Position, direction: string): Position {
     const deltas: Record<string, Position> = {
       north: { x: 0, y: -1 },
       east: { x: 1, y: 0 },
@@ -534,31 +492,39 @@ export class ExpertAI extends StrategicAI {
   override evaluateTilePlacements(context: AIContext): TilePlacement[] {
     const candidates = super.evaluateTilePlacements(context);
     const scorer = new ScoreManager();
-    const baseline = context.allPlayers.map(player => ({ ...player, score: 0 }));
+    const baseline = context.allPlayers.map((player) => ({ ...player, score: 0 }));
     scorer.calculateFinalScores(baseline, context.board);
-    const baseScores = new Map(baseline.map(player => [player.id, player.score]));
+    const baseScores = new Map(baseline.map((player) => [player.id, player.score]));
     // The heuristic shortlist bounds the cost without consulting hidden draws.
-    return candidates.slice(0, 12).map(candidate => {
-      const board = new Board(context.board);
-      const tile = context.currentTile.rotate(candidate.rotation);
-      const { completed } = board.placeTile(tile, candidate.position);
-      const claimableFeatures = new FeatureClaimManager().getClaimableFeatures(tile)
-        .filter(feature => board.canClaimFeature(feature.type, candidate.position, feature.identifier));
-      const claim = this.evaluateMeeplePlacement({ ...context, board, currentTile: tile, claimableFeatures }, candidate.position);
-      if (claim) board.claimFeature(claim.type, candidate.position, claim.identifier, context.currentPlayer.id);
-      const scored = completed.map(feature => ({ ...feature, claimedBy: board.getFeatureClaimants(feature) }));
-      const players = context.allPlayers.map(player => ({ ...player, score: 0 }));
-      scorer.scoreCompletedFeatures(scored, players);
-      board.returnFollowersFromCompletedFeatures(scored);
-      scorer.calculateFinalScores(players, board);
-      let ours = 0, opponents = 0;
-      for (const player of players) {
-        const gain = player.score - (baseScores.get(player.id) ?? 0);
-        if (player.id === context.currentPlayer.id) ours = gain;
-        else opponents = Math.max(opponents, gain);
-      }
-      return { ...candidate, score: (ours - opponents) * 10 + candidate.score * 0.15 };
-    }).sort((a, b) => b.score - a.score);
+    return candidates
+      .slice(0, 12)
+      .map((candidate) => {
+        const board = new Board(context.board);
+        const tile = context.currentTile.rotate(candidate.rotation);
+        const { completed } = board.placeTile(tile, candidate.position);
+        const claimableFeatures = new FeatureClaimManager()
+          .getClaimableFeatures(tile)
+          .filter((feature) => board.canClaimFeature(feature.type, candidate.position, feature.identifier));
+        const claim = this.evaluateMeeplePlacement(
+          { ...context, board, currentTile: tile, claimableFeatures },
+          candidate.position,
+        );
+        if (claim) board.claimFeature(claim.type, candidate.position, claim.identifier, context.currentPlayer.id);
+        const scored = completed.map((feature) => ({ ...feature, claimedBy: board.getFeatureClaimants(feature) }));
+        const players = context.allPlayers.map((player) => ({ ...player, score: 0 }));
+        scorer.scoreCompletedFeatures(scored, players);
+        board.returnFollowersFromCompletedFeatures(scored);
+        scorer.calculateFinalScores(players, board);
+        let ours = 0,
+          opponents = 0;
+        for (const player of players) {
+          const gain = player.score - (baseScores.get(player.id) ?? 0);
+          if (player.id === context.currentPlayer.id) ours = gain;
+          else opponents = Math.max(opponents, gain);
+        }
+        return { ...candidate, score: (ours - opponents) * 10 + candidate.score * 0.15 };
+      })
+      .sort((a, b) => b.score - a.score);
   }
 
   constructor(options: StrategicAIOptions = {}) {

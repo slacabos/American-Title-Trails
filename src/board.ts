@@ -49,9 +49,9 @@ export class Board implements IBoard {
 
   constructor(source?: IBoard) {
     this.tiles = new Map(source?.getAllTiles());
-    this.featureClaims = new Map(source?.getFeatureClaims().map(claim => [
-      claim.edge, { ...claim, players: [...claim.players] },
-    ]));
+    this.featureClaims = new Map(
+      source?.getFeatureClaims().map((claim) => [claim.edge, { ...claim, players: [...claim.players] }]),
+    );
   }
 
   isEmpty(): boolean {
@@ -63,17 +63,20 @@ export class Board implements IBoard {
   }
 
   getNeighbors(position: Position): Record<string, NeighborInfo> {
-    return DIRECTIONS.reduce((neighbors, direction) => {
-      const neighborPosition = addDelta(position, direction);
-      const record = this.getTile(neighborPosition);
-      if (record) {
-        neighbors[direction] = {
-          position: neighborPosition,
-          tile: record.tile,
-        };
-      }
-      return neighbors;
-    }, {} as Record<string, NeighborInfo>);
+    return DIRECTIONS.reduce(
+      (neighbors, direction) => {
+        const neighborPosition = addDelta(position, direction);
+        const record = this.getTile(neighborPosition);
+        if (record) {
+          neighbors[direction] = {
+            position: neighborPosition,
+            tile: record.tile,
+          };
+        }
+        return neighbors;
+      },
+      {} as Record<string, NeighborInfo>,
+    );
   }
 
   getBounds(): Bounds {
@@ -129,9 +132,7 @@ export class Board implements IBoard {
     }
 
     return neighborEntries.every(([direction, neighbor]) => {
-      const oppositeEdge = neighbor.tile.getEdge(
-        OPPOSITE[direction as Direction]
-      );
+      const oppositeEdge = neighbor.tile.getEdge(OPPOSITE[direction as Direction]);
       const currentEdge = tile.getEdge(direction as Direction);
       return oppositeEdge === currentEdge;
     });
@@ -139,9 +140,7 @@ export class Board implements IBoard {
 
   placeTile(tile: ITile, position: Position): PlacementResult {
     if (!this.canPlace(tile, position)) {
-      throw new Error(
-        `Cannot place tile at position (${position.x}, ${position.y})`
-      );
+      throw new Error(`Cannot place tile at position (${position.x}, ${position.y})`);
     }
 
     const tileRecord: TileRecord = { position, tile };
@@ -153,10 +152,7 @@ export class Board implements IBoard {
     return { completed };
   }
 
-  private analyzeCompletedFeatures(
-    placedPosition: Position,
-    placedTile: ITile
-  ): CompletedFeature[] {
+  private analyzeCompletedFeatures(placedPosition: Position, placedTile: ITile): CompletedFeature[] {
     const completed: CompletedFeature[] = [];
 
     // Check roads
@@ -174,10 +170,7 @@ export class Board implements IBoard {
     });
 
     // Check Costcos
-    const costcoFeatures = this.findConnectedCostcos(
-      placedPosition,
-      placedTile
-    );
+    const costcoFeatures = this.findConnectedCostcos(placedPosition, placedTile);
     costcoFeatures.forEach((feature) => {
       if (this.isCostcoComplete(feature)) {
         const claimedBy = this.getFeatureClaimants(feature);
@@ -200,25 +193,24 @@ export class Board implements IBoard {
         if (!this.getTile(position)?.tile.hasMcDonalds || !this.isMcDonaldsComplete(position)) continue;
         const key = positionKey(position);
         const feature = { type: "mcdonalds" as const, tiles: new Set([key]), edges: new Set([key]), isComplete: true };
-        completed.push({ ...feature, claimedBy: this.getFeatureClaimants(feature), points: GAME_RULES.MCDONALDS_MAX_SCORE });
+        completed.push({
+          ...feature,
+          claimedBy: this.getFeatureClaimants(feature),
+          points: GAME_RULES.MCDONALDS_MAX_SCORE,
+        });
       }
     }
 
     return completed;
   }
 
-  private findConnectedRoads(
-    startPosition: Position,
-    startTile: ITile
-  ): Feature[] {
+  private findConnectedRoads(startPosition: Position, startTile: ITile): Feature[] {
     const features: Feature[] = [];
     const visited = new Set<string>();
 
     // Check each road connection on the placed tile
     startTile.roadConnections.forEach((connection) => {
-      const featureKey = `${positionKey(startPosition)}:${connection.join(
-        ","
-      )}`;
+      const featureKey = `${positionKey(startPosition)}:${connection.join(",")}`;
       if (visited.has(featureKey)) return;
 
       const feature = this.traceRoadFeature(startPosition, connection, visited);
@@ -230,11 +222,7 @@ export class Board implements IBoard {
     return features;
   }
 
-  public traceRoadFeature(
-    startPosition: Position,
-    connection: string[],
-    visited: Set<string>
-  ): Feature {
+  public traceRoadFeature(startPosition: Position, connection: string[], visited: Set<string>): Feature {
     const feature: Feature = {
       type: "road",
       tiles: new Set(),
@@ -250,7 +238,7 @@ export class Board implements IBoard {
       const { position, segments } = queue.shift()!;
       const posKey = positionKey(position);
 
-      if (segments.every(segment => visited.has(`${posKey}:${segment}`))) continue;
+      if (segments.every((segment) => visited.has(`${posKey}:${segment}`))) continue;
       feature.tiles.add(posKey);
 
       const tile = this.getTile(position)?.tile;
@@ -271,9 +259,7 @@ export class Board implements IBoard {
         if (!neighbor) return;
 
         const oppositeDir = OPPOSITE[direction];
-        const neighborRoads = neighbor.tile.roadConnections.filter(
-          (conn: string[]) => conn.includes(oppositeDir)
-        );
+        const neighborRoads = neighbor.tile.roadConnections.filter((conn: string[]) => conn.includes(oppositeDir));
 
         neighborRoads.forEach((roadConn: string[]) => {
           queue.push({ position: neighborPos, segments: roadConn });
@@ -284,10 +270,7 @@ export class Board implements IBoard {
     return feature;
   }
 
-  private findConnectedCostcos(
-    startPosition: Position,
-    startTile: ITile
-  ): Feature[] {
+  private findConnectedCostcos(startPosition: Position, startTile: ITile): Feature[] {
     const features: Feature[] = [];
     const visited = new Set<string>();
 
@@ -305,11 +288,7 @@ export class Board implements IBoard {
     return features;
   }
 
-  public traceCostcoFeature(
-    startPosition: Position,
-    zone: CostcoSegment,
-    visited: Set<string>
-  ): Feature {
+  public traceCostcoFeature(startPosition: Position, zone: CostcoSegment, visited: Set<string>): Feature {
     const feature: Feature = {
       type: "costco",
       tiles: new Set(),
@@ -318,9 +297,7 @@ export class Board implements IBoard {
       pennants: 0,
     };
 
-    const queue: Array<{ position: Position; zone: CostcoSegment }> = [
-      { position: startPosition, zone },
-    ];
+    const queue: Array<{ position: Position; zone: CostcoSegment }> = [{ position: startPosition, zone }];
 
     while (queue.length > 0) {
       const { position, zone: currentZone } = queue.shift()!;
@@ -355,9 +332,8 @@ export class Board implements IBoard {
         if (!neighbor) return;
 
         const oppositeDir = OPPOSITE[direction];
-        const neighborCostcos = neighbor.tile.costcoZones.filter(
-          (neighborZone: CostcoSegment) =>
-            neighborZone.segments.includes(oppositeDir)
+        const neighborCostcos = neighbor.tile.costcoZones.filter((neighborZone: CostcoSegment) =>
+          neighborZone.segments.includes(oppositeDir),
         );
 
         neighborCostcos.forEach((costcoZone: CostcoSegment) => {
@@ -388,11 +364,7 @@ export class Board implements IBoard {
     se: { south: "ne", east: "sw" },
   };
 
-  public traceFieldFeature(
-    startPosition: Position,
-    fieldSegment: FieldSegment,
-    visited: Set<string>
-  ): Feature {
+  public traceFieldFeature(startPosition: Position, fieldSegment: FieldSegment, visited: Set<string>): Feature {
     const feature: Feature = {
       type: "field",
       tiles: new Set(),
@@ -439,9 +411,7 @@ export class Board implements IBoard {
           if (!oppositeCorner) return;
 
           // Find which field segment in the neighbor contains this corner
-          const neighborSegment = neighbor.tile.fieldSegments.find(
-            (fs) => fs.corners.includes(oppositeCorner)
-          );
+          const neighborSegment = neighbor.tile.fieldSegments.find((fs) => fs.corners.includes(oppositeCorner));
 
           if (neighborSegment) {
             const neighborKey = `${positionKey(neighborPos)}:${neighborSegment.id}`;
@@ -459,13 +429,13 @@ export class Board implements IBoard {
   public findAdjacentCostcos(fieldFeature: Feature): Set<string> {
     const adjacentCostcos = new Set<string>();
 
-    fieldFeature.tiles.forEach(tileKey => {
+    fieldFeature.tiles.forEach((tileKey) => {
       const record = this.tiles.get(tileKey);
       if (!record) return;
       for (const field of record.tile.fieldSegments) {
-        if (!field.corners.some(corner => fieldFeature.edges.has(`${tileKey}:${corner}`))) continue;
+        if (!field.corners.some((corner) => fieldFeature.edges.has(`${tileKey}:${corner}`))) continue;
         for (const zoneId of field.adjacentCostcoZones ?? []) {
-          const zone = record.tile.costcoZones.find(zone => zone.id === zoneId);
+          const zone = record.tile.costcoZones.find((zone) => zone.id === zoneId);
           if (!zone) continue;
           const feature = this.traceCostcoFeature(record.position, zone, new Set());
           if (this.isCostcoComplete(feature)) adjacentCostcos.add([...feature.edges].sort().join("|"));
@@ -487,9 +457,7 @@ export class Board implements IBoard {
       if (!tile) return;
 
       // Check if this segment connects to the center or to another direction
-      const roadConn = tile.roadConnections.find((conn: string[]) =>
-        conn.includes(segment)
-      );
+      const roadConn = tile.roadConnections.find((conn: string[]) => conn.includes(segment));
       if (!roadConn) return;
 
       roadConn.forEach((dir: string) => {
@@ -503,8 +471,8 @@ export class Board implements IBoard {
             openEnds.add(`${posKey}:${dir}`);
           } else {
             const oppositeDir = OPPOSITE[dir as Direction];
-            const hasConnectingRoad = neighbor.tile.roadConnections.some(
-              (conn: string[]) => conn.includes(oppositeDir)
+            const hasConnectingRoad = neighbor.tile.roadConnections.some((conn: string[]) =>
+              conn.includes(oppositeDir),
             );
             if (!hasConnectingRoad) {
               openEnds.add(`${posKey}:${dir}`);
@@ -529,8 +497,8 @@ export class Board implements IBoard {
         if (!neighbor) return false; // Open edge to empty space
 
         const oppositeDir = OPPOSITE[segment as Direction];
-        const hasConnectingCostco = neighbor.tile.costcoZones.some(
-          (zone: CostcoSegment) => zone.segments.includes(oppositeDir)
+        const hasConnectingCostco = neighbor.tile.costcoZones.some((zone: CostcoSegment) =>
+          zone.segments.includes(oppositeDir),
         );
         if (!hasConnectingCostco) return false; // Open edge to non-Costco
       }
@@ -568,36 +536,26 @@ export class Board implements IBoard {
     return claimants;
   }
 
-  canClaimFeature(
-    type: TerrainType,
-    position: Position,
-    identifier: string | undefined
-  ): boolean {
+  canClaimFeature(type: TerrainType, position: Position, identifier: string | undefined): boolean {
     const tileRecord = this.getTile(position);
     if (!tileRecord) return false;
 
     let feature: Feature | null = null;
 
     if (type === "road") {
-      const connectionIndex = identifier
-        ? parseInt(identifier.replace("road_", ""))
-        : 0;
+      const connectionIndex = identifier ? parseInt(identifier.replace("road_", "")) : 0;
       const connection = tileRecord.tile.roadConnections[connectionIndex];
       if (connection) {
         feature = this.traceRoadFeature(position, connection, new Set());
       }
     } else if (type === "costco") {
-      const zoneIndex = identifier
-        ? parseInt(identifier.replace("costco_", ""))
-        : 0;
+      const zoneIndex = identifier ? parseInt(identifier.replace("costco_", "")) : 0;
       const zone = tileRecord.tile.costcoZones[zoneIndex];
       if (zone) {
         feature = this.traceCostcoFeature(position, zone, new Set());
       }
     } else if (type === "field") {
-      const fieldIndex = identifier
-        ? parseInt(identifier.replace("field_", ""))
-        : 0;
+      const fieldIndex = identifier ? parseInt(identifier.replace("field_", "")) : 0;
       const fieldSegment = tileRecord.tile.fieldSegments[fieldIndex];
       if (fieldSegment) {
         feature = this.traceFieldFeature(position, fieldSegment, new Set());
@@ -620,12 +578,7 @@ export class Board implements IBoard {
     return true;
   }
 
-  claimFeature(
-    type: TerrainType,
-    position: Position,
-    identifier: string | undefined,
-    playerId: string
-  ): FeatureClaim {
+  claimFeature(type: TerrainType, position: Position, identifier: string | undefined, playerId: string): FeatureClaim {
     if (!this.canClaimFeature(type, position, identifier)) {
       throw new Error("Cannot claim feature: already has a follower");
     }
@@ -639,9 +592,7 @@ export class Board implements IBoard {
     // For roads and costcos, we need to store the claim using the same edge format
     // as the traced features (e.g., "0,0:north" instead of "0,0:road_0")
     if (type === "road" && tileRecord) {
-      const connectionIndex = identifier
-        ? parseInt(identifier.replace("road_", ""))
-        : 0;
+      const connectionIndex = identifier ? parseInt(identifier.replace("road_", "")) : 0;
       const connection = tileRecord.tile.roadConnections[connectionIndex];
       if (connection && connection.length > 0) {
         // Store claim using the first segment of the connection
@@ -651,9 +602,7 @@ export class Board implements IBoard {
         return newClaim;
       }
     } else if (type === "costco" && tileRecord) {
-      const zoneIndex = identifier
-        ? parseInt(identifier.replace("costco_", ""))
-        : 0;
+      const zoneIndex = identifier ? parseInt(identifier.replace("costco_", "")) : 0;
       const zone = tileRecord.tile.costcoZones[zoneIndex];
       if (zone && zone.segments.length > 0) {
         // Store claim using the first segment of the zone
@@ -663,9 +612,7 @@ export class Board implements IBoard {
         return newClaim;
       }
     } else if (type === "field" && tileRecord) {
-      const fieldIndex = identifier
-        ? parseInt(identifier.replace("field_", ""))
-        : 0;
+      const fieldIndex = identifier ? parseInt(identifier.replace("field_", "")) : 0;
       const fieldSegment = tileRecord.tile.fieldSegments[fieldIndex];
       if (fieldSegment && fieldSegment.corners.length > 0) {
         // Store claim using the first corner of the field segment

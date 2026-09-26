@@ -19,10 +19,13 @@ vi.mock("@/components/three/BoardScene", () => ({
   },
 }));
 
-const state = new Game([
-  { id: "a", name: "A", color: "#437eaf" },
-  { id: "b", name: "B", color: "#d76543" },
-], { seed: 3 }).getState();
+const state = new Game(
+  [
+    { id: "a", name: "A", color: "#437eaf" },
+    { id: "b", name: "B", color: "#d76543" },
+  ],
+  { seed: 3 },
+).getState();
 
 function Harness({ onRetry = () => {} }: { onRetry?: () => void }) {
   const [unavailable, setUnavailable] = useState(false);

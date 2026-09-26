@@ -45,9 +45,7 @@ export function Scoreboard({
                 ) : (
                   player.isAI && <span className="capitalize">{player.aiDifficulty || "medium"}</span>
                 )}
-                <FollowerDetails
-                  breakdown={getFollowerBreakdown(player.id, player.followers, board)}
-                />
+                <FollowerDetails breakdown={getFollowerBreakdown(player.id, player.followers, board)} />
               </span>
             </li>
           );

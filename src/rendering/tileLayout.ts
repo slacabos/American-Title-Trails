@@ -1,12 +1,6 @@
 import { restaurantPosition, tileRoadPath } from "./riverLayout";
 import type { ITile } from "@/interfaces/ITile";
-import type {
-  ClaimableFeature,
-  Direction,
-  FeatureClaim,
-  GameState,
-  Position,
-} from "@/types";
+import type { ClaimableFeature, Direction, FeatureClaim, GameState, Position } from "@/types";
 import { GamePhase } from "@/types";
 
 export type Point = readonly [number, number];
@@ -27,18 +21,13 @@ export const ROAD_WIDTH = 0.18;
 export const SHOP_WIDTH = 0.5;
 
 /** Board coordinates use X/Z in the scene; positive board Y points south. */
-export const boardToWorld = ({ x, y }: Position): [number, number, number] => [
-  x,
-  0,
-  y,
-];
+export const boardToWorld = ({ x, y }: Position): [number, number, number] => [x, 0, y];
 export const worldToBoard = (x: number, z: number): Position => ({
   x: Math.floor(x + 0.5),
   y: Math.floor(z + 0.5),
 });
 export const positionKey = ({ x, y }: Position): string => `${x},${y}`;
-export const samePosition = (a?: Position, b?: Position): boolean =>
-  a?.x === b?.x && a?.y === b?.y;
+export const samePosition = (a?: Position, b?: Position): boolean => a?.x === b?.x && a?.y === b?.y;
 
 /** Clockwise in board space. Geometry is authored once, in canonical orientation. */
 export function rotatePoint([x, y]: Point, turns: number): Point {
@@ -54,14 +43,7 @@ export function canonicalTile(tile: ITile): ITile {
 /** Includes topology so custom/test tiles cannot alias a different model by ID. */
 export function sceneryKey(tile: ITile): string {
   const base = canonicalTile(tile);
-  return JSON.stringify([
-    base.id,
-    base.center,
-    base.river,
-    base.roadConnections,
-    base.costcoZones,
-    base.fieldSegments,
-  ]);
+  return JSON.stringify([base.id, base.center, base.river, base.roadConnections, base.costcoZones, base.fieldSegments]);
 }
 
 export function roadPath(connection: string[]): Point[] {
@@ -73,8 +55,7 @@ export function roadPath(connection: string[]): Point[] {
   return Array.from({ length: 25 }, (_, i) => {
     const t = i / 24;
     // A gentle meander with zero displacement and tangent change at the edges.
-    const bend = straight && i > 0 && i < 24
-      ? 0.025 * Math.sin(2 * Math.PI * t) * Math.sin(Math.PI * t) ** 2 : 0;
+    const bend = straight && i > 0 && i < 24 ? 0.025 * Math.sin(2 * Math.PI * t) * Math.sin(Math.PI * t) ** 2 : 0;
     return [
       (1 - t) ** 2 * start[0] + t ** 2 * end[0] - start[1] * 2 * bend,
       (1 - t) ** 2 * start[1] + t ** 2 * end[1] + start[0] * 2 * bend,
@@ -84,15 +65,11 @@ export function roadPath(connection: string[]): Point[] {
 
 export function hull(points: Point[]): Point[] {
   const sorted = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (a: Point, b: Point, c: Point) =>
-    (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const cross = (a: Point, b: Point, c: Point) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
   const half = (items: Point[]) => {
     const result: Point[] = [];
     for (const point of items) {
-      while (
-        result.length >= 2 &&
-        cross(result[result.length - 2], result[result.length - 1], point) <= 0
-      )
+      while (result.length >= 2 && cross(result[result.length - 2], result[result.length - 1], point) <= 0)
         result.pop();
       result.push(point);
     }
@@ -106,12 +83,15 @@ export function zonePolygon(tile: ITile, index: number): Point[] {
   const zone = tile.costcoZones[index];
   if (!zone) return [];
   if (tile.id === "river-costco-bend") {
-    return hull([[-0.25, -0.5], [0.25, -0.5], [0.5, -0.25], [0.5, 0.25], [0, 0]])
-      .map(point => rotatePoint(point, tile.orientation));
+    return hull([
+      [-0.25, -0.5],
+      [0.25, -0.5],
+      [0.5, -0.25],
+      [0.5, 0.25],
+      [0, 0],
+    ]).map((point) => rotatePoint(point, tile.orientation));
   }
-  const edges = zone.segments.filter(
-    (segment): segment is Direction => segment !== "center",
-  );
+  const edges = zone.segments.filter((segment): segment is Direction => segment !== "center");
   if (edges.length === 4)
     return [
       [-0.5, -0.5],
@@ -122,19 +102,10 @@ export function zonePolygon(tile: ITile, index: number): Point[] {
   const points: Point[] = [];
   for (const edge of edges) {
     const [x, y] = PORTALS[edge];
-    const tangent: Point = [
-      y === 0 ? 0 : SHOP_WIDTH / 2,
-      x === 0 ? 0 : SHOP_WIDTH / 2,
-    ];
-    points.push(
-      [x + tangent[0], y + tangent[1]],
-      [x - tangent[0], y - tangent[1]],
-    );
+    const tangent: Point = [y === 0 ? 0 : SHOP_WIDTH / 2, x === 0 ? 0 : SHOP_WIDTH / 2];
+    points.push([x + tangent[0], y + tangent[1]], [x - tangent[0], y - tangent[1]]);
     if (!zone.segments.includes("center")) {
-      points.push(
-        [x * 0.56 + tangent[0], y * 0.56 + tangent[1]],
-        [x * 0.56 - tangent[0], y * 0.56 - tangent[1]],
-      );
+      points.push([x * 0.56 + tangent[0], y * 0.56 + tangent[1]], [x * 0.56 - tangent[0], y * 0.56 - tangent[1]]);
     }
   }
   if (zone.segments.includes("center")) {
@@ -148,8 +119,7 @@ export function insidePolygon([x, y]: Point, polygon: Point[]): boolean {
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
     const [xi, yi] = polygon[i];
     const [xj, yj] = polygon[j];
-    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi)
-      inside = !inside;
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
   }
   return inside;
 }
@@ -157,43 +127,28 @@ export function insidePolygon([x, y]: Point, polygon: Point[]): boolean {
 /** Anchors sit on their feature, not on a centroid that may fall inside another feature. */
 export function featureAnchor(tile: ITile, feature: ClaimableFeature): Point {
   const index = Number(feature.identifier?.split("_")[1] ?? 0);
-  if (feature.type === "road")
-    return tileRoadPath(tile, tile.roadConnections[index] ?? ["center"])[12];
-  if (feature.type === "field")
-    return CORNERS[tile.fieldSegments[index]?.corners[0]] ?? [0, 0];
+  if (feature.type === "road") return tileRoadPath(tile, tile.roadConnections[index] ?? ["center"])[12];
+  if (feature.type === "field") return CORNERS[tile.fieldSegments[index]?.corners[0]] ?? [0, 0];
   if (feature.type === "costco") {
     const zone = tile.costcoZones[index];
-    const first =
-      PORTALS[
-        zone?.segments.find((segment) => segment !== "center") ?? "center"
-      ];
+    const first = PORTALS[zone?.segments.find((segment) => segment !== "center") ?? "center"];
     return [first[0] * 0.78, first[1] * 0.78];
   }
   return tile.hasMcDonalds ? restaurantPosition(tile) : [0, 0];
 }
 
 /** Stored claims contain a direction/corner, whereas claim buttons use feature indexes. */
-export function resolveClaim(
-  tile: ITile,
-  position: Position,
-  claim: FeatureClaim,
-): ClaimableFeature | undefined {
+export function resolveClaim(tile: ITile, position: Position, claim: FeatureClaim): ClaimableFeature | undefined {
   const [key, segment] = claim.edge.split(":");
   if (key !== positionKey(position)) return undefined;
   if (claim.type === "mcdonalds") return { type: "mcdonalds" };
   const index =
     claim.type === "road"
-      ? tile.roadConnections.findIndex((connection) =>
-          connection.includes(segment),
-        )
+      ? tile.roadConnections.findIndex((connection) => connection.includes(segment))
       : claim.type === "costco"
-        ? tile.costcoZones.findIndex((zone) =>
-            zone.segments.some((part) => part === segment),
-          )
+        ? tile.costcoZones.findIndex((zone) => zone.segments.some((part) => part === segment))
         : claim.type === "field"
-          ? tile.fieldSegments.findIndex((field) =>
-              field.corners.some((corner) => corner === segment),
-            )
+          ? tile.fieldSegments.findIndex((field) => field.corners.some((corner) => corner === segment))
           : -1;
   if (index < 0) return undefined;
   return {
@@ -205,19 +160,13 @@ export function resolveClaim(
 /** Recompute from each state notification: the engine mutates the board in place. */
 export function boardSnapshot(state: GameState) {
   const canPlace =
-    state.phase === GamePhase.PLACE_TILE &&
-    !state.isGameOver &&
-    !state.players[state.currentPlayerIndex]?.isAI;
+    state.phase === GamePhase.PLACE_TILE && !state.isGameOver && !state.players[state.currentPlayerIndex]?.isAI;
   return {
     tiles: [...state.board.getAllTiles().values()],
     claims: state.board.getFeatureClaims(),
     legal:
       canPlace && state.currentTile
-        ? state.board
-            .getPlacementCandidates()
-            .filter((position) =>
-              state.board.canPlace(state.currentTile!, position),
-            )
+        ? state.board.getPlacementCandidates().filter((position) => state.board.canPlace(state.currentTile!, position))
         : [],
     canPlace,
   };

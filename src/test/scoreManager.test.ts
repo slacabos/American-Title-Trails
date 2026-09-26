@@ -1,11 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ScoreManager } from "../managers/ScoreManager";
-import {
-  PlayerState,
-  CompletedFeature,
-  TerrainType,
-  ScoreBreakdown,
-} from "../types";
+import { PlayerState, CompletedFeature, TerrainType, ScoreBreakdown } from "../types";
 import { GAME_RULES } from "../constants/gameRules";
 
 // Test helpers
@@ -18,11 +13,7 @@ const createPlayer = (id: string, name: string, score = 0): PlayerState => ({
   color: "#FF0000",
 });
 
-const createCompletedFeature = (
-  type: TerrainType,
-  points: number,
-  claimedBy: string[] = []
-): CompletedFeature => ({
+const createCompletedFeature = (type: TerrainType, points: number, claimedBy: string[] = []): CompletedFeature => ({
   type,
   tiles: new Set(["0,0"]),
   edges: new Set(["0,0:north"]),
@@ -89,15 +80,9 @@ describe("ScoreManager", () => {
 
       it("should not award points to minority holders", () => {
         const scoreManager = new ScoreManager();
-        const players = [
-          createPlayer("p1", "Alice"),
-          createPlayer("p2", "Bob"),
-          createPlayer("p3", "Charlie"),
-        ];
+        const players = [createPlayer("p1", "Alice"), createPlayer("p2", "Bob"), createPlayer("p3", "Charlie")];
         // p1 has 3 followers, p2 has 1, p3 has 1
-        const features = [
-          createCompletedFeature("costco", 15, ["p1", "p1", "p1", "p2", "p3"]),
-        ];
+        const features = [createCompletedFeature("costco", 15, ["p1", "p1", "p1", "p2", "p3"])];
 
         scoreManager.scoreCompletedFeatures(features, players);
 
@@ -122,11 +107,7 @@ describe("ScoreManager", () => {
 
       it("should award full points to all tied players (3-way tie)", () => {
         const scoreManager = new ScoreManager();
-        const players = [
-          createPlayer("p1", "Alice"),
-          createPlayer("p2", "Bob"),
-          createPlayer("p3", "Charlie"),
-        ];
+        const players = [createPlayer("p1", "Alice"), createPlayer("p2", "Bob"), createPlayer("p3", "Charlie")];
         // All players have 1 follower each
         const features = [createCompletedFeature("costco", 8, ["p1", "p2", "p3"])];
 
@@ -139,15 +120,9 @@ describe("ScoreManager", () => {
 
       it("should award full points to tied majority holders only", () => {
         const scoreManager = new ScoreManager();
-        const players = [
-          createPlayer("p1", "Alice"),
-          createPlayer("p2", "Bob"),
-          createPlayer("p3", "Charlie"),
-        ];
+        const players = [createPlayer("p1", "Alice"), createPlayer("p2", "Bob"), createPlayer("p3", "Charlie")];
         // p1 and p2 have 2 followers each, p3 has 1
-        const features = [
-          createCompletedFeature("costco", 10, ["p1", "p1", "p2", "p2", "p3"]),
-        ];
+        const features = [createCompletedFeature("costco", 10, ["p1", "p1", "p2", "p2", "p3"])];
 
         scoreManager.scoreCompletedFeatures(features, players);
 
@@ -207,10 +182,7 @@ describe("ScoreManager", () => {
 
       it("should preserve existing player scores", () => {
         const scoreManager = new ScoreManager();
-        const players = [
-          createPlayer("p1", "Alice", 25),
-          createPlayer("p2", "Bob", 15),
-        ];
+        const players = [createPlayer("p1", "Alice", 25), createPlayer("p2", "Bob", 15)];
         const features = [createCompletedFeature("costco", 10, ["p1"])];
 
         scoreManager.scoreCompletedFeatures(features, players);
@@ -286,7 +258,10 @@ describe("ScoreManager", () => {
           return undefined;
         },
         traceRoadFeature: () => ({
-          type: "road", tiles: new Set(["0,0"]), edges: new Set(["0,0:north"]), isComplete: false,
+          type: "road",
+          tiles: new Set(["0,0"]),
+          edges: new Set(["0,0:north"]),
+          isComplete: false,
         }),
         traceFieldFeature: () => ({
           type: "field",
@@ -300,15 +275,9 @@ describe("ScoreManager", () => {
 
       scoreManager.calculateFinalScores(players, board, breakdown);
 
-      expect(breakdown.p1.incomplete_road).toBe(
-        GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE
-      );
-      expect(breakdown.p2.incomplete_mcdonalds).toBe(
-        5 * GAME_RULES.MCDONALDS_POINTS_PER_TILE
-      );
-      expect(breakdown.p1.farmers).toBe(
-        2 * GAME_RULES.FARMER_POINTS_PER_COSTCO
-      );
+      expect(breakdown.p1.incomplete_road).toBe(GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE);
+      expect(breakdown.p2.incomplete_mcdonalds).toBe(5 * GAME_RULES.MCDONALDS_POINTS_PER_TILE);
+      expect(breakdown.p1.farmers).toBe(2 * GAME_RULES.FARMER_POINTS_PER_COSTCO);
     });
   });
 });

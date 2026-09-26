@@ -49,7 +49,13 @@ describe("sound cues", () => {
   });
 
   it("reads values, not the board and players that change in place", () => {
-    const game = new Game([{ id: "a", name: "A" }, { id: "b", name: "B" }], { seed: 17 });
+    const game = new Game(
+      [
+        { id: "a", name: "A" },
+        { id: "b", name: "B" },
+      ],
+      { seed: 17 },
+    );
     const before = soundSnapshot(game.getState());
     for (let turn = 0; turn < 4 && game.getValidPlacements().length === 0; turn++) game.rotateTileClockwise();
     game.placeTile(game.getValidPlacements()[0]);

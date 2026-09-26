@@ -8,13 +8,7 @@ import TimeToggle from "./hud/TimeToggle";
 import useTimeOfDay from "@/hooks/useTimeOfDay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import useTranslations from "@/hooks/useTranslations";
 import { PLAYER_COLORS } from "@/constants/colors";
 import type { SavedGame } from "@/persistence/savedGame";
@@ -34,10 +28,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame, savedGame, onResumeG
   const { t } = useTranslations();
   const defaultConfigs = (count: number): PlayerDefinition[] =>
     Array.from({ length: count }, (_, i) => ({
-      name:
-        i === 0
-          ? t("setup.defaultPlayerName")
-          : t("setup.defaultPlayerNameTemplate", { number: i + 1 }),
+      name: i === 0 ? t("setup.defaultPlayerName") : t("setup.defaultPlayerNameTemplate", { number: i + 1 }),
       id: `player-${i + 1}`,
       isAI: i > 0,
       aiDifficulty: i > 0 ? "medium" : undefined,
@@ -54,11 +45,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame, savedGame, onResumeG
     setPlayerConfigs(defaultConfigs(count));
   };
 
-  const updatePlayerConfig = (
-    index: number,
-    field: keyof PlayerDefinition,
-    value: string | boolean | AIDifficulty
-  ) => {
+  const updatePlayerConfig = (index: number, field: keyof PlayerDefinition, value: string | boolean | AIDifficulty) => {
     const newConfigs = [...playerConfigs];
     newConfigs[index] = { ...newConfigs[index], [field]: value };
 
@@ -91,9 +78,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame, savedGame, onResumeG
   const handleStartGame = () => {
     const validatedPlayers = playerConfigs.map((config, index) => ({
       ...config,
-      name:
-        config.name.trim() ||
-        t("setup.defaultPlayerNameTemplate", { number: index + 1 }),
+      name: config.name.trim() || t("setup.defaultPlayerNameTemplate", { number: index + 1 }),
       id: `player-${index + 1}`,
       color: PLAYER_COLORS[index],
     }));
@@ -104,18 +89,10 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame, savedGame, onResumeG
     <>
       <div className="w-full max-w-xl rounded-2xl border border-border bg-card text-card-foreground shadow-2xl overflow-hidden">
         <header className="flex items-center gap-4 p-6 pb-5 bg-muted/60 border-b border-border">
-          <img
-            src={iconUrl}
-            alt={t("app.gameIcon")}
-            className="h-16 w-16 rounded-xl shadow-md shrink-0"
-          />
+          <img src={iconUrl} alt={t("app.gameIcon")} className="h-16 w-16 rounded-xl shadow-md shrink-0" />
           <div className="min-w-0 flex-1">
-            <h1 className="m-0 brand-wordmark text-sm sm:text-base text-forest">
-              {t("app.title")}
-            </h1>
-            <p className="m-0 mt-2 text-sm text-muted-foreground">
-              {t("app.tagline")}
-            </p>
+            <h1 className="m-0 brand-wordmark text-sm sm:text-base text-forest">{t("app.title")}</h1>
+            <p className="m-0 mt-2 text-sm text-muted-foreground">{t("app.tagline")}</p>
           </div>
           <div className="self-start">
             <TimeToggle night={night} onToggle={toggleNight} />
@@ -170,10 +147,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame, savedGame, onResumeG
             <Label htmlFor="playerCount" className="text-sm font-semibold">
               {t("setup.numberOfPlayers")}
             </Label>
-            <Select
-              value={playerCount.toString()}
-              onValueChange={(value) => changePlayerCount(parseInt(value, 10))}
-            >
+            <Select value={playerCount.toString()} onValueChange={(value) => changePlayerCount(parseInt(value, 10))}>
               <SelectTrigger id="playerCount" className="h-11">
                 <SelectValue placeholder={t("setup.selectNumberOfPlayers")} />
               </SelectTrigger>
@@ -189,12 +163,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame, savedGame, onResumeG
           <div className="flex flex-col gap-2">
             <Label className="text-sm font-semibold">{t("setup.players")}</Label>
             {playerConfigs.map((config, index) => (
-              <PlayerConfigRow
-                key={index}
-                config={config}
-                index={index}
-                onUpdate={updatePlayerConfig}
-              />
+              <PlayerConfigRow key={index} config={config} index={index} onUpdate={updatePlayerConfig} />
             ))}
           </div>
 
@@ -204,12 +173,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStartGame, savedGame, onResumeG
           </p>
 
           <div className="flex flex-col-reverse sm:flex-row gap-3">
-            <Button
-              variant="outline"
-              size="lg"
-              className="sm:w-auto"
-              onClick={() => setShowHelp(true)}
-            >
+            <Button variant="outline" size="lg" className="sm:w-auto" onClick={() => setShowHelp(true)}>
               <CircleQuestionMark aria-hidden="true" />
               {t("setup.howToPlay")}
             </Button>

@@ -6,12 +6,7 @@
  */
 
 import type { IBoard } from "../../interfaces";
-import type {
-  Position,
-  TerrainType,
-  Feature,
-  FieldSegment,
-} from "../../types";
+import type { Position, TerrainType, Feature, FieldSegment } from "../../types";
 import { GAME_RULES } from "../../constants/gameRules";
 
 /**
@@ -39,10 +34,7 @@ export class FeatureAnalyzer {
    * Estimate the value of a Costco feature.
    * Higher value for larger features that are close to completion.
    */
-  estimateCostcoValue(
-    position: Position,
-    zoneIndex: number
-  ): FeatureValueEstimate {
+  estimateCostcoValue(position: Position, zoneIndex: number): FeatureValueEstimate {
     const tileRecord = this.board.getTile(position);
     if (!tileRecord) {
       return { currentPoints: 0, potentialPoints: 0, completionChance: 0, totalValue: 0 };
@@ -61,22 +53,18 @@ export class FeatureAnalyzer {
 
     // Current points if completed now
     const currentPoints = isComplete
-      ? tileCount * GAME_RULES.COSTCO_POINTS_PER_TILE_COMPLETE +
-        pennants * GAME_RULES.COSTCO_PENNANT_BONUS_COMPLETE
+      ? tileCount * GAME_RULES.COSTCO_POINTS_PER_TILE_COMPLETE + pennants * GAME_RULES.COSTCO_PENNANT_BONUS_COMPLETE
       : tileCount * GAME_RULES.COSTCO_POINTS_PER_TILE_INCOMPLETE +
         pennants * GAME_RULES.COSTCO_PENNANT_BONUS_INCOMPLETE;
 
     // Estimate potential points (assume 1-2 more tiles)
     const potentialTiles = tileCount + 2;
     const potentialPoints =
-      potentialTiles * GAME_RULES.COSTCO_POINTS_PER_TILE_COMPLETE +
-      pennants * GAME_RULES.COSTCO_PENNANT_BONUS_COMPLETE;
+      potentialTiles * GAME_RULES.COSTCO_POINTS_PER_TILE_COMPLETE + pennants * GAME_RULES.COSTCO_PENNANT_BONUS_COMPLETE;
 
     // Completion chance decreases as feature grows (harder to complete large features)
     const openEdges = this.countOpenEdges(feature);
-    const completionChance = isComplete
-      ? 1.0
-      : Math.max(0.1, 1.0 - openEdges * 0.15);
+    const completionChance = isComplete ? 1.0 : Math.max(0.1, 1.0 - openEdges * 0.15);
 
     const totalValue = currentPoints * completionChance + potentialPoints * (1 - completionChance) * 0.3;
 
@@ -87,10 +75,7 @@ export class FeatureAnalyzer {
    * Estimate the value of a road feature.
    * Roads score 1 point per tile, so value is based on length potential.
    */
-  estimateRoadValue(
-    position: Position,
-    connectionIndex: number
-  ): FeatureValueEstimate {
+  estimateRoadValue(position: Position, connectionIndex: number): FeatureValueEstimate {
     const tileRecord = this.board.getTile(position);
     if (!tileRecord) {
       return { currentPoints: 0, potentialPoints: 0, completionChance: 0, totalValue: 0 };
@@ -136,21 +121,16 @@ export class FeatureAnalyzer {
       { x: position.x + 1, y: position.y + 1 },
     ];
 
-    const filledCount = surroundingPositions.filter(
-      (pos) => this.board.getTile(pos) !== undefined
-    ).length;
+    const filledCount = surroundingPositions.filter((pos) => this.board.getTile(pos) !== undefined).length;
 
     // McDonald's gives 1 point per tile including itself
-    const currentPoints =
-      (filledCount + 1) * GAME_RULES.MCDONALDS_POINTS_PER_TILE;
+    const currentPoints = (filledCount + 1) * GAME_RULES.MCDONALDS_POINTS_PER_TILE;
     const potentialPoints = GAME_RULES.MCDONALDS_MAX_SCORE;
 
     // Completion chance based on how many tiles are already placed
     const completionChance = filledCount >= 5 ? 0.9 : filledCount >= 3 ? 0.6 : 0.3;
 
-    const totalValue =
-      currentPoints * completionChance +
-      potentialPoints * (1 - completionChance) * 0.5;
+    const totalValue = currentPoints * completionChance + potentialPoints * (1 - completionChance) * 0.5;
 
     return { isComplete: filledCount === 8, currentPoints, potentialPoints, completionChance, totalValue };
   }
@@ -159,10 +139,7 @@ export class FeatureAnalyzer {
    * Estimate the value of a field feature.
    * Fields score based on adjacent completed Costcos at game end.
    */
-  estimateFieldValue(
-    position: Position,
-    identifier?: string
-  ): FeatureValueEstimate {
+  estimateFieldValue(position: Position, identifier?: string): FeatureValueEstimate {
     const tileRecord = this.board.getTile(position);
     if (!tileRecord || !tileRecord.tile.fieldSegments) {
       return { currentPoints: 0, potentialPoints: 0, completionChance: 0, totalValue: 0 };
@@ -182,15 +159,9 @@ export class FeatureAnalyzer {
       return { currentPoints: 0, potentialPoints: 0, completionChance: 0, totalValue: 0 };
     }
 
-    const fieldFeature = this.board.traceFieldFeature(
-      position,
-      fieldSegment,
-      new Set()
-    );
+    const fieldFeature = this.board.traceFieldFeature(position, fieldSegment, new Set());
 
-    const adjacentCostcoFeatures = this.collectAdjacentCostcoFeatures(
-      fieldFeature
-    );
+    const adjacentCostcoFeatures = this.collectAdjacentCostcoFeatures(fieldFeature);
 
     let expectedPoints = 0;
     let completedCount = 0;
@@ -207,10 +178,8 @@ export class FeatureAnalyzer {
       expectedPoints += completionChance * GAME_RULES.FARMER_POINTS_PER_COSTCO;
     });
 
-    const currentPoints =
-      completedCount * GAME_RULES.FARMER_POINTS_PER_COSTCO;
-    const maxPoints =
-      adjacentCostcoFeatures.size * GAME_RULES.FARMER_POINTS_PER_COSTCO;
+    const currentPoints = completedCount * GAME_RULES.FARMER_POINTS_PER_COSTCO;
+    const maxPoints = adjacentCostcoFeatures.size * GAME_RULES.FARMER_POINTS_PER_COSTCO;
     const completionChance = maxPoints > 0 ? expectedPoints / maxPoints : 0;
 
     return {
@@ -224,23 +193,15 @@ export class FeatureAnalyzer {
   /**
    * Estimate feature value by type.
    */
-  estimateFeatureValue(
-    type: TerrainType,
-    position: Position,
-    identifier?: string
-  ): FeatureValueEstimate {
+  estimateFeatureValue(type: TerrainType, position: Position, identifier?: string): FeatureValueEstimate {
     switch (type) {
       case "costco": {
-        const costcoIndex = identifier
-          ? parseInt(identifier.replace("costco_", ""))
-          : 0;
+        const costcoIndex = identifier ? parseInt(identifier.replace("costco_", "")) : 0;
         return this.estimateCostcoValue(position, costcoIndex);
       }
 
       case "road": {
-        const roadIndex = identifier
-          ? parseInt(identifier.replace("road_", ""))
-          : 0;
+        const roadIndex = identifier ? parseInt(identifier.replace("road_", "")) : 0;
         return this.estimateRoadValue(position, roadIndex);
       }
 
@@ -300,10 +261,7 @@ export class FeatureAnalyzer {
   /**
    * Get neighbor position in a direction.
    */
-  private getNeighborPosition(
-    position: Position,
-    direction: string
-  ): Position {
+  private getNeighborPosition(position: Position, direction: string): Position {
     const deltas: Record<string, Position> = {
       north: { x: 0, y: -1 },
       east: { x: 1, y: 0 },
@@ -327,9 +285,9 @@ export class FeatureAnalyzer {
       const tile = this.board.getTile(position)?.tile;
       if (!tile) continue;
       for (const field of tile.fieldSegments) {
-        if (!field.corners.some(corner => fieldFeature.edges.has(`${tileKey}:${corner}`))) continue;
+        if (!field.corners.some((corner) => fieldFeature.edges.has(`${tileKey}:${corner}`))) continue;
         for (const zoneId of field.adjacentCostcoZones ?? []) {
-          const zone = tile.costcoZones.find(zone => zone.id === zoneId);
+          const zone = tile.costcoZones.find((zone) => zone.id === zoneId);
           if (!zone) continue;
           const feature = this.board.traceCostcoFeature(position, zone, new Set());
           unique.set([...feature.edges].sort().join("|"), feature);

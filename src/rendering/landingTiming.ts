@@ -8,5 +8,4 @@ export const LANDING_FALL = 0.55;
 export const LANDING_IMPACT_MS = LANDING_MS * LANDING_FALL;
 
 export const prefersReducedMotion = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;

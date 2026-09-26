@@ -1,11 +1,4 @@
-import {
-  PlayerState,
-  CompletedFeature,
-  ScoreBreakdown,
-  ScoreCategory,
-  TerrainType,
-  FieldCorner,
-} from "../types";
+import { PlayerState, CompletedFeature, ScoreBreakdown, ScoreCategory, TerrainType, FieldCorner } from "../types";
 import type { IBoard } from "../interfaces/IBoard";
 import { GAME_RULES } from "../constants/gameRules";
 
@@ -24,7 +17,7 @@ export class ScoreManager {
   public scoreCompletedFeatures(
     completedFeatures: CompletedFeature[],
     players: PlayerState[],
-    scoreBreakdown?: ScoreBreakdown
+    scoreBreakdown?: ScoreBreakdown,
   ): void {
     completedFeatures.forEach((feature) => {
       if (feature.claimedBy && feature.claimedBy.length > 0) {
@@ -33,13 +26,7 @@ export class ScoreManager {
         const category = this.getCompletedFeatureCategory(feature.type);
 
         majorityHolders.forEach((playerId) => {
-          this.awardPoints(
-            players,
-            playerId,
-            feature.points,
-            category,
-            scoreBreakdown
-          );
+          this.awardPoints(players, playerId, feature.points, category, scoreBreakdown);
         });
       }
     });
@@ -72,11 +59,7 @@ export class ScoreManager {
   /**
    * Calculate final scores for all incomplete features at game end
    */
-  public calculateFinalScores(
-    players: PlayerState[],
-    board: IBoard,
-    scoreBreakdown?: ScoreBreakdown
-  ): void {
+  public calculateFinalScores(players: PlayerState[], board: IBoard, scoreBreakdown?: ScoreBreakdown): void {
     // Score incomplete Costco features
     this.scoreIncompleteCostcoFeatures(players, board, scoreBreakdown);
 
@@ -85,11 +68,11 @@ export class ScoreManager {
 
     // Count each connected road once, including bridges and source roads.
     const roads = new Set<string>();
-    for (const claim of board.getFeatureClaims().filter(claim => claim.type === "road")) {
+    for (const claim of board.getFeatureClaims().filter((claim) => claim.type === "road")) {
       const [key, edge] = claim.edge.split(":");
       const position = this.parsePositionKey(key);
       const tile = board.getTile(position)?.tile;
-      const connection = tile?.roadConnections.find(connection => connection.includes(edge));
+      const connection = tile?.roadConnections.find((connection) => connection.includes(edge));
       if (!connection) continue;
       const feature = board.traceRoadFeature(position, connection, new Set());
       const id = [...feature.edges].sort().join("|");
@@ -97,7 +80,13 @@ export class ScoreManager {
       roads.add(id);
       const claimants = board.getFeatureClaimants(feature);
       for (const playerId of this.findMajorityHolders(this.countFollowersPerPlayer(claimants)))
-        this.awardPoints(players, playerId, feature.tiles.size * GAME_RULES.ROAD_POINTS_PER_TILE, "incomplete_road", scoreBreakdown);
+        this.awardPoints(
+          players,
+          playerId,
+          feature.tiles.size * GAME_RULES.ROAD_POINTS_PER_TILE,
+          "incomplete_road",
+          scoreBreakdown,
+        );
     }
 
     // Score farmer features (fields with farmers get points for adjacent completed Costcos)
@@ -111,11 +100,9 @@ export class ScoreManager {
   private scoreIncompleteMcDonaldsFeatures(
     players: PlayerState[],
     board: IBoard,
-    scoreBreakdown?: ScoreBreakdown
+    scoreBreakdown?: ScoreBreakdown,
   ): void {
-    const claims = board
-      .getFeatureClaims()
-      .filter((claim) => claim.type === "mcdonalds");
+    const claims = board.getFeatureClaims().filter((claim) => claim.type === "mcdonalds");
 
     claims.forEach((claim) => {
       const edgeKey = claim.edge.split(":")[0];
@@ -123,13 +110,7 @@ export class ScoreManager {
       const points = this.countMcDonaldsPoints(board, position);
 
       claim.players.forEach((playerId) => {
-        this.awardPoints(
-          players,
-          playerId,
-          points,
-          "incomplete_mcdonalds",
-          scoreBreakdown
-        );
+        this.awardPoints(players, playerId, points, "incomplete_mcdonalds", scoreBreakdown);
       });
     });
   }
@@ -138,11 +119,7 @@ export class ScoreManager {
    * Score incomplete Costco features at game end
    * Scoring: 1 point per tile + 1 point per pennant
    */
-  private scoreIncompleteCostcoFeatures(
-    players: PlayerState[],
-    board: IBoard,
-    scoreBreakdown?: ScoreBreakdown
-  ): void {
+  private scoreIncompleteCostcoFeatures(players: PlayerState[], board: IBoard, scoreBreakdown?: ScoreBreakdown): void {
     const allIncompleteFeatures = this.findAllIncompleteCostcoFeatures(board);
 
     allIncompleteFeatures.forEach((feature) => {
@@ -166,13 +143,7 @@ export class ScoreManager {
         const majorityHolders = this.findMajorityHolders(followerCounts);
 
         majorityHolders.forEach((playerId) => {
-          this.awardPoints(
-            players,
-            playerId,
-            totalPoints,
-            "incomplete_costco",
-            scoreBreakdown
-          );
+          this.awardPoints(players, playerId, totalPoints, "incomplete_costco", scoreBreakdown);
         });
       }
     });
@@ -198,9 +169,12 @@ export class ScoreManager {
         const id = [...feature.edges].sort().join("|");
         if (processed.has(id)) continue;
         processed.add(id);
-        if (!board.isCostcoComplete(feature)) allFeatures.push({
-          tiles: feature.tiles, edges: feature.edges, pennants: feature.pennants || 0,
-        });
+        if (!board.isCostcoComplete(feature))
+          allFeatures.push({
+            tiles: feature.tiles,
+            edges: feature.edges,
+            pennants: feature.pennants || 0,
+          });
       }
     });
 
@@ -215,10 +189,7 @@ export class ScoreManager {
     return { x, y };
   }
 
-  private countMcDonaldsPoints(
-    board: IBoard,
-    position: { x: number; y: number }
-  ): number {
+  private countMcDonaldsPoints(board: IBoard, position: { x: number; y: number }): number {
     const positions = [
       position,
       { x: position.x - 1, y: position.y - 1 },
@@ -245,18 +216,12 @@ export class ScoreManager {
    * Score farmer features at game end
    * Farmers score 3 points per adjacent completed Costco
    */
-  private scoreFarmerFeatures(
-    players: PlayerState[],
-    board: IBoard,
-    scoreBreakdown?: ScoreBreakdown
-  ): void {
+  private scoreFarmerFeatures(players: PlayerState[], board: IBoard, scoreBreakdown?: ScoreBreakdown): void {
     const processedFields = new Set<string>();
 
     // Find all field claims (farmers)
     const claims = board.getFeatureClaims();
-    const farmerClaims = claims.filter(
-      (claim) => claim.type === "field" && claim.followerType === "farmer"
-    );
+    const farmerClaims = claims.filter((claim) => claim.type === "field" && claim.followerType === "farmer");
 
     farmerClaims.forEach((claim) => {
       // Parse the claim edge to get position and corner
@@ -268,17 +233,11 @@ export class ScoreManager {
       if (!tileRecord) return;
 
       // Find the field segment that contains this corner
-      const fieldSegment = tileRecord.tile.fieldSegments.find((fs) =>
-        fs.corners.includes(corner as FieldCorner)
-      );
+      const fieldSegment = tileRecord.tile.fieldSegments.find((fs) => fs.corners.includes(corner as FieldCorner));
       if (!fieldSegment) return;
 
       // Trace the full field feature
-      const fieldFeature = board.traceFieldFeature(
-        position,
-        fieldSegment,
-        new Set()
-      );
+      const fieldFeature = board.traceFieldFeature(position, fieldSegment, new Set());
 
       // Create a unique key for this field feature
       const fieldKey = Array.from(fieldFeature.edges).sort().join("|");
@@ -301,13 +260,7 @@ export class ScoreManager {
           const majorityHolders = this.findMajorityHolders(followerCounts);
 
           majorityHolders.forEach((playerId) => {
-            this.awardPoints(
-              players,
-              playerId,
-              points,
-              "farmers",
-              scoreBreakdown
-            );
+            this.awardPoints(players, playerId, points, "farmers", scoreBreakdown);
           });
         }
       }
@@ -319,7 +272,7 @@ export class ScoreManager {
     playerId: string,
     points: number,
     category?: ScoreCategory,
-    scoreBreakdown?: ScoreBreakdown
+    scoreBreakdown?: ScoreBreakdown,
   ): void {
     const player = players.find((p) => p.id === playerId);
     if (!player) return;
@@ -334,9 +287,7 @@ export class ScoreManager {
     }
   }
 
-  private getCompletedFeatureCategory(
-    type: TerrainType
-  ): ScoreCategory | undefined {
+  private getCompletedFeatureCategory(type: TerrainType): ScoreCategory | undefined {
     switch (type) {
       case "road":
         return "completed_road";
@@ -348,5 +299,4 @@ export class ScoreManager {
         return undefined;
     }
   }
-
 }

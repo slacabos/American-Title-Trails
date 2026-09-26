@@ -31,9 +31,7 @@ function Dock({ phase }: { phase: "place" | "claim" | "ai" }) {
     <div style={{ width: 288 }}>
       <TileDock
         state={state}
-        claimableFeatures={
-          state.phase === GamePhase.CLAIM_FEATURE ? game.getClaimableFeaturesForCurrentTurn() : []
-        }
+        claimableFeatures={state.phase === GamePhase.CLAIM_FEATURE ? game.getClaimableFeaturesForCurrentTurn() : []}
         onRotateClockwise={noop}
         onRotateCounterClockwise={noop}
         onClaim={noop}

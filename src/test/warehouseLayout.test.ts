@@ -33,8 +33,16 @@ describe("connected warehouse layout", () => {
     const right = after[0].sections.find((section) => section.key.startsWith("1,0:"))!;
     expect(left.joined).toContain("east");
     expect(right.joined).toContain("west");
-    expect(left.roof.filter(([x]) => x === 0.5).map(([, z]) => z).sort()).toEqual(
-      right.roof.filter(([x]) => x === 0.5).map(([, z]) => z).sort(),
+    expect(
+      left.roof
+        .filter(([x]) => x === 0.5)
+        .map(([, z]) => z)
+        .sort(),
+    ).toEqual(
+      right.roof
+        .filter(([x]) => x === 0.5)
+        .map(([, z]) => z)
+        .sort(),
     );
     expect(after[0].loadingBay).toBeDefined();
   });
@@ -47,14 +55,17 @@ describe("connected warehouse layout", () => {
         rotated.costcoZones.forEach((zone, i) => {
           const roof = warehouseFootprint(rotated, i);
           const paving = zonePolygon(rotated, i);
-          const center = roof.reduce(([x, z], point) => [x + point[0] / roof.length, z + point[1] / roof.length], [0, 0]);
+          const center = roof.reduce(
+            ([x, z], point) => [x + point[0] / roof.length, z + point[1] / roof.length],
+            [0, 0],
+          );
           for (const [x, z] of roof) {
             expect(insidePolygon([x * 0.999 + center[0] * 0.001, z * 0.999 + center[1] * 0.001], paving)).toBe(true);
           }
           for (const edge of zone.segments) {
             if (edge === "center") continue;
             const [x, z] = PORTALS[edge];
-            const portal = roof.filter((p) => x ? p[0] === x : p[1] === z);
+            const portal = roof.filter((p) => (x ? p[0] === x : p[1] === z));
             expect(portal).toHaveLength(2);
             expect(Math.hypot(portal[0][0] - portal[1][0], portal[0][1] - portal[1][1])).toBeCloseTo(WAREHOUSE_WIDTH);
           }

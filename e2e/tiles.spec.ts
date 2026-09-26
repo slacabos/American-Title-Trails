@@ -13,7 +13,9 @@ declare global {
 }
 
 for (const occlude of [false, true]) {
-  test(`every claimed feature stays visible ${occlude ? "behind opaque and transparent objects" : "on all tile scenery"}`, async ({ page }, testInfo) => {
+  test(`every claimed feature stays visible ${occlude ? "behind opaque and transparent objects" : "on all tile scenery"}`, async ({
+    page,
+  }, testInfo) => {
     await page.setViewportSize({ width: 1220, height: 1300 });
     for (let group = 0; group < 7; group++) {
       await page.goto(`/e2e/tiles.html?page=${group}&markers${occlude ? "&occlude" : ""}`);
@@ -33,11 +35,13 @@ test("junctions have uninterrupted asphalt and the gas-station driveway enters t
   await page.goto("/e2e/tiles.html?page=1");
   const pixels = await page.evaluate(() => {
     const junction: [number, number][] = [];
-    for (let x = -0.075; x <= 0.075; x += 0.015)
-      for (let z = -0.075; z <= 0.075; z += 0.015) junction.push([x, z]);
+    for (let x = -0.075; x <= 0.075; x += 0.015) for (let z = -0.075; z <= 0.075; z += 0.015) junction.push([x, z]);
     return [
       ...window.tileSceneryTest.surfacePixels("three-way-road", junction),
-      ...window.tileSceneryTest.surfacePixels("costco-road", [[0, 0.1], [0, 0.15]]),
+      ...window.tileSceneryTest.surfacePixels("costco-road", [
+        [0, 0.1],
+        [0, 0.15],
+      ]),
     ];
   });
   for (const pixel of pixels) expect(pixel).toEqual([98, 108, 105, 255]);
@@ -57,7 +61,6 @@ test("all 28 tile types render in every orientation", async ({ page }, testInfo)
   expect(errors).toEqual([]);
 });
 
-
 test("feature highlights tolerate stale selections and empty polygons on every tile and rotation", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -68,7 +71,6 @@ test("feature highlights tolerate stale selections and empty polygons on every t
   }
   expect(errors).toEqual([]);
 });
-
 
 test("every river tile paints water along its whole river path", async ({ page }) => {
   await page.goto("/e2e/tiles.html?page=4");

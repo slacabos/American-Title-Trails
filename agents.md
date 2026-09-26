@@ -178,21 +178,21 @@ All changes go through `Game` methods: `placeTile(position, rotation)`, `claimFe
 
 ### Essential Commands
 
-| Command                                                   | Description                                            |
-| --------------------------------------------------------- | ------------------------------------------------------ |
-| `npm run dev`                                             | Vite dev server (port 3000, opens the browser)         |
-| `npm run build`                                           | Type check + production build                          |
-| `npm run preview`                                         | Serve the production build                             |
-| `npx tsc --noEmit`                                        | Type check only                                        |
-| `npm run lint` / `npm run lint:fix`                       | ESLint on `src/`                                       |
-| `npm run format` / `npm run format:check`                 | Prettier: rewrite, or only check, every file           |
-| `npm test`                                                | All unit tests, including the AI simulation            |
-| `npm run test:ai-sim`                                     | Only the AI balance simulation                         |
-| `npx vitest run --config vite.config.ts --project storybook` | Every story, rendered and tested in Chromium        |
-| `npm run test:browser`                                    | Playwright end-to-end tests (starts a dev server on 4173) |
-| `npm run test:coverage`                                   | Unit + Storybook coverage, merged; enforces the 80% gate |
-| `npm run storybook` / `npm run build-storybook`           | Storybook                                              |
-| `npm run sync-help-content en`                            | Regenerate `src/content/help/en.ts` from `en.md`       |
+| Command                                                      | Description                                               |
+| ------------------------------------------------------------ | --------------------------------------------------------- |
+| `npm run dev`                                                | Vite dev server (port 3000, opens the browser)            |
+| `npm run build`                                              | Type check + production build                             |
+| `npm run preview`                                            | Serve the production build                                |
+| `npx tsc --noEmit`                                           | Type check only                                           |
+| `npm run lint` / `npm run lint:fix`                          | ESLint on `src/`                                          |
+| `npm run format` / `npm run format:check`                    | Prettier: rewrite, or only check, every file              |
+| `npm test`                                                   | All unit tests, including the AI simulation               |
+| `npm run test:ai-sim`                                        | Only the AI balance simulation                            |
+| `npx vitest run --config vite.config.ts --project storybook` | Every story, rendered and tested in Chromium              |
+| `npm run test:browser`                                       | Playwright end-to-end tests (starts a dev server on 4173) |
+| `npm run test:coverage`                                      | Unit + Storybook coverage, merged; enforces the 80% gate  |
+| `npm run storybook` / `npm run build-storybook`              | Storybook                                                 |
+| `npm run sync-help-content en`                               | Regenerate `src/content/help/en.ts` from `en.md`          |
 
 Browser tests need Chromium: `npx playwright install chromium`. They use SwiftShader for WebGL, so they run without a GPU.
 
@@ -227,13 +227,13 @@ type FollowerType = "standard" | "farmer";
 type FieldCorner = "nw" | "ne" | "sw" | "se";
 ```
 
-| Type        | Description                          | Completed                               | Incomplete at game end            |
-| ----------- | ------------------------------------ | --------------------------------------- | --------------------------------- |
-| `road`      | Highways                             | 1 pt/tile                               | 1 pt/tile                         |
-| `costco`    | Costco shopping areas (cities)       | 2 pts/tile + 2 pts/pennant              | 1 pt/tile + 1 pt/pennant          |
-| `mcdonalds` | McDonald's restaurants (monasteries) | 9 pts (all 8 surrounding tiles filled)  | 1 pt per tile in the 3×3 area     |
-| `field`     | Fields (farmers)                     | Scored at game end only                 | 3 pts per adjacent completed Costco |
-| `river`     | Water: can't be claimed, scores nothing | –                                    | –                                 |
+| Type        | Description                             | Completed                              | Incomplete at game end              |
+| ----------- | --------------------------------------- | -------------------------------------- | ----------------------------------- |
+| `road`      | Highways                                | 1 pt/tile                              | 1 pt/tile                           |
+| `costco`    | Costco shopping areas (cities)          | 2 pts/tile + 2 pts/pennant             | 1 pt/tile + 1 pt/pennant            |
+| `mcdonalds` | McDonald's restaurants (monasteries)    | 9 pts (all 8 surrounding tiles filled) | 1 pt per tile in the 3×3 area       |
+| `field`     | Fields (farmers)                        | Scored at game end only                | 3 pts per adjacent completed Costco |
+| `river`     | Water: can't be claimed, scores nothing | –                                      | –                                   |
 
 ### The River Opening
 
@@ -256,11 +256,11 @@ All rule numbers live in `GAME_RULES` (`src/constants/gameRules.ts`): scoring va
 
 Every difficulty implements `AIStrategy` (`evaluateTilePlacements`, `evaluateMeeplePlacement`, `getBestMove`). `AIFactory.create(difficulty, rng)` builds one.
 
-| Difficulty | Class         | Strategy                                                |
-| ---------- | ------------- | ------------------------------------------------------- |
-| Easy       | `RandomAI`    | Random valid placements, 15% chance to claim            |
-| Medium     | `SimpleAI`    | Weighted heuristics with feature analysis               |
-| Hard       | `StrategicAI` | Look-ahead (depth 2, ~400 ms), defensive play           |
+| Difficulty | Class         | Strategy                                                                     |
+| ---------- | ------------- | ---------------------------------------------------------------------------- |
+| Easy       | `RandomAI`    | Random valid placements, 15% chance to claim                                 |
+| Medium     | `SimpleAI`    | Weighted heuristics with feature analysis                                    |
+| Hard       | `StrategicAI` | Look-ahead (depth 2, ~400 ms), defensive play                                |
 | Expert     | `ExpertAI`    | Deeper look-ahead (depth 3, ~600 ms), stronger weights (in `StrategicAI.ts`) |
 
 `TilePlacementEvaluator` scores every position × rotation; `FeatureAnalyzer` estimates what a feature is worth. After changing the AI, run `npm run test:ai-sim` to check the balance thresholds. [docs/ai-system.md](docs/ai-system.md) has the full weights and formulas.
@@ -301,7 +301,7 @@ Anything that changes the game must go through a `Game` method that records a `G
 
 - No `any` types in new code; use the types in `src/types.ts` or `src/interfaces/`.
 - Methods return structured results (`{ success, completedFeatures, message }`).
-- Use JSDoc on public methods, and short comments that explain *why*.
+- Use JSDoc on public methods, and short comments that explain _why_.
 - Prefer `@/` imports.
 - Components are PascalCase `.tsx` files; rule numbers come from `GAME_RULES`.
 - No emojis in code.

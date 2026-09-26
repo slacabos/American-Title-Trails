@@ -5,8 +5,6 @@ export const translations = {
   en,
 };
 
-export const availableLanguages = Object.keys(translations) as Array<
-  keyof typeof translations
->;
+export const availableLanguages = Object.keys(translations) as Array<keyof typeof translations>;
 
 export default translations;

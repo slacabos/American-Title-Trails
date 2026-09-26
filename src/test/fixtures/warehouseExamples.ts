@@ -20,7 +20,12 @@ export const warehouseExamples = [
   },
   {
     name: "A four-tile warehouse with a courtyard",
-    records: [tile("costco-corner", 0, 0, 1), tile("costco-corner", 1, 0, 2), tile("costco-corner", 0, 1), tile("costco-corner", 1, 1, 3)],
+    records: [
+      tile("costco-corner", 0, 0, 1),
+      tile("costco-corner", 1, 0, 2),
+      tile("costco-corner", 0, 1),
+      tile("costco-corner", 1, 1, 3),
+    ],
     complexes: 1,
   },
   {

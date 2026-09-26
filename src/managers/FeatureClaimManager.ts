@@ -120,7 +120,7 @@ export class FeatureClaimManager {
     type: TerrainType,
     position: Position,
     identifier: string | undefined,
-    playerId: string
+    playerId: string,
   ): void {
     board.claimFeature(type, position, identifier, playerId);
   }

@@ -6,14 +6,7 @@
  */
 
 // Core types and interfaces
-export type {
-  AIStrategy,
-  AIDifficulty,
-  AIContext,
-  TilePlacement,
-  MeeplePlacement,
-  AIDecision,
-} from "./AIStrategy";
+export type { AIStrategy, AIDifficulty, AIContext, TilePlacement, MeeplePlacement, AIDecision } from "./AIStrategy";
 
 // AI Implementations
 export { RandomAI } from "./RandomAI";
@@ -29,13 +22,5 @@ export type { StrategicAIOptions } from "./StrategicAI";
 export { AIFactory } from "./AIFactory";
 
 // Evaluators
-export {
-  FeatureAnalyzer,
-  TilePlacementEvaluator,
-  DEFAULT_WEIGHTS,
-} from "./evaluators";
-export type {
-  FeatureValueEstimate,
-  EvaluationWeights,
-  PlacementScore,
-} from "./evaluators";
+export { FeatureAnalyzer, TilePlacementEvaluator, DEFAULT_WEIGHTS } from "./evaluators";
+export type { FeatureValueEstimate, EvaluationWeights, PlacementScore } from "./evaluators";

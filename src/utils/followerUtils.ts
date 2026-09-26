@@ -12,11 +12,7 @@ export interface FollowerBreakdown {
   };
 }
 
-export function getFollowerBreakdown(
-  playerId: string,
-  remainingFollowers: number,
-  board: IBoard
-): FollowerBreakdown {
+export function getFollowerBreakdown(playerId: string, remainingFollowers: number, board: IBoard): FollowerBreakdown {
   const byFeature = {
     road: 0,
     costco: 0,

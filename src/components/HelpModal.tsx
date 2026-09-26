@@ -18,10 +18,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         <div className="overflow-y-auto max-h-[92vh] px-6 sm:px-8 pb-6">
           <div className="space-y-6 text-card-foreground pt-6">
             <ShortcutList />
-            <MarkdownRenderer
-              content={helpContent.en}
-              className="max-w-none"
-            />
+            <MarkdownRenderer content={helpContent.en} className="max-w-none" />
 
             <div className="flex justify-center pt-4">
               <Button onClick={onClose} size="lg">

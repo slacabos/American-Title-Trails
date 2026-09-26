@@ -13,8 +13,7 @@ import { ITile } from "./interfaces/ITile";
 
 const CORNER_ROTATION: FieldCorner[] = ["nw", "ne", "se", "sw"];
 
-const directionIndex = (direction: Direction): number =>
-  DIRECTIONS.indexOf(direction);
+const directionIndex = (direction: Direction): number => DIRECTIONS.indexOf(direction);
 
 export class Tile implements ITile {
   public readonly river?: RiverSegment;
@@ -80,16 +79,12 @@ export class Tile implements ITile {
     });
 
     const rotateCollection = (collection: string[][]): string[][] =>
-      collection.map((items) =>
-        items.map((item) => rotateDirection(item, normalized))
-      );
+      collection.map((items) => items.map((item) => rotateDirection(item, normalized)));
 
     const rotateCostcoZones = (zones: CostcoSegment[]): CostcoSegment[] =>
       zones.map((zone) => ({
         id: zone.id,
-        segments: zone.segments.map((segment) =>
-          rotateDirection(segment, normalized)
-        ) as (Direction | "center")[],
+        segments: zone.segments.map((segment) => rotateDirection(segment, normalized)) as (Direction | "center")[],
         hasPennant: zone.hasPennant,
         shape: zone.shape,
       }));
@@ -114,7 +109,10 @@ export class Tile implements ITile {
         west: rotatedEdges[3],
       } as TileEdges,
       center: this.center,
-      river: this.river && { kind: this.river.kind, edges: this.river.edges.map(edge => rotateDirection(edge, normalized) as Direction) },
+      river: this.river && {
+        kind: this.river.kind,
+        edges: this.river.edges.map((edge) => rotateDirection(edge, normalized) as Direction),
+      },
       roadConnections: rotateCollection(this.roadConnections),
       costcoZones: rotateCostcoZones(this.costcoZones),
       fieldSegments: rotateFieldSegments(this.fieldSegments),

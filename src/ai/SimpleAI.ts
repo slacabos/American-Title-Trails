@@ -6,18 +6,8 @@
  */
 
 import type { Position } from "../types";
-import type {
-  AIStrategy,
-  AIDifficulty,
-  AIContext,
-  TilePlacement,
-  MeeplePlacement,
-  AIDecision,
-} from "./AIStrategy";
-import {
-  TilePlacementEvaluator,
-  FeatureAnalyzer,
-} from "./evaluators";
+import type { AIStrategy, AIDifficulty, AIContext, TilePlacement, MeeplePlacement, AIDecision } from "./AIStrategy";
+import { TilePlacementEvaluator, FeatureAnalyzer } from "./evaluators";
 import type { EvaluationWeights } from "./evaluators";
 import type { RNG } from "../utils/rng";
 
@@ -48,15 +38,14 @@ export class SimpleAI implements AIStrategy {
    * Evaluate all valid tile placements.
    */
   evaluateTilePlacements(context: AIContext): TilePlacement[] {
-    const { board, currentTile, currentPlayer, allPlayers, validPlacements } =
-      context;
+    const { board, currentTile, currentPlayer, allPlayers, validPlacements } = context;
 
     const scores = this.evaluator.evaluateAllPlacements(
       board,
       currentTile,
       validPlacements,
       currentPlayer.id,
-      allPlayers
+      allPlayers,
     );
 
     return scores.map((score) => ({
@@ -69,10 +58,7 @@ export class SimpleAI implements AIStrategy {
   /**
    * Evaluate meeple placement decision.
    */
-  evaluateMeeplePlacement(
-    context: AIContext,
-    placedPosition: Position
-  ): MeeplePlacement | null {
+  evaluateMeeplePlacement(context: AIContext, placedPosition: Position): MeeplePlacement | null {
     const { board, currentPlayer, claimableFeatures, gameState } = context;
 
     // Don't claim if we need to keep followers in reserve
@@ -97,11 +83,7 @@ export class SimpleAI implements AIStrategy {
     };
 
     for (const feature of claimableFeatures) {
-      const estimate = analyzer.estimateFeatureValue(
-        feature.type,
-        placedPosition,
-        feature.identifier
-      );
+      const estimate = analyzer.estimateFeatureValue(feature.type, placedPosition, feature.identifier);
 
       if (estimate.isComplete && estimate.currentPoints > 0) {
         const score = 1000 + estimate.currentPoints;
@@ -144,8 +126,7 @@ export class SimpleAI implements AIStrategy {
         }
       }
 
-      const threshold =
-        featureThresholds[feature.type as keyof typeof featureThresholds] || 3;
+      const threshold = featureThresholds[feature.type as keyof typeof featureThresholds] || 3;
 
       if (score > bestScore && score >= threshold) {
         bestScore = score;

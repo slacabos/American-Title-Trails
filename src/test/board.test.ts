@@ -151,12 +151,7 @@ describe("Board", () => {
 
       board.placeTile(roadTile, { x: 0, y: 1 });
 
-      const result = board.claimFeature(
-        "road",
-        { x: 0, y: 1 },
-        "road_0",
-        "player1"
-      );
+      const result = board.claimFeature("road", { x: 0, y: 1 }, "road_0", "player1");
       expect(result).toBeDefined();
       expect(result.type).toBe("road");
       expect(result.players).toContain("player1");
@@ -180,12 +175,7 @@ describe("Board", () => {
       board.placeTile(roadTile, { x: 0, y: 1 });
 
       // First claim should succeed
-      const result1 = board.claimFeature(
-        "road",
-        { x: 0, y: 1 },
-        "road_0",
-        "player1"
-      );
+      const result1 = board.claimFeature("road", { x: 0, y: 1 }, "road_0", "player1");
       expect(result1).toBeDefined();
 
       // Second claim should throw an error
@@ -311,11 +301,7 @@ describe("Board", () => {
       board.claimFeature("road", { x: 1, y: 0 }, "road_0", "player1");
 
       // Costco should still be claimable
-      const canClaimCostco = board.canClaimFeature(
-        "costco",
-        { x: 1, y: 0 },
-        "costco_0"
-      );
+      const canClaimCostco = board.canClaimFeature("costco", { x: 1, y: 0 }, "costco_0");
       expect(canClaimCostco).toBe(true);
     });
 
@@ -337,17 +323,13 @@ describe("Board", () => {
       board.placeTile(mcdonaldsTile, { x: 1, y: 0 });
 
       // Should be claimable initially
-      expect(board.canClaimFeature("mcdonalds", { x: 1, y: 0 }, undefined)).toBe(
-        true
-      );
+      expect(board.canClaimFeature("mcdonalds", { x: 1, y: 0 }, undefined)).toBe(true);
 
       // Claim it
       board.claimFeature("mcdonalds", { x: 1, y: 0 }, undefined, "player1");
 
       // Should not be claimable after
-      expect(board.canClaimFeature("mcdonalds", { x: 1, y: 0 }, undefined)).toBe(
-        false
-      );
+      expect(board.canClaimFeature("mcdonalds", { x: 1, y: 0 }, undefined)).toBe(false);
     });
   });
 
@@ -377,14 +359,9 @@ describe("Board", () => {
       // (0,1) rot 0 → roads on N+E  (north matches (0,0) south)
       freshBoard.placeTile(new Tile(curveDef).rotate(0), { x: 0, y: 1 });
       // (1,1) rot 3 → roads on W+N  (closes the loop)
-      const result = freshBoard.placeTile(
-        new Tile(curveDef).rotate(3),
-        { x: 1, y: 1 }
-      );
+      const result = freshBoard.placeTile(new Tile(curveDef).rotate(3), { x: 1, y: 1 });
 
-      const completedRoads = result.completed.filter(
-        (f) => f.type === "road" && f.isComplete
-      );
+      const completedRoads = result.completed.filter((f) => f.type === "road" && f.isComplete);
       expect(completedRoads).toHaveLength(1);
       expect(completedRoads[0].tiles.size).toBe(4);
       expect(completedRoads[0].points).toBe(4);
@@ -458,9 +435,7 @@ describe("Board", () => {
         },
         center: "field",
         roadConnections: [],
-        costcoZones: [
-          { id: "c1", segments: ["south", "east", "west"], hasPennant: false },
-        ],
+        costcoZones: [{ id: "c1", segments: ["south", "east", "west"], hasPennant: false }],
       } as TileDefinition);
 
       // South tile at (0, 1) - has costco on north to connect to center's south
@@ -475,9 +450,7 @@ describe("Board", () => {
         },
         center: "field",
         roadConnections: [],
-        costcoZones: [
-          { id: "c1", segments: ["north", "east", "west"], hasPennant: false },
-        ],
+        costcoZones: [{ id: "c1", segments: ["north", "east", "west"], hasPennant: false }],
       } as TileDefinition);
 
       // East tile at (1, 0) - has costco on west to connect to center's east
@@ -492,9 +465,7 @@ describe("Board", () => {
         },
         center: "field",
         roadConnections: [],
-        costcoZones: [
-          { id: "c1", segments: ["west", "north", "south"], hasPennant: false },
-        ],
+        costcoZones: [{ id: "c1", segments: ["west", "north", "south"], hasPennant: false }],
       } as TileDefinition);
 
       // West tile at (-1, 0) - has costco on east to connect to center's west
@@ -509,9 +480,7 @@ describe("Board", () => {
         },
         center: "field",
         roadConnections: [],
-        costcoZones: [
-          { id: "c1", segments: ["east", "north", "south"], hasPennant: false },
-        ],
+        costcoZones: [{ id: "c1", segments: ["east", "north", "south"], hasPennant: false }],
       } as TileDefinition);
 
       // Corner tiles to close the costco completely
@@ -527,9 +496,7 @@ describe("Board", () => {
         },
         center: "field",
         roadConnections: [],
-        costcoZones: [
-          { id: "c1", segments: ["east", "south"], hasPennant: false },
-        ],
+        costcoZones: [{ id: "c1", segments: ["east", "south"], hasPennant: false }],
       } as TileDefinition);
 
       // NE corner at (1, -1)
@@ -544,9 +511,7 @@ describe("Board", () => {
         },
         center: "field",
         roadConnections: [],
-        costcoZones: [
-          { id: "c1", segments: ["west", "south"], hasPennant: false },
-        ],
+        costcoZones: [{ id: "c1", segments: ["west", "south"], hasPennant: false }],
       } as TileDefinition);
 
       // SW corner at (-1, 1)
@@ -561,9 +526,7 @@ describe("Board", () => {
         },
         center: "field",
         roadConnections: [],
-        costcoZones: [
-          { id: "c1", segments: ["north", "east"], hasPennant: false },
-        ],
+        costcoZones: [{ id: "c1", segments: ["north", "east"], hasPennant: false }],
       } as TileDefinition);
 
       // SE corner at (1, 1)
@@ -578,9 +541,7 @@ describe("Board", () => {
         },
         center: "field",
         roadConnections: [],
-        costcoZones: [
-          { id: "c1", segments: ["north", "west"], hasPennant: false },
-        ],
+        costcoZones: [{ id: "c1", segments: ["north", "west"], hasPennant: false }],
       } as TileDefinition);
 
       // Place tiles in order, need to be careful about placement validation
@@ -596,9 +557,7 @@ describe("Board", () => {
       const result = testBoard.placeTile(seCorner, { x: 1, y: 1 });
 
       // The Costco should be complete
-      const costcoCompleted = result.completed.filter(
-        (f) => f.type === "costco"
-      );
+      const costcoCompleted = result.completed.filter((f) => f.type === "costco");
       expect(costcoCompleted.length).toBe(1);
       // The feature spans 9 tiles now (center + 4 sides + 4 corners)
       expect(costcoCompleted[0].tiles.size).toBe(9);
@@ -631,9 +590,7 @@ describe("Board", () => {
       const result = testBoard.placeTile(costcoTile, { x: 0, y: 0 });
 
       // Should not be complete since it has open edges
-      const costcoCompleted = result.completed.filter(
-        (f) => f.type === "costco"
-      );
+      const costcoCompleted = result.completed.filter((f) => f.type === "costco");
       expect(costcoCompleted.length).toBe(0);
     });
 
@@ -688,9 +645,7 @@ describe("Board", () => {
       const result = testBoard.placeTile(topTile, { x: 0, y: -1 });
 
       // The Costco should now be complete (2 tiles)
-      const costcoCompleted = result.completed.filter(
-        (f) => f.type === "costco"
-      );
+      const costcoCompleted = result.completed.filter((f) => f.type === "costco");
       expect(costcoCompleted.length).toBe(1);
       expect(costcoCompleted[0].tiles.size).toBe(2);
     });
@@ -748,11 +703,7 @@ describe("Board", () => {
       const tileRecord = testBoard.getTile({ x: 0, y: -1 });
       expect(tileRecord).toBeDefined();
 
-      const feature = testBoard.traceCostcoFeature(
-        { x: 0, y: -1 },
-        tileRecord!.tile.costcoZones[0],
-        new Set()
-      );
+      const feature = testBoard.traceCostcoFeature({ x: 0, y: -1 }, tileRecord!.tile.costcoZones[0], new Set());
 
       expect(feature.tiles.size).toBe(2);
       expect(feature.edges.has("0,-1:south")).toBe(true);

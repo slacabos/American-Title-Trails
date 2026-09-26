@@ -27,18 +27,25 @@ const smoothstep = (a: number, b: number, x: number) => fade(Math.min(1, Math.ma
 
 /** Smooth, seeded value noise in [0, 1]. */
 function noise(x: number, z: number, seed: number, salt: number): number {
-  const gx = x / CELL, gz = z / CELL;
-  const ix = Math.floor(gx), iz = Math.floor(gz);
-  const tx = fade(gx - ix), tz = fade(gz - iz);
-  const a = lattice(ix, iz, seed, salt), b = lattice(ix + 1, iz, seed, salt);
-  const c = lattice(ix, iz + 1, seed, salt), d = lattice(ix + 1, iz + 1, seed, salt);
+  const gx = x / CELL,
+    gz = z / CELL;
+  const ix = Math.floor(gx),
+    iz = Math.floor(gz);
+  const tx = fade(gx - ix),
+    tz = fade(gz - iz);
+  const a = lattice(ix, iz, seed, salt),
+    b = lattice(ix + 1, iz, seed, salt);
+  const c = lattice(ix, iz + 1, seed, salt),
+    d = lattice(ix + 1, iz + 1, seed, salt);
   return (a + (b - a) * tx) * (1 - tz) + (c + (d - c) * tx) * tz;
 }
 
 /** Two octaves in a rotated frame, so borders never follow the tile grid. */
 function field(x: number, z: number, seed: number, salt: number, angle: number): number {
-  const c = Math.cos(angle), s = Math.sin(angle);
-  const u = x * c - z * s, v = x * s + z * c;
+  const c = Math.cos(angle),
+    s = Math.sin(angle);
+  const u = x * c - z * s,
+    v = x * s + z * c;
   return (noise(u, v, seed, salt) * 3 + noise(u * 2.3 + 7.1, v * 2.3 - 3.7, seed, salt + 1)) / 4;
 }
 
@@ -72,7 +79,12 @@ export function sampleRegion(weights: RegionWeights, roll: number): Region {
 }
 
 /** Canonical tile corners in NW, NE, SW, SE order, matching the ground shader. */
-const CORNER_POINTS: Point[] = [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]];
+const CORNER_POINTS: Point[] = [
+  [-0.5, -0.5],
+  [0.5, -0.5],
+  [-0.5, 0.5],
+  [0.5, 0.5],
+];
 
 /** Region weights at the four canonical corners of a placed tile. */
 export function cornerWeights(position: Position, orientation: number, seed = 0): RegionWeights[] {

@@ -3,22 +3,33 @@ import type { Direction, FieldCorner, TileDefinition } from "./types";
 
 // C3-FA through C3-FL, The World of Carcassonne, page 5 (publisher inventory).
 // Cities become Costcos and monasteries become McDonald's; gardens are decorative.
-const field = (id: string, corners: FieldCorner[], adjacentCostcoZones: string[] = []) =>
-  ({ id, corners, adjacentCostcoZones });
+const field = (id: string, corners: FieldCorner[], adjacentCostcoZones: string[] = []) => ({
+  id,
+  corners,
+  adjacentCostcoZones,
+});
 const all: FieldCorner[] = ["nw", "ne", "sw", "se"];
-const define = (
-  id: string, name: string, edges: Direction[],
-  extra: Partial<TileDefinition> = {},
-): TileDefinition => ({
-  id, name, center: "field", roadConnections: [], costcoZones: [],
-  edges: { north: "field", east: "field", south: "field", west: "field",
-    ...Object.fromEntries(edges.map(edge => [edge, "river"])) },
-  river: { kind: "segment", edges }, ...extra,
+const define = (id: string, name: string, edges: Direction[], extra: Partial<TileDefinition> = {}): TileDefinition => ({
+  id,
+  name,
+  center: "field",
+  roadConnections: [],
+  costcoZones: [],
+  edges: {
+    north: "field",
+    east: "field",
+    south: "field",
+    west: "field",
+    ...Object.fromEntries(edges.map((edge) => [edge, "river"])),
+  },
+  river: { kind: "segment", edges },
+  ...extra,
 });
 
 export const RIVER_TILES: TileDefinition[] = [
   define("river-source", "River Source", ["south"], {
-    isStart: true, river: { kind: "source", edges: ["south"] },
+    isStart: true,
+    river: { kind: "source", edges: ["south"] },
     edges: { north: "road", east: "road", south: "river", west: "field" },
     roadConnections: [["north", "east"]],
     fieldSegments: [field("field-0", ["ne"]), field("field-1", ["nw", "sw", "se"])],
@@ -31,7 +42,10 @@ export const RIVER_TILES: TileDefinition[] = [
   }),
   define("river-dual-costco", "Opposite Bank Costcos", ["west", "east"], {
     edges: { north: "costco", east: "river", south: "costco", west: "river" },
-    costcoZones: [{ id: "north-store", segments: ["north"] }, { id: "south-store", segments: ["south"] }],
+    costcoZones: [
+      { id: "north-store", segments: ["north"] },
+      { id: "south-store", segments: ["south"] },
+    ],
     fieldSegments: [field("field-0", ["nw", "ne"], ["north-store"]), field("field-1", ["sw", "se"], ["south-store"])],
   }),
   define("river-straight", "Open River", ["north", "south"], {
@@ -68,11 +82,12 @@ export const RIVER_TILES: TileDefinition[] = [
     fieldSegments: all.map((corner, i) => field(`field-${i}`, [corner])),
   }),
   define("river-lake", "Lakeside McDonald's", ["north"], {
-    center: "mcdonalds", river: { kind: "lake", edges: ["north"] },
+    center: "mcdonalds",
+    river: { kind: "lake", edges: ["north"] },
     fieldSegments: [field("field-0", all)],
   }),
 ];
 
 export const getRiverSource = (): Tile => new Tile(RIVER_TILES[0]);
 export const getRiverLake = (): Tile => new Tile(RIVER_TILES[11]);
-export const buildRiverDeck = (): Tile[] => RIVER_TILES.slice(1, 11).map(definition => new Tile(definition));
+export const buildRiverDeck = (): Tile[] => RIVER_TILES.slice(1, 11).map((definition) => new Tile(definition));

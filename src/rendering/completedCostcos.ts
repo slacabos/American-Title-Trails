@@ -23,14 +23,16 @@ export function completedCostcos(board: IBoard): CompletedCostco[] {
       const feature = board.traceCostcoFeature(record.position, zone, visited);
       if (!board.isCostcoComplete(feature)) continue;
 
-      const zones = [...visited].filter(key => !before.has(key)).flatMap(key => {
-        const separator = key.lastIndexOf(":");
-        const [x, y] = key.slice(0, separator).split(",").map(Number);
-        const tileRecord = board.getTile({ x, y });
-        if (!tileRecord) return [];
-        const index = tileRecord.tile.costcoZones.findIndex(candidate => candidate.id === key.slice(separator + 1));
-        return index < 0 ? [] : [{ record: tileRecord, index }];
-      });
+      const zones = [...visited]
+        .filter((key) => !before.has(key))
+        .flatMap((key) => {
+          const separator = key.lastIndexOf(":");
+          const [x, y] = key.slice(0, separator).split(",").map(Number);
+          const tileRecord = board.getTile({ x, y });
+          if (!tileRecord) return [];
+          const index = tileRecord.tile.costcoZones.findIndex((candidate) => candidate.id === key.slice(separator + 1));
+          return index < 0 ? [] : [{ record: tileRecord, index }];
+        });
       if (!zones.length) continue;
 
       const centers = zones.map(({ record, index }) => {
@@ -47,7 +49,8 @@ export function completedCostcos(board: IBoard): CompletedCostco[] {
           x: centers.reduce((sum, center) => sum + center.x, 0) / centers.length,
           y: centers.reduce((sum, center) => sum + center.y, 0) / centers.length,
         },
-        points: feature.tiles.size * GAME_RULES.COSTCO_POINTS_PER_TILE_COMPLETE +
+        points:
+          feature.tiles.size * GAME_RULES.COSTCO_POINTS_PER_TILE_COMPLETE +
           (feature.pennants ?? 0) * GAME_RULES.COSTCO_PENNANT_BONUS_COMPLETE,
       });
     }

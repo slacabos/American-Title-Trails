@@ -84,12 +84,7 @@ export interface IBoard {
    * @param playerId - The player making the claim
    * @returns The claim result
    */
-  claimFeature(
-    type: string,
-    position: Position,
-    identifier: string | undefined,
-    playerId: string
-  ): FeatureClaim;
+  claimFeature(type: string, position: Position, identifier: string | undefined, playerId: string): FeatureClaim;
 
   /**
    * Get all current feature claims on the board.
@@ -139,11 +134,7 @@ export interface IBoard {
    * @param visited - Set of already visited feature keys
    * @returns The complete Costco feature
    */
-  traceCostcoFeature(
-    position: Position,
-    zone: CostcoSegment,
-    visited: Set<string>
-  ): CostcoFeature;
+  traceCostcoFeature(position: Position, zone: CostcoSegment, visited: Set<string>): CostcoFeature;
 
   /**
    * Check if a Costco feature is complete (fully enclosed).
@@ -162,11 +153,7 @@ export interface IBoard {
    * @param identifier - Optional identifier for the specific feature
    * @returns True if the feature can be claimed
    */
-  canClaimFeature(
-    type: TerrainType,
-    position: Position,
-    identifier: string | undefined
-  ): boolean;
+  canClaimFeature(type: TerrainType, position: Position, identifier: string | undefined): boolean;
 
   /**
    * Trace a complete road feature starting from a position and connection.
@@ -176,11 +163,7 @@ export interface IBoard {
    * @param visited - Set of already visited feature keys
    * @returns The complete road feature
    */
-  traceRoadFeature(
-    position: Position,
-    connection: string[],
-    visited: Set<string>
-  ): Feature;
+  traceRoadFeature(position: Position, connection: string[], visited: Set<string>): Feature;
 
   /**
    * Get all tiles on the board.
@@ -199,11 +182,7 @@ export interface IBoard {
    * @param visited - Set of already visited feature keys
    * @returns The complete field feature
    */
-  traceFieldFeature(
-    position: Position,
-    fieldSegment: FieldSegment,
-    visited: Set<string>
-  ): Feature;
+  traceFieldFeature(position: Position, fieldSegment: FieldSegment, visited: Set<string>): Feature;
 
   /**
    * Find all completed Costco features adjacent to a field feature.

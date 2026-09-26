@@ -105,10 +105,7 @@ export class TileManager {
 
     return board
       .getPlacementCandidates()
-      .filter(
-        (position: Position) =>
-          this.currentTile && board.canPlace(this.currentTile, position)
-      );
+      .filter((position: Position) => this.currentTile && board.canPlace(this.currentTile, position));
   }
 
   /**
@@ -126,10 +123,7 @@ export class TileManager {
    * Get statistics about tiles (remaining, placed, total)
    */
   public getTileStats(): { remaining: number; placed: number; total: number } {
-    const total =
-      this.tileDeck.length +
-      this.discardPile.length +
-      (this.currentTile ? 1 : 0);
+    const total = this.tileDeck.length + this.discardPile.length + (this.currentTile ? 1 : 0);
     const remaining = this.tileDeck.length;
     const placed = this.discardPile.length;
 

@@ -126,15 +126,12 @@ describe("Game", () => {
     it("should successfully claim a road feature", () => {
       const state = game.getState();
       if (state.phase === GamePhase.CLAIM_FEATURE) {
-        const initialFollowers =
-          state.players[state.currentPlayerIndex].followers;
+        const initialFollowers = state.players[state.currentPlayerIndex].followers;
 
         const result = game.claimFeature("road");
 
         if (result) {
-          expect(
-            game.getState().players[state.currentPlayerIndex].followers
-          ).toBe(initialFollowers - 1);
+          expect(game.getState().players[state.currentPlayerIndex].followers).toBe(initialFollowers - 1);
         }
       }
     });
@@ -173,9 +170,7 @@ describe("Game", () => {
         game.skipClaim();
 
         const newPlayerIndex = game.getState().currentPlayerIndex;
-        expect(newPlayerIndex).toBe(
-          (initialPlayerIndex + 1) % playerConfigs.length
-        );
+        expect(newPlayerIndex).toBe((initialPlayerIndex + 1) % playerConfigs.length);
       }
     });
 
@@ -227,9 +222,7 @@ describe("Game", () => {
 
     it("should end game when no tiles remain", () => {
       // Create a new game with players to test end game scenario
-      const testPlayers: PlayerDefinition[] = [
-        { name: "Test Player 1", isAI: false },
-      ];
+      const testPlayers: PlayerDefinition[] = [{ name: "Test Player 1", isAI: false }];
       const testGame = new Game(testPlayers);
 
       // Force the deck to be empty by directly modifying the TileManager

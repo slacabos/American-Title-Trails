@@ -6,11 +6,7 @@ import { Game } from "../src/game";
 import { GamePhase, Position } from "../src/types";
 import { BoardStatus, BoardView, CurrentTilePreview, ViewToggle } from "../src/components/BoardView";
 import { boardSnapshot } from "../src/rendering/tileLayout";
-import {
-  readCameraView,
-  saveCameraView,
-  type CameraView,
-} from "../src/rendering/cameraView";
+import { readCameraView, saveCameraView, type CameraView } from "../src/rendering/cameraView";
 import "../src/index.css";
 
 const params = new URLSearchParams(location.search);
@@ -24,8 +20,7 @@ const game = new Game(
   { seed: Number(params.get("seed") ?? 17) },
 );
 if (params.has("full")) {
-  for (let step = 0; step < 500 && !game.getState().isGameOver; step++)
-    game.processAITurn();
+  for (let step = 0; step < 500 && !game.getState().isGameOver; step++) game.processAITurn();
 }
 function Harness() {
   const [state, setState] = useState(game.getState());
@@ -68,9 +63,7 @@ function Harness() {
             {game.getClaimableFeaturesForCurrentTurn().map((feature) => (
               <button
                 key={`${feature.type}-${feature.identifier}`}
-                onClick={() =>
-                  game.claimFeature(feature.type, feature.identifier)
-                }
+                onClick={() => game.claimFeature(feature.type, feature.identifier)}
               >
                 Claim {feature.type} {feature.identifier}
               </button>
@@ -94,7 +87,7 @@ Object.assign(window, {
         count: state.board.getAllTiles().size,
         drawStage: state.drawStage,
         tileId: state.currentTile?.id,
-        riverCount: [...state.board.getAllTiles().values()].filter(record => record.tile.river).length,
+        riverCount: [...state.board.getAllTiles().values()].filter((record) => record.tile.river).length,
         phase: state.phase,
         orientation: state.currentTile?.orientation,
         legal: boardSnapshot(state).legal,
@@ -104,13 +97,9 @@ Object.assign(window, {
       };
     },
     point: (position: Position) => {
-      const canvas = document.querySelector<HTMLCanvasElement>(
-        '[data-testid="board-3d"] canvas',
-      )!;
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
       const state = _roots.get(canvas)!.store.getState();
-      const point = new Vector3(position.x, 0, position.y).project(
-        state.camera,
-      );
+      const point = new Vector3(position.x, 0, position.y).project(state.camera);
       const rect = canvas.getBoundingClientRect();
       return {
         x: rect.left + ((point.x + 1) / 2) * rect.width,
@@ -120,24 +109,28 @@ Object.assign(window, {
     renderedLegal: () => {
       const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
       const positions: Position[] = [];
-      _roots.get(canvas)!.store.getState().scene.traverse(object => {
-        if (object.name === "legal-placement") positions.push({ x: object.position.x, y: object.position.z });
-      });
+      _roots
+        .get(canvas)!
+        .store.getState()
+        .scene.traverse((object) => {
+          if (object.name === "legal-placement") positions.push({ x: object.position.x, y: object.position.z });
+        });
       return positions;
     },
     completedMarkers: () => {
       const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
       let count = 0;
       // The canvas can appear before its root registers; let polls retry.
-      _roots.get(canvas)?.store.getState().scene.traverse(object => {
-        if (object.name === "completed-costco-marker") count++;
-      });
+      _roots
+        .get(canvas)
+        ?.store.getState()
+        .scene.traverse((object) => {
+          if (object.name === "completed-costco-marker") count++;
+        });
       return count;
     },
     stats: () => {
-      const canvas = document.querySelector<HTMLCanvasElement>(
-        '[data-testid="board-3d"] canvas',
-      )!;
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
       const state = _roots.get(canvas)!.store.getState();
       return {
         calls: state.gl.info.render.calls,
@@ -151,17 +144,16 @@ Object.assign(window, {
     },
     /** Where the camera's view ray meets the table. */
     cameraTarget: () => {
-      const canvas = document.querySelector<HTMLCanvasElement>(
-        '[data-testid="board-3d"] canvas',
-      )!;
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
       const { camera } = _roots.get(canvas)!.store.getState();
       const direction = camera.getWorldDirection(new Vector3());
-      return camera.position.clone().addScaledVector(direction, -camera.position.y / direction.y).toArray();
+      return camera.position
+        .clone()
+        .addScaledVector(direction, -camera.position.y / direction.y)
+        .toArray();
     },
     cameraUp: () => {
-      const canvas = document.querySelector<HTMLCanvasElement>(
-        '[data-testid="board-3d"] canvas',
-      )!;
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
       return _roots.get(canvas)!.store.getState().camera.up.toArray();
     },
     /** Height of a landing Costco tile's own warehouse section, or null once joined. */
@@ -181,40 +173,31 @@ Object.assign(window, {
       const matrix = new Matrix4();
       const point = new Vector3();
       let height = 0;
-      _roots.get(canvas)!.store.getState().scene.traverse((object) => {
-        if (!(object instanceof InstancedMesh)) return;
-        for (let i = 0; i < object.count; i++) {
-          object.getMatrixAt(i, matrix);
-          point.setFromMatrixPosition(matrix);
-          if (Math.round(point.x) === position.x && Math.round(point.z) === position.y)
-            height = Math.max(height, point.y);
-        }
-      });
-      return height;
-    },
-    previewFrame: () => {
-      const canvas = document.querySelector<HTMLCanvasElement>(
-        '.tabletop-tile-preview canvas',
-      )!;
-      return _roots.get(canvas)!.store.getState().gl.info.render.frame;
-    },
-    losePreviewContext: () => {
-      const canvas = document.querySelector<HTMLCanvasElement>(
-        '.tabletop-tile-preview canvas',
-      )!;
-      _roots.get(canvas)!.store.getState().gl.getContext()
-        .getExtension("WEBGL_lose_context")!.loseContext();
-    },
-    loseContext: () => {
-      const canvas = document.querySelector<HTMLCanvasElement>(
-        '[data-testid="board-3d"] canvas',
-      )!;
       _roots
         .get(canvas)!
         .store.getState()
-        .gl.getContext()
-        .getExtension("WEBGL_lose_context")!
-        .loseContext();
+        .scene.traverse((object) => {
+          if (!(object instanceof InstancedMesh)) return;
+          for (let i = 0; i < object.count; i++) {
+            object.getMatrixAt(i, matrix);
+            point.setFromMatrixPosition(matrix);
+            if (Math.round(point.x) === position.x && Math.round(point.z) === position.y)
+              height = Math.max(height, point.y);
+          }
+        });
+      return height;
+    },
+    previewFrame: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>(".tabletop-tile-preview canvas")!;
+      return _roots.get(canvas)!.store.getState().gl.info.render.frame;
+    },
+    losePreviewContext: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>(".tabletop-tile-preview canvas")!;
+      _roots.get(canvas)!.store.getState().gl.getContext().getExtension("WEBGL_lose_context")!.loseContext();
+    },
+    loseContext: () => {
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="board-3d"] canvas')!;
+      _roots.get(canvas)!.store.getState().gl.getContext().getExtension("WEBGL_lose_context")!.loseContext();
     },
   },
 });

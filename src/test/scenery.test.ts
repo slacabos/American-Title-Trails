@@ -7,14 +7,15 @@ import { LANDMARK_RADIUS, LANDMARKS, landmarkConflict } from "@/rendering/landma
 
 const tiles = [
   ...new Map(
-    [getStartTile(), ...buildDeck(), getRiverSource(), ...buildRiverDeck(), getRiverLake()].map((tile) => [tile.id, tile]),
+    [getStartTile(), ...buildDeck(), getRiverSource(), ...buildRiverDeck(), getRiverLake()].map((tile) => [
+      tile.id,
+      tile,
+    ]),
   ).values(),
 ];
 beforeEach(() => {
   const ctx = document.createElement("canvas").getContext("2d")!;
-  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
-    Object.assign(ctx, { setLineDash: () => {} }),
-  );
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(Object.assign(ctx, { setLineDash: () => {} }));
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -44,12 +45,9 @@ describe("procedural scenery resources", () => {
     const library = new SceneryLibrary();
     const tile = getStartTile();
     const model = library.get(tile);
-    for (let turn = 1; turn < 4; turn++)
-      expect(library.get(tile.rotate(turn))).toBe(model);
+    for (let turn = 1; turn < 4; turn++) expect(library.get(tile.rotate(turn))).toBe(model);
     const disposed = vi.fn();
-    model.parts.forEach((part) =>
-      part.geometry.addEventListener("dispose", disposed),
-    );
+    model.parts.forEach((part) => part.geometry.addEventListener("dispose", disposed));
     library.dispose();
     expect(disposed).toHaveBeenCalledTimes(model.parts.length);
   });
@@ -79,8 +77,9 @@ describe("night lighting", () => {
   it("lights windows and lamps at night, including models built afterwards", () => {
     const library = new SceneryLibrary();
     const glowing = (tile: (typeof tiles)[number]) =>
-      library.get(tile).parts
-        .map((part) => part.material as THREE.MeshStandardMaterial)
+      library
+        .get(tile)
+        .parts.map((part) => part.material as THREE.MeshStandardMaterial)
         .filter((material) => material.emissiveIntensity !== undefined && material.emissive?.getHex() !== 0);
     const mcdonalds = tiles.find((tile) => tile.id === "mcdonalds-abbey")!;
     expect(glowing(mcdonalds).every((material) => material.emissiveIntensity === 0)).toBe(true);

@@ -1,13 +1,5 @@
 import { tileRoadPath } from "@/rendering/riverLayout";
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { warehouseLayout, warehouseLayoutKey } from "@/rendering/warehouseLayout";
@@ -34,11 +26,7 @@ const LibraryContext = createContext<SceneryLibrary | null>(null);
 export function SceneryProvider({ children }: { children: React.ReactNode }) {
   const [library] = useState(() => new SceneryLibrary());
   useEffect(() => () => library.dispose(), [library]);
-  return (
-    <LibraryContext.Provider value={library}>
-      {children}
-    </LibraryContext.Provider>
-  );
+  return <LibraryContext.Provider value={library}>{children}</LibraryContext.Provider>;
 }
 
 /** Where a tile instance rests: rotated about its centre, then placed. */
@@ -63,8 +51,10 @@ function useLandingInstances(
     const indices = frame ? owners.flatMap((owner, i) => (owner === frame.key ? [i] : [])) : [];
     if (!indices.length && !moving.current.length) return;
     const started = indices.length > 0 && moving.current.length === 0;
-    for (const i of moving.current) if (!indices.includes(i) && i < owners.length) mesh.setMatrixAt(i, rest(i, scratch.base));
-    for (const i of indices) mesh.setMatrixAt(i, landingMatrix(rest(i, scratch.base), frame!.center, frame!.pose, scratch.out));
+    for (const i of moving.current)
+      if (!indices.includes(i) && i < owners.length) mesh.setMatrixAt(i, rest(i, scratch.base));
+    for (const i of indices)
+      mesh.setMatrixAt(i, landingMatrix(rest(i, scratch.base), frame!.center, frame!.pose, scratch.out));
     mesh.instanceMatrix.needsUpdate = true;
     // Refresh the culling bounds as the tile starts high and when it has landed.
     if (started || !indices.length) mesh.computeBoundingSphere();
@@ -116,23 +106,10 @@ function Instances({
   }, [records, invalidate, part, seed]);
   // R3F disposes each instance buffer. Geometry/material arguments belong to the
   // library and are not declaratively attached children, so they stay shared.
-  return (
-    <instancedMesh
-      ref={ref}
-      args={[part.geometry, part.material, records.length]}
-      castShadow
-      receiveShadow
-    />
-  );
+  return <instancedMesh ref={ref} args={[part.geometry, part.material, records.length]} castShadow receiveShadow />;
 }
 
-function PlantMesh({
-  plants,
-  landing,
-}: {
-  plants: PlantInstances;
-  landing?: React.RefObject<LandingFrame | null>;
-}) {
+function PlantMesh({ plants, landing }: { plants: PlantInstances; landing?: React.RefObject<LandingFrame | null> }) {
   const library = useContext(LibraryContext)!;
   const ref = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
@@ -218,13 +195,7 @@ export function Scenery({
       {groups.map(([key, tiles]) => (
         <group key={key}>
           {library.get(tiles[0].tile).parts.map((part, i) => (
-            <Instances
-              key={`${i}-${tiles.length}`}
-              part={part}
-              records={tiles}
-              seed={seed}
-              landing={landing}
-            />
+            <Instances key={`${i}-${tiles.length}`} part={part} records={tiles} seed={seed} landing={landing} />
           ))}
         </group>
       ))}
@@ -257,13 +228,7 @@ function Warehouses({
   );
 }
 
-function LandingWarehouse({
-  record,
-  landing,
-}: {
-  record: TileRecord;
-  landing: React.RefObject<LandingFrame | null>;
-}) {
+function LandingWarehouse({ record, landing }: { record: TileRecord; landing: React.RefObject<LandingFrame | null> }) {
   const library = useContext(LibraryContext)!;
   const group = useRef<THREE.Group>(null);
   const key = positionKey(record.position);
@@ -331,9 +296,7 @@ export function LandingDust({
 function WarehouseModel({ records }: { records: TileRecord[] }) {
   const library = useContext(LibraryContext)!;
   // The parent key changes only when placed warehouse topology changes.
-  const [model] = useState(
-    () => library.createWarehouses(warehouseLayout(records)),
-  );
+  const [model] = useState(() => library.createWarehouses(warehouseLayout(records)));
   useEffect(() => () => model.parts.forEach((part) => part.geometry.dispose()), [model]);
   return (
     <group dispose={null} name="connected-warehouses">
@@ -344,15 +307,7 @@ function WarehouseModel({ records }: { records: TileRecord[] }) {
   );
 }
 
-export function GhostTile({
-  tile,
-  x,
-  z,
-}: {
-  tile: ITile;
-  x: number;
-  z: number;
-}) {
+export function GhostTile({ tile, x, z }: { tile: ITile; x: number; z: number }) {
   const library = useContext(LibraryContext)!;
   const model = library.getGhost(tile);
   const materials = useMemo(
@@ -366,16 +321,9 @@ export function GhostTile({
       }),
     [model],
   );
-  useEffect(
-    () => () => materials.forEach((material) => material.dispose()),
-    [materials],
-  );
+  useEffect(() => () => materials.forEach((material) => material.dispose()), [materials]);
   return (
-    <group
-      position={[x, 0.018, z]}
-      rotation={[0, (-tile.orientation * Math.PI) / 2, 0]}
-      dispose={null}
-    >
+    <group position={[x, 0.018, z]} rotation={[0, (-tile.orientation * Math.PI) / 2, 0]} dispose={null}>
       {model.parts.map((part, i) => (
         <mesh key={i} geometry={part.geometry} material={materials[i]} />
       ))}
@@ -402,10 +350,7 @@ export function Follower({
         <ringGeometry args={[0.07, 0.085, 20]} />
         <meshBasicMaterial color="#fff6da" {...overlay} />
       </mesh>
-      <group
-        rotation={[0, 0, farmer ? Math.PI / 2 : 0]}
-        position={[farmer ? 0.065 : 0, farmer ? 0.048 : 0.015, 0]}
-      >
+      <group rotation={[0, 0, farmer ? Math.PI / 2 : 0]} position={[farmer ? 0.065 : 0, farmer ? 0.048 : 0.015, 0]}>
         <mesh renderOrder={1000} position={[0, 0.035, 0]}>
           <cylinderGeometry args={[0.027, 0.048, 0.07, 10]} />
           <meshStandardMaterial color={color} roughness={0.5} {...overlay} />
@@ -435,26 +380,15 @@ export function CellOutline({
       {fill && (
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[0.96, 0.96]} />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={0.22}
-            depthWrite={false}
-          />
+          <meshBasicMaterial color={color} transparent opacity={0.22} depthWrite={false} />
         </mesh>
       )}
       {[0, 1, 2, 3].map((edge) => (
         <mesh
           key={edge}
-          position={[
-            edge === 1 ? 0.485 : edge === 3 ? -0.485 : 0,
-            0.003,
-            edge === 0 ? -0.485 : edge === 2 ? 0.485 : 0,
-          ]}
+          position={[edge === 1 ? 0.485 : edge === 3 ? -0.485 : 0, 0.003, edge === 0 ? -0.485 : edge === 2 ? 0.485 : 0]}
         >
-          <boxGeometry
-            args={edge % 2 ? [0.013, 0.008, 0.97] : [0.97, 0.008, 0.013]}
-          />
+          <boxGeometry args={edge % 2 ? [0.013, 0.008, 0.97] : [0.97, 0.008, 0.013]} />
           <meshBasicMaterial color={color} />
         </mesh>
       ))}
@@ -466,22 +400,14 @@ function HighlightPolygon({ points }: { points: Point[] }) {
   const geometry = useMemo(() => {
     // Three's Shape constructor reads points[0], even for an empty array.
     if (points.length < 3) return null;
-    const shape = new THREE.Shape(
-      points.map(([x, z]) => new THREE.Vector2(x, -z)),
-    );
+    const shape = new THREE.Shape(points.map(([x, z]) => new THREE.Vector2(x, -z)));
     return new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
   }, [points]);
   useEffect(() => () => geometry?.dispose(), [geometry]);
   if (!geometry) return null;
   return (
     <mesh geometry={geometry} position={[0, 0.008, 0]}>
-      <meshBasicMaterial
-        color="#ffde79"
-        transparent
-        opacity={0.55}
-        depthWrite={false}
-        side={THREE.DoubleSide}
-      />
+      <meshBasicMaterial color="#ffde79" transparent opacity={0.55} depthWrite={false} side={THREE.DoubleSide} />
     </mesh>
   );
 }
@@ -505,51 +431,29 @@ export function FeatureHighlight({
     (feature.type === "road" && !tile.roadConnections[index]) ||
     (feature.type === "field" && !tile.fieldSegments[index]) ||
     (feature.type === "mcdonalds" && !tile.hasMcDonalds)
-  ) return null;
+  )
+    return null;
   const anchor = featureAnchor(tile, feature);
   return (
     <group position={[x, 0.004, z]}>
-      {feature.type === "costco" && (
-        <HighlightPolygon points={zonePolygon(tile, index)} />
-      )}
+      {feature.type === "costco" && <HighlightPolygon points={zonePolygon(tile, index)} />}
       {feature.type === "road" &&
         tileRoadPath(tile, tile.roadConnections[index] ?? ["center"])
           .filter((_, i) => i % 2 === 0)
           .map(([px, pz], i) => (
-            <mesh
-              key={i}
-              position={[px, 0.01, pz]}
-              rotation={[-Math.PI / 2, 0, 0]}
-            >
+            <mesh key={i} position={[px, 0.01, pz]} rotation={[-Math.PI / 2, 0, 0]}>
               <circleGeometry args={[0.086, 12]} />
-              <meshBasicMaterial
-                color="#ffde79"
-                transparent
-                opacity={0.6}
-                depthWrite={false}
-              />
+              <meshBasicMaterial color="#ffde79" transparent opacity={0.6} depthWrite={false} />
             </mesh>
           ))}
       {feature.type === "field" &&
         tile.fieldSegments[index]?.corners.map((corner) => (
-          <mesh
-            key={corner}
-            position={[CORNERS[corner][0], 0.009, CORNERS[corner][1]]}
-            rotation={[-Math.PI / 2, 0, 0]}
-          >
+          <mesh key={corner} position={[CORNERS[corner][0], 0.009, CORNERS[corner][1]]} rotation={[-Math.PI / 2, 0, 0]}>
             <circleGeometry args={[0.12, 20]} />
-            <meshBasicMaterial
-              color="#ffde79"
-              transparent
-              opacity={0.6}
-              depthWrite={false}
-            />
+            <meshBasicMaterial color="#ffde79" transparent opacity={0.6} depthWrite={false} />
           </mesh>
         ))}
-      <mesh
-        position={[anchor[0], 0.21, anchor[1]]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      >
+      <mesh position={[anchor[0], 0.21, anchor[1]]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.075, 0.095, 24]} />
         <meshBasicMaterial color="#ffe59a" depthTest={false} />
       </mesh>
@@ -583,9 +487,7 @@ export function Daylight({
   return (
     <>
       <primitive object={target} />
-      <hemisphereLight
-        args={night ? ["#7d88a0", "#232c30", 1.05] : ["#fff6df", "#788a77", 2.1]}
-      />
+      <hemisphereLight args={night ? ["#7d88a0", "#232c30", 1.05] : ["#fff6df", "#788a77", 2.1]} />
       <directionalLight
         position={[center[0] - 5, 10, center[1] + 4]}
         target={target}

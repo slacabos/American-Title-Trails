@@ -18,9 +18,7 @@ describe("GameSetup Component", () => {
     render(<GameSetup onStartGame={mockOnStartGame} />);
 
     expect(screen.getByText(/game setup/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /start game/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /start game/i })).toBeInTheDocument();
   });
 
   it("should render with default 3 players", () => {
@@ -179,7 +177,7 @@ describe("GameSetup Component", () => {
           savedGame={savedGame}
           onResumeGame={onResume}
           onDiscardSave={onDiscard}
-        />
+        />,
       );
       expect(screen.getByText("Ada")).toBeInTheDocument();
       expect(screen.getByText(/Turn 12/)).toBeInTheDocument();

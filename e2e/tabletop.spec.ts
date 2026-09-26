@@ -61,15 +61,10 @@ async function legalPoint(page: Page) {
       // Demand frames can belong to an earlier orientation. Wait for the actual
       // legal-cell geometry to reach the scene before clicking its projection.
       await expect.poll(() => page.evaluate(() => window.tabletopTest.renderedLegal())).toEqual(legal);
-      return page.evaluate(
-        (position) => window.tabletopTest.point(position),
-        legal[0],
-      );
+      return page.evaluate((position) => window.tabletopTest.point(position), legal[0]);
     }
     const frame = await page.evaluate(() => window.tabletopTest.stats().frame);
-    await page
-      .getByRole("button", { name: "Rotate tile", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Rotate tile", exact: true }).click();
     // Legal cells in the DOM update before the separate R3F root has drawn
     // them. Click the rendered orientation, not the previous frame's cells.
     await expect.poll(() => page.evaluate(() => window.tabletopTest.stats().frame)).toBeGreaterThan(frame);
@@ -127,7 +122,6 @@ test("placement and claiming reuse the same preview canvas across turns", async 
     if (turn === 11) {
       expect(state.riverCount).toBe(12);
       await page.screenshot({ path: testInfo.outputPath("completed-river-3d.png"), fullPage: true });
-
     }
     await expect.poll(() => page.evaluate(() => window.tabletopTest.previewFrame())).toBeGreaterThan(0);
     const boardFrame = await page.evaluate(() => window.tabletopTest.stats().frame);
@@ -142,7 +136,9 @@ test("placement and claiming reuse the same preview canvas across turns", async 
     await page.getByRole("button", { name: "Skip claim" }).click();
     await expect(page.locator(".tabletop-tile-preview")).toBeVisible();
     await expect.poll(() => page.evaluate(() => window.tabletopTest.previewFrame())).toBeGreaterThan(claimFrame);
-    expect(await canvas!.evaluate((element) => element === document.querySelector(".tabletop-tile-preview canvas"))).toBe(true);
+    expect(
+      await canvas!.evaluate((element) => element === document.querySelector(".tabletop-tile-preview canvas")),
+    ).toBe(true);
     await expect(page.getByTestId("board-3d")).toBeVisible();
   }
   // R3F's delayed context teardown must not switch a later turn to 2D.
@@ -150,9 +146,7 @@ test("placement and claiming reuse the same preview canvas across turns", async 
   await expect(page.getByTestId("board-3d")).toBeVisible();
 });
 
-test("desktop placement, dragging, rotation, claiming and view switching preserve the game", async ({
-  page,
-}) => {
+test("desktop placement, dragging, rotation, claiming and view switching preserve the game", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await ready(page);
@@ -162,13 +156,9 @@ test("desktop placement, dragging, rotation, claiming and view switching preserv
   await page.mouse.move(start.x + 80, start.y + 30, { steps: 8 });
   await page.mouse.up();
   expect(await page.evaluate(() => window.tabletopTest.state().count)).toBe(1);
-  const manualCamera = await page.evaluate(
-    () => window.tabletopTest.stats().camera,
-  );
+  const manualCamera = await page.evaluate(() => window.tabletopTest.stats().camera);
   await page.getByRole("button", { name: "Rotate tile", exact: true }).click();
-  expect(await page.evaluate(() => window.tabletopTest.stats().camera)).toEqual(
-    manualCamera,
-  );
+  expect(await page.evaluate(() => window.tabletopTest.stats().camera)).toEqual(manualCamera);
   await page.getByRole("button", { name: "Fit board", exact: true }).click();
   const placement = await legalPoint(page);
   await page.mouse.move(placement.x, placement.y);
@@ -191,9 +181,7 @@ test("desktop placement, dragging, rotation, claiming and view switching preserv
   expect(errors).toEqual([]);
 });
 
-test("tablet tap previews before confirmation and fits without horizontal overflow", async ({
-  browser,
-}) => {
+test("tablet tap previews before confirmation and fits without horizontal overflow", async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 820, height: 1180 },
     hasTouch: true,
@@ -201,16 +189,10 @@ test("tablet tap previews before confirmation and fits without horizontal overfl
   });
   const page = await context.newPage();
   await ready(page);
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const point = await legalPoint(page);
   await page.touchscreen.tap(point.x, point.y);
-  await expect(
-    page.getByRole("button", { name: "Place tile", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Place tile", exact: true })).toBeVisible();
   expect(await page.evaluate(() => window.tabletopTest.state().count)).toBe(1);
   await page.getByRole("button", { name: "Cancel", exact: true }).tap();
   expect(await page.evaluate(() => window.tabletopTest.state().count)).toBe(1);
@@ -224,9 +206,7 @@ test("tablet tap previews before confirmation and fits without horizontal overfl
   await context.close();
 });
 
-test("pinch zoom never places a tile or opens a confirmation", async ({
-  browser,
-}) => {
+test("pinch zoom never places a tile or opens a confirmation", async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 820, height: 1180 },
     hasTouch: true,
@@ -255,18 +235,12 @@ test("pinch zoom never places a tile or opens a confirmation", async ({
     touchPoints: [],
   });
   expect(await page.evaluate(() => window.tabletopTest.state().count)).toBe(1);
-  await expect(
-    page.getByRole("button", { name: "Place tile", exact: true }),
-  ).toHaveCount(0);
-  expect(
-    await page.evaluate(() => window.tabletopTest.stats().zoom),
-  ).toBeGreaterThan(before);
+  await expect(page.getByRole("button", { name: "Place tile", exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => window.tabletopTest.stats().zoom)).toBeGreaterThan(before);
   await context.close();
 });
 
-test("context loss shows a retry panel without losing tiles, claims or scores", async ({
-  page,
-}) => {
+test("context loss shows a retry panel without losing tiles, claims or scores", async ({ page }) => {
   await ready(page);
   const point = await legalPoint(page);
   await page.mouse.click(point.x, point.y);
@@ -275,9 +249,7 @@ test("context loss shows a retry panel without losing tiles, claims or scores", 
   await page.evaluate(() => window.tabletopTest.loseContext());
   await expect(page.getByText("3D graphics aren't available right now")).toBeVisible();
   await expect(page.getByTestId("board-3d")).toHaveCount(0);
-  expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(
-    before,
-  );
+  expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(before);
   // A fresh canvas asks for a new context, and the game carries on.
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByTestId("board-3d")).toBeVisible();
@@ -293,20 +265,13 @@ test("context loss shows a retry panel without losing tiles, claims or scores", 
       }),
     )
     .toBeGreaterThan(0);
-  expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(
-    before,
-  );
+  expect(await page.evaluate(() => window.tabletopTest.state())).toEqual(before);
 });
 
-test("devices without WebGL get the unavailable panel instead of a crash", async ({
-  page,
-}) => {
+test("devices without WebGL get the unavailable panel instead of a crash", async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (
-      type: string,
-      ...args: unknown[]
-    ) {
+    HTMLCanvasElement.prototype.getContext = function (type: string, ...args: unknown[]) {
       if (type.includes("webgl")) return null;
       return Reflect.apply(original, this, [type, ...args]);
     } as typeof original;
@@ -322,28 +287,18 @@ test("devices without WebGL get the unavailable panel instead of a crash", async
   expect(errors).toEqual([]);
 });
 
-test("full-deck scenery renders efficiently and stops drawing when idle", async ({
-  page,
-}) => {
+test("full-deck scenery renders efficiently and stops drawing when idle", async ({ page }) => {
   await ready(page, "?full");
-  expect(await page.evaluate(() => window.tabletopTest.state().over)).toBe(
-    true,
-  );
-  expect(
-    await page.evaluate(() => window.tabletopTest.state().count),
-  ).toBeGreaterThan(40);
+  expect(await page.evaluate(() => window.tabletopTest.state().over)).toBe(true);
+  expect(await page.evaluate(() => window.tabletopTest.state().count)).toBeGreaterThan(40);
   await page.waitForTimeout(500);
   const first = await page.evaluate(() => window.tabletopTest.stats());
   expect(first.calls).toBeLessThan(350);
   expect(first.triangles).toBeLessThan(150000);
   await page.waitForTimeout(500);
-  expect((await page.evaluate(() => window.tabletopTest.stats())).frame).toBe(
-    first.frame,
-  );
+  expect((await page.evaluate(() => window.tabletopTest.stats())).frame).toBe(first.frame);
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
-  await expect
-    .poll(() => page.evaluate(() => window.tabletopTest.stats().frame))
-    .toBeGreaterThan(first.frame);
+  await expect.poll(() => page.evaluate(() => window.tabletopTest.stats().frame)).toBeGreaterThan(first.frame);
   await page.screenshot({
     path: "test-results/tabletop-full-deck.png",
     fullPage: true,
@@ -351,9 +306,7 @@ test("full-deck scenery renders efficiently and stops drawing when idle", async 
   console.log("Full-deck rendering:", first);
 });
 
-test("zooming out sheds scenery detail and zooming back in restores it", async ({
-  page,
-}) => {
+test("zooming out sheds scenery detail and zooming back in restores it", async ({ page }) => {
   await ready(page, "?full");
   const zoomTo = async (label: "Zoom in" | "Zoom out", clicks: number) => {
     for (let i = 0; i < clicks; i++) {
@@ -374,9 +327,7 @@ test("zooming out sheds scenery detail and zooming back in restores it", async (
   console.log("Triangles by tier:", { near: near.triangles, far: far.triangles });
 });
 
-test("the drone view looks straight down with north up, places tiles and is remembered", async ({
-  page,
-}) => {
+test("the drone view looks straight down with north up, places tiles and is remembered", async ({ page }) => {
   await ready(page);
   const overhead = async () => {
     const [x, , z] = await page.evaluate(() => window.tabletopTest.stats().camera);
@@ -401,23 +352,16 @@ test("the drone view looks straight down with north up, places tiles and is reme
   await expect.poll(overhead).toBeGreaterThan(1);
 });
 
-test("the production game keeps its current tile when switching camera views", async ({
-  page,
-}) => {
+test("the production game keeps its current tile when switching camera views", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Start Game" }).click();
   await expect(page.getByTestId("board-3d")).toBeVisible();
-  const name = await page
-    .locator(".tabletop-tile-preview")
-    .getAttribute("aria-label");
+  const name = await page.locator(".tabletop-tile-preview").getAttribute("aria-label");
   await page.getByRole("button", { name: "Drone" }).click();
   await expect(page.getByRole("button", { name: "Drone" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("board-3d")).toBeVisible();
   await page.getByRole("button", { name: "Tabletop" }).click();
-  await expect(page.locator(".tabletop-tile-preview")).toHaveAttribute(
-    "aria-label",
-    name!,
-  );
+  await expect(page.locator(".tabletop-tile-preview")).toHaveAttribute("aria-label", name!);
   await page.waitForTimeout(300);
   const preview = page.locator(".tabletop-tile-preview canvas");
   const original = await preview.screenshot();
@@ -538,7 +482,11 @@ test("reduced motion places tiles without the landing animation", async ({ page 
 test("a Costco tile's warehouse falls with it, then joins its neighbours", async ({ page }) => {
   await ready(page);
   // Play turns until a Costco tile comes up.
-  for (let turn = 0; turn < 12 && !/costco/.test((await page.evaluate(() => window.tabletopTest.state())).tileId ?? ""); turn++) {
+  for (
+    let turn = 0;
+    turn < 12 && !/costco/.test((await page.evaluate(() => window.tabletopTest.state())).tileId ?? "");
+    turn++
+  ) {
     const point = await legalPoint(page);
     const count = await page.evaluate(() => window.tabletopTest.state().count);
     await page.mouse.click(point.x, point.y);
@@ -551,5 +499,7 @@ test("a Costco tile's warehouse falls with it, then joins its neighbours", async
   const point = await legalPoint(page);
   await page.mouse.click(point.x, point.y);
   await expect.poll(() => page.evaluate(() => window.tabletopTest.landingWarehouseHeight())).toBeGreaterThan(0.1);
-  await expect.poll(() => page.evaluate(() => window.tabletopTest.landingWarehouseHeight()), { timeout: 3000 }).toBeNull();
+  await expect
+    .poll(() => page.evaluate(() => window.tabletopTest.landingWarehouseHeight()), { timeout: 3000 })
+    .toBeNull();
 });

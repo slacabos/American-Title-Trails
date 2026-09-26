@@ -35,7 +35,7 @@ export function ActivityLog({ entries, className }: { entries: LogEntry[]; class
       >
         <ScrollText size={16} aria-hidden="true" className="shrink-0 text-moss" />
         <span className="activity-log-latest" aria-live="polite">
-          {open ? t("hud.activity") : latest?.message ?? t("hud.noActivity")}
+          {open ? t("hud.activity") : (latest?.message ?? t("hud.noActivity"))}
         </span>
         {open ? (
           <ChevronDown size={16} aria-hidden="true" className="shrink-0" />

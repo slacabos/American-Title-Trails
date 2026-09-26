@@ -22,9 +22,7 @@ function syncContent() {
     // Check if the markdown file exists
     if (!fs.existsSync(mdFile)) {
       console.error(`❌ Markdown file not found: ${mdFile}`);
-      console.log(
-        `💡 Available languages: ${getAvailableLanguages().join(", ")}`
-      );
+      console.log(`💡 Available languages: ${getAvailableLanguages().join(", ")}`);
       process.exit(1);
     }
 

@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { readTimeOfDay, saveTimeOfDay } from "@/rendering/timeOfDay";
 
 const prefersDark = (dark: boolean) =>
-  vi.spyOn(window, "matchMedia").mockImplementation(
-    (query) => ({ matches: dark && query.includes("dark"), media: query }) as MediaQueryList,
-  );
+  vi
+    .spyOn(window, "matchMedia")
+    .mockImplementation((query) => ({ matches: dark && query.includes("dark"), media: query }) as MediaQueryList);
 
 afterEach(() => {
   localStorage.clear();

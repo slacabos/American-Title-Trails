@@ -67,4 +67,4 @@ The file format is ready for more languages, but the app doesn't let you switch 
 6. **Picker:** add a language control to the setup screen, and to the HUD if useful.
 7. **Check lengths:** translations are often longer than English. Check the setup screen, the tile dock and the scoreboard in Storybook at phone width.
 
-Some strings are built from parts, such as a feature type inside a claim label: `` t("hud.claim", { type: t(`hud.featureTypes.${type}`) }) ``. Check that the sentence still reads naturally in the new language, and give it its own key if it doesn't.
+Some strings are built from parts, such as a feature type inside a claim label: ``t("hud.claim", { type: t(`hud.featureTypes.${type}`) })``. Check that the sentence still reads naturally in the new language, and give it its own key if it doesn't.

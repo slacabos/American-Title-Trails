@@ -80,27 +80,21 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
                 <RotateCw aria-hidden="true" />
               </Button>
             </div>
-            <p className="tile-dock-hint m-0">
-              {t("hud.placeHint3d")}
-            </p>
+            <p className="tile-dock-hint m-0">{t("hud.placeHint3d")}</p>
             <p className="tile-dock-hint tile-dock-keys m-0">{t("hud.keyboardHint")}</p>
           </>
         )}
 
         {claiming && (
           <>
-            <p className="tile-dock-hint m-0">
-              {t("hud.claimHint", { count: player?.followers ?? 0 })}
-            </p>
+            <p className="tile-dock-hint m-0">{t("hud.claimHint", { count: player?.followers ?? 0 })}</p>
             <div className="tile-dock-claims">
               {claimableFeatures.map((feature) => (
                 <Button
                   key={`${feature.type}-${feature.identifier ?? ""}`}
                   variant="secondary"
                   className="justify-start aria-[current=true]:ring-2 aria-[current=true]:ring-gold"
-                  aria-current={
-                    highlighted?.type === feature.type && highlighted.identifier === feature.identifier
-                  }
+                  aria-current={highlighted?.type === feature.type && highlighted.identifier === feature.identifier}
                   onMouseEnter={() => onHighlight(feature)}
                   onMouseLeave={() => onHighlight(undefined)}
                   onFocus={() => onHighlight(feature)}

@@ -19,9 +19,8 @@ export interface VegetationSpot {
 
 export type Species = "round" | "bush" | "pine" | "fern" | "hay" | "fence" | "cactus" | "rock";
 
-const scenerySeed = (id: string) => Array.from(id).reduce(
-  (seed, character) => (seed * 31 + character.charCodeAt(0)) >>> 0, 177,
-);
+const scenerySeed = (id: string) =>
+  Array.from(id).reduce((seed, character) => (seed * 31 + character.charCodeAt(0)) >>> 0, 177);
 
 /**
  * Where plants can grow on a canonical tile: one tree and shrub per open field
@@ -37,8 +36,10 @@ export function vegetationSpots(base: ITile): VegetationSpot[] {
     const variation = (scenerySeed(base.id) + i * 137) >>> 0;
     if (
       (i > 0 && variation % 5 === 0) ||
-      nearRiver(base, [x, z], 0.10) ||
-      (base.river && base.hasMcDonalds && Math.hypot(x - restaurantPosition(base)[0], z - restaurantPosition(base)[1]) < 0.28) ||
+      nearRiver(base, [x, z], 0.1) ||
+      (base.river &&
+        base.hasMcDonalds &&
+        Math.hypot(x - restaurantPosition(base)[0], z - restaurantPosition(base)[1]) < 0.28) ||
       zones.some((polygon) => insidePolygon([x, z], polygon)) ||
       roads.some(([rx, rz]) => Math.hypot(rx - x, rz - z) < 0.19)
     )
@@ -49,8 +50,11 @@ export function vegetationSpots(base: ITile): VegetationSpot[] {
     spots.push({ kind: "shrub", at: [x - 0.065, z + 0.027], scale: 1, variant: i });
     if (variation % 3 === 0) {
       const sapling: Point = [treeX - Math.sign(x) * 0.09, treeZ];
-      if (!nearRiver(base, sapling, 0.06) && !zones.some((polygon) => insidePolygon(sapling, polygon)) &&
-        !roads.some(([rx, rz]) => Math.hypot(rx - sapling[0], rz - sapling[1]) < 0.15)) {
+      if (
+        !nearRiver(base, sapling, 0.06) &&
+        !zones.some((polygon) => insidePolygon(sapling, polygon)) &&
+        !roads.some(([rx, rz]) => Math.hypot(rx - sapling[0], rz - sapling[1]) < 0.15)
+      ) {
         spots.push({ kind: "sapling", at: sapling, scale: 0.72, variant: 1 });
       }
     }
@@ -113,8 +117,22 @@ export function buildSpecies(species: Species, coarse = false): THREE.BufferGeom
       add(new THREE.ConeGeometry(0.03, 0.04, r(5)), "#3f6b45", 0.02);
       break;
     case "hay":
-      add(new THREE.CylinderGeometry(0.035, 0.035, 0.055, r(12)), "#d8b35e", 0.035, 0, 0, new THREE.Euler(0, 0, Math.PI / 2));
-      add(new THREE.CylinderGeometry(0.03, 0.03, 0.057, r(12)), "#c79c48", 0.035, 0, 0, new THREE.Euler(0, 0, Math.PI / 2));
+      add(
+        new THREE.CylinderGeometry(0.035, 0.035, 0.055, r(12)),
+        "#d8b35e",
+        0.035,
+        0,
+        0,
+        new THREE.Euler(0, 0, Math.PI / 2),
+      );
+      add(
+        new THREE.CylinderGeometry(0.03, 0.03, 0.057, r(12)),
+        "#c79c48",
+        0.035,
+        0,
+        0,
+        new THREE.Euler(0, 0, Math.PI / 2),
+      );
       break;
     case "fence":
       for (const x of [-0.035, 0.035]) add(new THREE.BoxGeometry(0.008, 0.045, 0.008), "#9b865a", 0.022, x);
@@ -125,9 +143,23 @@ export function buildSpecies(species: Species, coarse = false): THREE.BufferGeom
       add(new THREE.CylinderGeometry(0.014, 0.016, 0.13, r(7)), "#5f8a4f", 0.065);
       add(new THREE.SphereGeometry(0.014, r(7), coarse ? 2 : 4, 0, Math.PI * 2, 0, Math.PI / 2), "#5f8a4f", 0.13);
       add(new THREE.CylinderGeometry(0.009, 0.009, 0.05, r(6)), "#5f8a4f", 0.085, 0.03);
-      add(new THREE.CylinderGeometry(0.009, 0.009, 0.03, r(6)), "#5f8a4f", 0.064, 0.018, 0, new THREE.Euler(0, 0, Math.PI / 2));
+      add(
+        new THREE.CylinderGeometry(0.009, 0.009, 0.03, r(6)),
+        "#5f8a4f",
+        0.064,
+        0.018,
+        0,
+        new THREE.Euler(0, 0, Math.PI / 2),
+      );
       add(new THREE.CylinderGeometry(0.008, 0.008, 0.04, r(6)), "#5f8a4f", 0.07, -0.028);
-      add(new THREE.CylinderGeometry(0.008, 0.008, 0.026, r(6)), "#5f8a4f", 0.052, -0.016, 0, new THREE.Euler(0, 0, Math.PI / 2));
+      add(
+        new THREE.CylinderGeometry(0.008, 0.008, 0.026, r(6)),
+        "#5f8a4f",
+        0.052,
+        -0.016,
+        0,
+        new THREE.Euler(0, 0, Math.PI / 2),
+      );
       break;
     case "rock":
       add(new THREE.DodecahedronGeometry(0.03, 0).scale(1.3, 0.7, 1), "#b86a44", 0.015);

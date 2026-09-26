@@ -16,7 +16,12 @@ describe("regional landscapes", () => {
 
   it("keeps the river opening in meadow", () => {
     for (const seed of [1, 17, 42, 99])
-      for (const [x, z] of [[0, 0], [1, 1], [-1.5, 0.5], [0, 2]])
+      for (const [x, z] of [
+        [0, 0],
+        [1, 1],
+        [-1.5, 0.5],
+        [0, 2],
+      ])
         expect(regionWeights(x, z, seed).meadow).toBe(1);
   });
 
@@ -31,7 +36,9 @@ describe("regional landscapes", () => {
       expect(south[1]).toEqual(se);
       // Rotating a tile only reorders which corner lands where.
       const turned = cornerWeights({ x: 4, y: -3 }, orientation, 7);
-      expect(new Set(turned.map((w) => JSON.stringify(w)))).toEqual(new Set([nw, ne, sw, se].map((w) => JSON.stringify(w))));
+      expect(new Set(turned.map((w) => JSON.stringify(w)))).toEqual(
+        new Set([nw, ne, sw, se].map((w) => JSON.stringify(w))),
+      );
     }
   });
 
@@ -39,11 +46,12 @@ describe("regional landscapes", () => {
     const maps = [1, 17, 42].map((seed) => {
       const seen = new Set<string>();
       let map = "";
-      for (let x = -6; x <= 6; x++) for (let z = -6; z <= 6; z++) {
-        const region = dominantRegion(regionWeights(x, z, seed));
-        seen.add(region);
-        map += region[0];
-      }
+      for (let x = -6; x <= 6; x++)
+        for (let z = -6; z <= 6; z++) {
+          const region = dominantRegion(regionWeights(x, z, seed));
+          seen.add(region);
+          map += region[0];
+        }
       expect(seen.size).toBeGreaterThanOrEqual(3);
       return map;
     });

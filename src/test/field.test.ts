@@ -81,11 +81,7 @@ describe("Field/Farmer Mechanics", () => {
 
       board.placeTile(tile, { x: 0, y: 0 });
 
-      const feature = board.traceFieldFeature(
-        { x: 0, y: 0 },
-        tile.fieldSegments[0],
-        new Set()
-      );
+      const feature = board.traceFieldFeature({ x: 0, y: 0 }, tile.fieldSegments[0], new Set());
 
       expect(feature.tiles.size).toBe(1);
       expect(feature.tiles.has("0,0")).toBe(true);
@@ -117,11 +113,7 @@ describe("Field/Farmer Mechanics", () => {
       board.placeTile(tile1, { x: 0, y: 0 });
       board.placeTile(tile2, { x: 1, y: 0 });
 
-      const feature = board.traceFieldFeature(
-        { x: 0, y: 0 },
-        tile1.fieldSegments[0],
-        new Set()
-      );
+      const feature = board.traceFieldFeature({ x: 0, y: 0 }, tile1.fieldSegments[0], new Set());
 
       expect(feature.tiles.size).toBe(2);
       expect(feature.tiles.has("0,0")).toBe(true);
@@ -146,18 +138,10 @@ describe("Field/Farmer Mechanics", () => {
       board.placeTile(roadTile, { x: 0, y: 0 });
 
       // Trace left field
-      const leftField = board.traceFieldFeature(
-        { x: 0, y: 0 },
-        roadTile.fieldSegments[0],
-        new Set()
-      );
+      const leftField = board.traceFieldFeature({ x: 0, y: 0 }, roadTile.fieldSegments[0], new Set());
 
       // Trace right field
-      const rightField = board.traceFieldFeature(
-        { x: 0, y: 0 },
-        roadTile.fieldSegments[1],
-        new Set()
-      );
+      const rightField = board.traceFieldFeature({ x: 0, y: 0 }, roadTile.fieldSegments[1], new Set());
 
       // Both should only contain one tile each (they're separate)
       expect(leftField.tiles.size).toBe(1);
@@ -469,11 +453,7 @@ describe("Field/Farmer Mechanics", () => {
       board.placeTile(costcoTile, { x: 0, y: 0 });
 
       // Trace the field on this tile
-      const fieldFeature = board.traceFieldFeature(
-        { x: 0, y: 0 },
-        costcoTile.fieldSegments[0],
-        new Set()
-      );
+      const fieldFeature = board.traceFieldFeature({ x: 0, y: 0 }, costcoTile.fieldSegments[0], new Set());
 
       const adjacentCostcos = board.findAdjacentCostcos(fieldFeature);
 

@@ -1,14 +1,6 @@
 // Every sound is synthesized with the Web Audio API; there are no audio files.
 
-export type Cue =
-  | "land"
-  | "rotate"
-  | "claim"
-  | "complete"
-  | "completeCostco"
-  | "yourTurn"
-  | "invalid"
-  | "gameOver";
+export type Cue = "land" | "rotate" | "claim" | "complete" | "completeCostco" | "yourTurn" | "invalid" | "gameOver";
 
 interface Audio {
   context: AudioContext;
@@ -22,7 +14,7 @@ type AudioContextClass = typeof AudioContext;
 const audioContextClass = (): AudioContextClass | undefined =>
   typeof window === "undefined"
     ? undefined
-    : window.AudioContext ?? (window as unknown as { webkitAudioContext?: AudioContextClass }).webkitAudioContext;
+    : (window.AudioContext ?? (window as unknown as { webkitAudioContext?: AudioContextClass }).webkitAudioContext);
 
 /**
  * Starts audio. Browsers only allow it after a user gesture, so this runs
@@ -80,7 +72,11 @@ interface Tone {
 }
 
 /** One oscillator with a quick attack and an exponential decay. */
-function tone({ context, master }: Audio, start: number, { type = "sine", freq, to, at = 0, duration, gain, attack = 0.005 }: Tone) {
+function tone(
+  { context, master }: Audio,
+  start: number,
+  { type = "sine", freq, to, at = 0, duration, gain, attack = 0.005 }: Tone,
+) {
   const t0 = start + at;
   const oscillator = context.createOscillator();
   const envelope = context.createGain();
@@ -96,7 +92,11 @@ function tone({ context, master }: Audio, start: number, { type = "sine", freq, 
 }
 
 /** A burst of low-passed noise: the knock of wood on wood. */
-function knock({ context, master, noise }: Audio, start: number, { duration, gain, cutoff }: { duration: number; gain: number; cutoff: number }) {
+function knock(
+  { context, master, noise }: Audio,
+  start: number,
+  { duration, gain, cutoff }: { duration: number; gain: number; cutoff: number },
+) {
   const source = context.createBufferSource();
   const filter = context.createBiquadFilter();
   const envelope = context.createGain();

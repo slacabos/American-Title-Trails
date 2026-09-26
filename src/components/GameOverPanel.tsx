@@ -14,16 +14,15 @@ const SCORE_CATEGORY_ORDER = [
   "farmers",
 ] as const;
 
-const SCORE_CATEGORY_LABELS: Record<(typeof SCORE_CATEGORY_ORDER)[number], string> =
-  {
-    completed_road: "Completed Roads",
-    completed_costco: "Completed Costcos",
-    completed_mcdonalds: "Completed McDonald's",
-    incomplete_costco: "Incomplete Costcos",
-    incomplete_road: "Incomplete Roads",
-    incomplete_mcdonalds: "Incomplete McDonald's",
-    farmers: "Farmers",
-  };
+const SCORE_CATEGORY_LABELS: Record<(typeof SCORE_CATEGORY_ORDER)[number], string> = {
+  completed_road: "Completed Roads",
+  completed_costco: "Completed Costcos",
+  completed_mcdonalds: "Completed McDonald's",
+  incomplete_costco: "Incomplete Costcos",
+  incomplete_road: "Incomplete Roads",
+  incomplete_mcdonalds: "Incomplete McDonald's",
+  farmers: "Farmers",
+};
 
 interface GameOverPanelProps {
   players: PlayerState[];
@@ -75,18 +74,10 @@ const GameOverPanel: React.FC<GameOverPanelProps> = ({
       {collapsed ? (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
           {topPlayers.map((player) => (
-            <div
-              key={player.id}
-              className="flex items-center gap-2 rounded-md bg-muted px-2 py-1"
-            >
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: player.color }}
-              />
+            <div key={player.id} className="flex items-center gap-2 rounded-md bg-muted px-2 py-1">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: player.color }} />
               <span className="font-semibold">{player.name}</span>
-              <span className="text-muted-foreground">
-                {t("gameOver.points", { points: player.score })}
-              </span>
+              <span className="text-muted-foreground">{t("gameOver.points", { points: player.score })}</span>
             </div>
           ))}
         </div>
@@ -119,10 +110,7 @@ const GameOverPanel: React.FC<GameOverPanelProps> = ({
                 <div className="mt-2 flex flex-col gap-0.5 text-xs text-muted-foreground">
                   {entries.length > 0 ? (
                     entries.map(({ category, points }) => (
-                      <div
-                        key={category}
-                        className="flex items-center justify-between"
-                      >
+                      <div key={category} className="flex items-center justify-between">
                         <span>{SCORE_CATEGORY_LABELS[category]}</span>
                         <span className="font-semibold tabular-nums text-card-foreground">{points}</span>
                       </div>

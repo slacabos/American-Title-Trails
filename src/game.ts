@@ -57,7 +57,11 @@ export class Game {
     // Initialize managers
     this.scoreManager = new ScoreManager();
     this.turnManager = new TurnManager(options.startingPlayer || 0);
-    this.tileManager = new TileManager([...shuffle(buildDeck(), this.rng), getRiverLake(), ...shuffle(buildRiverDeck(), this.rng)]);
+    this.tileManager = new TileManager([
+      ...shuffle(buildDeck(), this.rng),
+      getRiverLake(),
+      ...shuffle(buildRiverDeck(), this.rng),
+    ]);
     this.featureClaimManager = new FeatureClaimManager();
     this.playerManager = new PlayerManager(playerConfigs);
 
@@ -106,9 +110,7 @@ export class Game {
     this.state.discardPile = this.tileManager.getDiscardPile();
   }
 
-  private initializeScoreBreakdown(
-    players: PlayerState[]
-  ): ScoreBreakdown {
+  private initializeScoreBreakdown(players: PlayerState[]): ScoreBreakdown {
     const breakdown: ScoreBreakdown = {};
 
     players.forEach((player) => {
@@ -164,11 +166,7 @@ export class Game {
    * Rebuilds a game from its setup and moves. Undefined when a move no longer
    * applies, as with a save from an older tile library.
    */
-  public static replay(
-    players: PlayerDefinition[],
-    seed: number,
-    actions: readonly GameAction[]
-  ): Game | undefined {
+  public static replay(players: PlayerDefinition[], seed: number, actions: readonly GameAction[]): Game | undefined {
     // `this`, so a subclass replays as itself.
     const game = new this(players, { seed });
     return actions.every((action) => game.applyAction(action)) ? game : undefined;
@@ -178,10 +176,7 @@ export class Game {
     return this.playerManager.getCurrentPlayer(this.state.currentPlayerIndex);
   }
 
-  public placeTile(
-    position: Position,
-    rotation: number = 0
-  ): TilePlacementResult {
+  public placeTile(position: Position, rotation: number = 0): TilePlacementResult {
     if (this.state.phase !== GamePhase.PLACE_TILE) {
       return {
         success: false,
@@ -239,13 +234,9 @@ export class Game {
       this.actions.push({ type: "place", position: { ...position }, orientation: rotatedTile.orientation });
 
       // Check if there are claimable features
-      const claimableFeatures =
-        this.featureClaimManager.getClaimableFeatures(rotatedTile);
+      const claimableFeatures = this.featureClaimManager.getClaimableFeatures(rotatedTile);
 
-      if (
-        claimableFeatures.length > 0 &&
-        this.getCurrentPlayer().followers > 0
-      ) {
+      if (claimableFeatures.length > 0 && this.getCurrentPlayer().followers > 0) {
         this.turnManager.enterClaimPhase();
         this.state.phase = this.turnManager.getPhase();
       } else {
@@ -262,18 +253,13 @@ export class Game {
       return {
         success: false,
         completedFeatures: [],
-        message:
-          error instanceof Error ? error.message : "Failed to place tile",
+        message: error instanceof Error ? error.message : "Failed to place tile",
       };
     }
   }
 
   private scoreCompletedFeatures(completedFeatures: CompletedFeature[]): void {
-    this.scoreManager.scoreCompletedFeatures(
-      completedFeatures,
-      this.state.players,
-      this.state.scoreBreakdown
-    );
+    this.scoreManager.scoreCompletedFeatures(completedFeatures, this.state.players, this.state.scoreBreakdown);
   }
 
   public getClaimableFeaturesForCurrentTurn(): ClaimableFeature[] {
@@ -291,16 +277,11 @@ export class Game {
       return [];
     }
 
-    const allClaimable =
-      this.featureClaimManager.getClaimableFeatures(tileRecord.tile);
+    const allClaimable = this.featureClaimManager.getClaimableFeatures(tileRecord.tile);
 
     // Filter out features that already have followers
     return allClaimable.filter((feature) =>
-      this.state.board.canClaimFeature(
-        feature.type,
-        lastPlacedPosition,
-        feature.identifier
-      )
+      this.state.board.canClaimFeature(feature.type, lastPlacedPosition, feature.identifier),
     );
   }
 
@@ -325,13 +306,7 @@ export class Game {
     }
 
     try {
-      this.featureClaimManager.claimFeature(
-        this.state.board,
-        type,
-        lastPlacedPosition,
-        identifier,
-        currentPlayer.id
-      );
+      this.featureClaimManager.claimFeature(this.state.board, type, lastPlacedPosition, identifier, currentPlayer.id);
       this.playerManager.decreaseFollowerCount(currentPlayer.id);
       this.actions.push({ type: "claim", feature: type, ...(identifier !== undefined && { identifier }) });
 
@@ -357,7 +332,7 @@ export class Game {
   }
 
   private endTurn(): void {
-    const completed = this.pendingCompleted.map(feature => ({
+    const completed = this.pendingCompleted.map((feature) => ({
       ...feature,
       claimedBy: this.state.board.getFeatureClaimants({ ...feature, edges: feature.edges ?? new Set() }),
     }));
@@ -372,10 +347,7 @@ export class Game {
     this.syncTileState();
 
     // Use TurnManager to handle turn completion
-    this.turnManager.completeTurn(
-      this.tileManager.getCurrentTile(),
-      this.state.players.length
-    );
+    this.turnManager.completeTurn(this.tileManager.getCurrentTile(), this.state.players.length);
 
     // Sync state with TurnManager
     this.state.phase = this.turnManager.getPhase();
@@ -394,11 +366,7 @@ export class Game {
     this.state.isGameOver = true;
 
     // Calculate final scores using ScoreManager
-    this.scoreManager.calculateFinalScores(
-      this.state.players,
-      this.state.board,
-      this.state.scoreBreakdown
-    );
+    this.scoreManager.calculateFinalScores(this.state.players, this.state.board, this.state.scoreBreakdown);
 
     // Determine winner
     const maxScore = Math.max(...this.state.players.map((p) => p.score));
@@ -490,18 +458,16 @@ export class Game {
       };
 
       // Get meeple placement decision from AI strategy
-      const meeplePlacement = aiStrategy.evaluateMeeplePlacement(
-        context,
-        lastPosition
-      );
+      const meeplePlacement = aiStrategy.evaluateMeeplePlacement(context, lastPosition);
 
       if (meeplePlacement && meeplePlacement.shouldClaim) {
         if (this.claimFeature(meeplePlacement.type, meeplePlacement.identifier)) {
           return {
             type: "claimed",
-            feature: claimableFeatures.find(feature =>
-              feature.type === meeplePlacement.type && feature.identifier === meeplePlacement.identifier
-            ) ?? meeplePlacement,
+            feature:
+              claimableFeatures.find(
+                (feature) => feature.type === meeplePlacement.type && feature.identifier === meeplePlacement.identifier,
+              ) ?? meeplePlacement,
           };
         }
       }
@@ -538,8 +504,7 @@ export class Game {
         if (lastPosition) {
           const placedTile = this.state.board.getTile(lastPosition)?.tile;
           if (placedTile) {
-            const claimable =
-              this.featureClaimManager.getClaimableFeatures(placedTile);
+            const claimable = this.featureClaimManager.getClaimableFeatures(placedTile);
             if (claimable.length > 0) {
               if (this.claimFeature(claimable[0].type, claimable[0].identifier)) {
                 return { type: "claimed", feature: claimable[0] };
@@ -572,10 +537,7 @@ export class Game {
   }
 
   public canRotateTile(): boolean {
-    return (
-      this.state.phase === GamePhase.PLACE_TILE &&
-      this.tileManager.canRotateTile()
-    );
+    return this.state.phase === GamePhase.PLACE_TILE && this.tileManager.canRotateTile();
   }
 
   public rotateTile(times: number = 1): void {

@@ -63,14 +63,11 @@ export function makeRegional(material: THREE.MeshStandardMaterial, mask: THREE.T
     shader.uniforms.farmTint = { value: tint("#c9b872") };
     shader.uniforms.forestTint = { value: tint("#5a7f4c") };
     shader.uniforms.desertTint = { value: tint("#dcc294") };
-    shader.vertexShader = VERTEX_HEAD + shader.vertexShader.replace(
-      "#include <begin_vertex>",
-      `#include <begin_vertex>\n${VERTEX_BODY}`,
-    );
-    shader.fragmentShader = FRAGMENT_HEAD + shader.fragmentShader.replace(
-      "#include <map_fragment>",
-      `#include <map_fragment>\n${FRAGMENT_BODY}`,
-    );
+    shader.vertexShader =
+      VERTEX_HEAD + shader.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>\n${VERTEX_BODY}`);
+    shader.fragmentShader =
+      FRAGMENT_HEAD +
+      shader.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>\n${FRAGMENT_BODY}`);
   };
 }
 

@@ -32,9 +32,12 @@ export function useSound() {
     window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: next }));
   }, [enabled]);
 
-  const play = useCallback((cue: Cue) => {
-    if (enabled) playCue(cue);
-  }, [enabled]);
+  const play = useCallback(
+    (cue: Cue) => {
+      if (enabled) playCue(cue);
+    },
+    [enabled],
+  );
 
   return { enabled, toggle, play };
 }

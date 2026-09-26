@@ -9,11 +9,7 @@ export interface ViewPose {
 }
 
 /** The tabletop looks along a fixed 45° diagonal from 50° above the table. */
-const TABLETOP_DIRECTION = new THREE.Vector3(
-  1,
-  Math.tan((50 * Math.PI) / 180) * Math.SQRT2,
-  1,
-).normalize();
+const TABLETOP_DIRECTION = new THREE.Vector3(1, Math.tan((50 * Math.PI) / 180) * Math.SQRT2, 1).normalize();
 
 export const VIEW_POSES: Record<CameraView, ViewPose> = {
   tabletop: { direction: TABLETOP_DIRECTION, up: new THREE.Vector3(0, 1, 0) },

@@ -22,9 +22,7 @@ function populatedState(count: number): GameState {
   );
   for (
     let step = 0;
-    step < 500 &&
-    game.getState().board.getAllTiles().size < count &&
-    !game.getState().isGameOver;
+    step < 500 && game.getState().board.getAllTiles().size < count && !game.getState().isGameOver;
     step++
   )
     game.processAITurn();
@@ -58,13 +56,16 @@ export const ConnectedScenery: Story = {};
 
 /** Two AI players keep placing tiles; each one drops in and settles. */
 function LandingDemo() {
-  const [game] = useState(() => new Game(
-    [
-      { id: "blue", name: "Blue", color: "#457da1", isAI: true },
-      { id: "red", name: "Red", color: "#cc5d44", isAI: true },
-    ],
-    { seed: 71 },
-  ));
+  const [game] = useState(
+    () =>
+      new Game(
+        [
+          { id: "blue", name: "Blue", color: "#457da1", isAI: true },
+          { id: "red", name: "Red", color: "#cc5d44", isAI: true },
+        ],
+        { seed: 71 },
+      ),
+  );
   const [state, setState] = useState(() => game.getState());
   useEffect(() => {
     game.setStateChangeListener(setState);
@@ -103,12 +104,20 @@ export const ConnectedWarehouses: Story = {
 };
 
 const finishedBoard = new Board();
-const finishCap = (id: string, direction: "east" | "west") => new Tile({
-  id, name: id,
-  edges: { north: "field", east: direction === "east" ? "costco" : "field", south: "field", west: direction === "west" ? "costco" : "field" },
-  center: "field", roadConnections: [],
-  costcoZones: [{ id: "shop", segments: [direction] }],
-});
+const finishCap = (id: string, direction: "east" | "west") =>
+  new Tile({
+    id,
+    name: id,
+    edges: {
+      north: "field",
+      east: direction === "east" ? "costco" : "field",
+      south: "field",
+      west: direction === "west" ? "costco" : "field",
+    },
+    center: "field",
+    roadConnections: [],
+    costcoZones: [{ id: "shop", segments: [direction] }],
+  });
 finishedBoard.placeTile(finishCap("east-cap", "east"), { x: 0, y: 0 });
 finishedBoard.placeTile(finishCap("west-cap", "west"), { x: 1, y: 0 });
 export const CompletedCostco: Story = {
@@ -121,7 +130,10 @@ export const CompletedCostco: Story = {
 const gallery = new Board();
 const unique = [
   ...new Map(
-    [getStartTile(), ...buildDeck(), getRiverSource(), ...buildRiverDeck(), getRiverLake()].map((tile) => [tile.id, tile]),
+    [getStartTile(), ...buildDeck(), getRiverSource(), ...buildRiverDeck(), getRiverLake()].map((tile) => [
+      tile.id,
+      tile,
+    ]),
   ).values(),
 ];
 unique.forEach((tile, index) => {

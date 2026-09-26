@@ -14,7 +14,10 @@ export class PaintBatch {
     const flat = geometry.index ? geometry.toNonIndexed() : geometry;
     if (flat !== geometry) geometry.dispose();
     if (!flat.getAttribute("uv")) {
-      flat.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(flat.getAttribute("position").count * 2), 2));
+      flat.setAttribute(
+        "uv",
+        new THREE.Float32BufferAttribute(new Float32Array(flat.getAttribute("position").count * 2), 2),
+      );
     }
     if (!color && flat.getAttribute("color")) {
       this.geometries.push(flat);
@@ -59,8 +62,24 @@ export function place(
 
 /** The drawing surface landmark builders use: boxes and arbitrary shapes in tile space. */
 export interface PropBuilder {
-  box(x: number, y: number, z: number, w: number, h: number, d: number, color: string, yaw?: number, lit?: boolean): void;
-  shape(geometry: THREE.BufferGeometry, color: string, position: THREE.Vector3, rotation?: THREE.Euler, lit?: boolean): void;
+  box(
+    x: number,
+    y: number,
+    z: number,
+    w: number,
+    h: number,
+    d: number,
+    color: string,
+    yaw?: number,
+    lit?: boolean,
+  ): void;
+  shape(
+    geometry: THREE.BufferGeometry,
+    color: string,
+    position: THREE.Vector3,
+    rotation?: THREE.Euler,
+    lit?: boolean,
+  ): void;
 }
 
 export const GLOW_COLOR = "#ffc86e";

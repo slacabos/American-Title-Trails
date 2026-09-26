@@ -56,10 +56,7 @@ interface BoardViewProps {
 
 function useCompletedCostcos(state: GameState) {
   const tileCount = state.board.getAllTiles().size;
-  return useMemo(
-    () => tileCount ? completedCostcos(state.board) : [],
-    [state.board, tileCount],
-  );
+  return useMemo(() => (tileCount ? completedCostcos(state.board) : []), [state.board, tileCount]);
 }
 
 /** Shown in place of the board when 3D graphics cannot run. */
@@ -125,23 +122,12 @@ export function BoardView({
   );
 }
 
-export function ViewToggle({
-  view,
-  onViewChange,
-}: {
-  view: CameraView;
-  onViewChange: (view: CameraView) => void;
-}) {
+export function ViewToggle({ view, onViewChange }: { view: CameraView; onViewChange: (view: CameraView) => void }) {
   const { t } = useTranslations();
   return (
     <div className="board-view-switch" role="group" aria-label={t("board.view")}>
       {CAMERA_VIEWS.map((option) => (
-        <button
-          key={option}
-          type="button"
-          aria-pressed={view === option}
-          onClick={() => onViewChange(option)}
-        >
+        <button key={option} type="button" aria-pressed={view === option} onClick={() => onViewChange(option)}>
           {t(option === "drone" ? "board.droneView" : "board.tabletopView")}
         </button>
       ))}
@@ -150,30 +136,26 @@ export function ViewToggle({
 }
 
 /** Draw stage and Costco progress. */
-export function BoardStatus({
-  state,
-  className = "",
-}: {
-  state: GameState;
-  className?: string;
-}) {
+export function BoardStatus({ state, className = "" }: { state: GameState; className?: string }) {
   const { t } = useTranslations();
   const [rulesOpen, setRulesOpen] = useState(false);
   const finishedCostcos = useCompletedCostcos(state);
-  const justCompletedCostcos = state.lastCompletedFeatures?.filter(feature => feature.type === "costco") ?? [];
+  const justCompletedCostcos = state.lastCompletedFeatures?.filter((feature) => feature.type === "costco") ?? [];
   const river = state.drawStage === "river";
   return (
     <div className={`board-status ${className}`}>
       <div data-testid="draw-stage" aria-live="polite">
-        {river ? t("board.riverOpening", {
-          remaining: state.tileDeck.filter(tile => tile.river).length + (state.currentTile?.river ? 1 : 0),
-        }) : t("board.landStage")}
+        {river
+          ? t("board.riverOpening", {
+              remaining: state.tileDeck.filter((tile) => tile.river).length + (state.currentTile?.river ? 1 : 0),
+            })
+          : t("board.landStage")}
         {river && (
           <button
             type="button"
             className="board-status-toggle"
             aria-expanded={rulesOpen}
-            onClick={() => setRulesOpen(open => !open)}
+            onClick={() => setRulesOpen((open) => !open)}
           >
             {t(rulesOpen ? "board.hideRules" : "board.showRules")}
           </button>
@@ -186,16 +168,12 @@ export function BoardStatus({
       )}
       <div className="board-status-sub" aria-live="polite">
         {justCompletedCostcos.length > 0
-          ? t(
-            justCompletedCostcos.length === 1
-              ? "board.costcoJustCompletedOne"
-              : "board.costcoJustCompletedMany",
-            { count: justCompletedCostcos.length },
-          )
-          : t(
-            finishedCostcos.length ? "board.costcoCompleteCount" : "board.costcoNone",
-            { count: finishedCostcos.length },
-          )}
+          ? t(justCompletedCostcos.length === 1 ? "board.costcoJustCompletedOne" : "board.costcoJustCompletedMany", {
+              count: justCompletedCostcos.length,
+            })
+          : t(finishedCostcos.length ? "board.costcoCompleteCount" : "board.costcoNone", {
+              count: finishedCostcos.length,
+            })}
       </div>
     </div>
   );
@@ -215,13 +193,7 @@ function SceneryTilePreview({ tile, night }: { tile?: ITile; night?: boolean }) 
   );
 }
 
-export function CurrentTilePreview({
-  tile,
-  night = false,
-}: {
-  tile?: ITile;
-  night?: boolean;
-}) {
+export function CurrentTilePreview({ tile, night = false }: { tile?: ITile; night?: boolean }) {
   // Keep the canvas and its library alive during the claim phase. Recreating
   // WebGL contexts every turn can exhaust the device's graphics resources.
   return (

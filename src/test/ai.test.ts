@@ -1,12 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import {
-  SimpleAI,
-  RandomAI,
-  StrategicAI,
-  ExpertAI,
-  AIFactory,
-  AIContext,
-} from "../ai";
+import { SimpleAI, RandomAI, StrategicAI, ExpertAI, AIFactory, AIContext } from "../ai";
 import { Game } from "../game";
 import { PlayerDefinition, GamePhase } from "../types";
 
@@ -117,17 +110,11 @@ describe("AI Strategy Pattern", () => {
       };
 
       // With 0% chance, should never claim
-      const neverResult = neverClaimAI.evaluateMeeplePlacement(
-        contextWithFeatures,
-        { x: 0, y: 0 }
-      );
+      const neverResult = neverClaimAI.evaluateMeeplePlacement(contextWithFeatures, { x: 0, y: 0 });
       expect(neverResult).toBeNull();
 
       // With 100% chance and available features, should claim
-      const alwaysResult = alwaysClaimAI.evaluateMeeplePlacement(
-        contextWithFeatures,
-        { x: 0, y: 0 }
-      );
+      const alwaysResult = alwaysClaimAI.evaluateMeeplePlacement(contextWithFeatures, { x: 0, y: 0 });
       expect(alwaysResult).not.toBeNull();
     });
   });
@@ -174,9 +161,7 @@ describe("AI Strategy Pattern", () => {
 
       // Should be sorted by score (descending)
       for (let i = 1; i < placements.length; i++) {
-        expect(placements[i - 1].score).toBeGreaterThanOrEqual(
-          placements[i].score
-        );
+        expect(placements[i - 1].score).toBeGreaterThanOrEqual(placements[i].score);
       }
     });
 
@@ -436,10 +421,13 @@ describe("Game AI Integration", () => {
 
   describe("AI vs AI game completion", () => {
     it("makes visible claims throughout a seeded easy game", () => {
-      const game = new Game([
-        { id: "a", name: "A", isAI: true, aiDifficulty: "easy" },
-        { id: "b", name: "B", isAI: true, aiDifficulty: "easy" },
-      ], { seed: 404 });
+      const game = new Game(
+        [
+          { id: "a", name: "A", isAI: true, aiDifficulty: "easy" },
+          { id: "b", name: "B", isAI: true, aiDifficulty: "easy" },
+        ],
+        { seed: 404 },
+      );
       let claims = 0;
       let steps = 0;
       while (!game.getState().isGameOver && steps++ < 200) {
@@ -448,7 +436,7 @@ describe("Game AI Integration", () => {
       }
       expect(game.getState().isGameOver).toBe(true);
       expect(claims).toBeGreaterThanOrEqual(10);
-      expect(game.getState().players.some(player => player.score > 0)).toBe(true);
+      expect(game.getState().players.some((player) => player.score > 0)).toBe(true);
     });
 
     it("should complete an AI vs AI game without errors", () => {

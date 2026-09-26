@@ -84,13 +84,7 @@ const renderInteractive: Story["render"] = (args) => {
     setCollapsed(args.collapsed ?? false);
   }, [args.collapsed]);
 
-  return (
-    <GameOverPanel
-      {...args}
-      collapsed={collapsed}
-      onToggle={() => setCollapsed((prev) => !prev)}
-    />
-  );
+  return <GameOverPanel {...args} collapsed={collapsed} onToggle={() => setCollapsed((prev) => !prev)} />;
 };
 
 export const Default: Story = {

@@ -6,13 +6,7 @@
  */
 
 import type { ITile, IBoard } from "../interfaces";
-import type {
-  Position,
-  TerrainType,
-  PlayerState,
-  GameState,
-  ClaimableFeature,
-} from "../types";
+import type { Position, TerrainType, PlayerState, GameState, ClaimableFeature } from "../types";
 
 /**
  * Represents a potential tile placement with its evaluation score.
@@ -87,10 +81,7 @@ export interface AIStrategy {
    * @param placedPosition - Where the tile was just placed
    * @returns Meeple placement decision, or null if no meeple should be placed
    */
-  evaluateMeeplePlacement(
-    context: AIContext,
-    placedPosition: Position
-  ): MeeplePlacement | null;
+  evaluateMeeplePlacement(context: AIContext, placedPosition: Position): MeeplePlacement | null;
 
   /**
    * Get the best complete decision for a turn.

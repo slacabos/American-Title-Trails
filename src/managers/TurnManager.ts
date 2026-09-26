@@ -100,10 +100,7 @@ export class TurnManager {
    * Complete the current turn and prepare for the next turn
    * Returns true if there's a next tile, false if game should end
    */
-  public completeTurn(
-    nextTile: ITile | undefined,
-    totalPlayers: number
-  ): boolean {
+  public completeTurn(nextTile: ITile | undefined, totalPlayers: number): boolean {
     this.phase = GamePhase.END_TURN;
     this.advanceToNextPlayer(totalPlayers);
 

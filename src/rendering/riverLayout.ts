@@ -12,30 +12,40 @@ export function riverPath(tile: ITile): Point[] {
   const edges = base.river!.edges;
   let points: Point[];
   if (base.river!.kind === "source") {
-    points = Array.from({ length: 25 }, (_, i) => [0.015 * Math.sin(Math.PI * i / 24) ** 2, 0.5 - i / 24 * 0.4]);
+    points = Array.from({ length: 25 }, (_, i) => [0.015 * Math.sin((Math.PI * i) / 24) ** 2, 0.5 - (i / 24) * 0.4]);
   } else if (base.river!.kind === "lake") {
-    points = [[0, -0.5], [0, -0.33], [-0.08, -0.2], [-0.12, -0.06]];
+    points = [
+      [0, -0.5],
+      [0, -0.33],
+      [-0.08, -0.2],
+      [-0.12, -0.06],
+    ];
   } else {
     points = roadPath(edges).map(([x, z], i) => {
       const straight = edges[0] === "north" && edges[1] === "south";
-      const bend = straight ? (base.id === "river-meander" ? 0.085 : 0.035) * Math.sin(i / 24 * Math.PI * 2) * Math.sin(i / 24 * Math.PI) ** 2 : 0;
+      const bend = straight
+        ? (base.id === "river-meander" ? 0.085 : 0.035) *
+          Math.sin((i / 24) * Math.PI * 2) *
+          Math.sin((i / 24) * Math.PI) ** 2
+        : 0;
       return [x + bend, z];
     });
   }
-  return points.map(point => rotatePoint(point, tile.orientation));
+  return points.map((point) => rotatePoint(point, tile.orientation));
 }
 
 export function restaurantPosition(tile: ITile): Point {
-  const point: Point = tile.id === "river-lake" ? [0.24, 0.28] : tile.id === "river-mcdonalds" ? [0, -0.31] : [-0.07, -0.075];
+  const point: Point =
+    tile.id === "river-lake" ? [0.24, 0.28] : tile.id === "river-mcdonalds" ? [0, -0.31] : [-0.07, -0.075];
   return rotatePoint(point, tile.orientation);
 }
 
 export function tileRoadPath(tile: ITile, connection: string[]): Point[] {
   if ((tile.id === "river-costco-bridge" || tile.id === "river-mcdonalds") && connection.includes("center")) {
-    const edge = connection.find(edge => edge !== "center")!;
+    const edge = connection.find((edge) => edge !== "center")!;
     const [x, z] = PORTALS[edge];
     return Array.from({ length: 25 }, (_, i) => {
-      const distance = 1 - i / 24 * 1.62;
+      const distance = 1 - (i / 24) * 1.62;
       return [x * distance, z * distance];
     });
   }
@@ -45,8 +55,12 @@ export function tileRoadPath(tile: ITile, connection: string[]): Point[] {
 export function nearRiver(tile: ITile, point: Point, margin = 0): boolean {
   if (!tile.river) return false;
   const basePoint = rotatePoint(point, -tile.orientation);
-  if (tile.river.kind === "lake" && Math.hypot((basePoint[0] + 0.12) / 0.24, (basePoint[1] + 0.04) / 0.24) < 1 + margin / 0.24) return true;
-  return riverPath(tile).some(p => Math.hypot(point[0] - p[0], point[1] - p[1]) < RIVER_WIDTH / 2 + margin);
+  if (
+    tile.river.kind === "lake" &&
+    Math.hypot((basePoint[0] + 0.12) / 0.24, (basePoint[1] + 0.04) / 0.24) < 1 + margin / 0.24
+  )
+    return true;
+  return riverPath(tile).some((p) => Math.hypot(point[0] - p[0], point[1] - p[1]) < RIVER_WIDTH / 2 + margin);
 }
 
 /** Paint water last beneath raised bridges. Coordinates are tile-centered units. */
@@ -57,9 +71,14 @@ export function paintRiver(ctx: CanvasRenderingContext2D, tile: ITile): void {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.setLineDash([]);
-  for (const [color, width] of [["#d9c995", RIVER_WIDTH + 0.055], ["#9ac9c2", RIVER_WIDTH + 0.024], ["#4aa2bd", RIVER_WIDTH], ["#71c1d3", RIVER_WIDTH * 0.65]] as const) {
+  for (const [color, width] of [
+    ["#d9c995", RIVER_WIDTH + 0.055],
+    ["#9ac9c2", RIVER_WIDTH + 0.024],
+    ["#4aa2bd", RIVER_WIDTH],
+    ["#71c1d3", RIVER_WIDTH * 0.65],
+  ] as const) {
     ctx.beginPath();
-    points.forEach(([x, z], i) => i ? ctx.lineTo(x, z) : ctx.moveTo(x, z));
+    points.forEach(([x, z], i) => (i ? ctx.lineTo(x, z) : ctx.moveTo(x, z)));
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
     ctx.stroke();

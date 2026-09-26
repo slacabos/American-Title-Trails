@@ -12,9 +12,17 @@ test("connected warehouse layouts render and rebuild without leaking geometry", 
   await page.setViewportSize({ width: 1140, height: 830 });
   for (let example = 0; example < 5; example++) {
     await page.goto(`/e2e/warehouses.html?example=${example}`);
-    await expect.poll(() => page.evaluate(() => {
-      try { return window.warehouseTest.stats().calls; } catch { return 0; }
-    })).toBeGreaterThan(0);
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          try {
+            return window.warehouseTest.stats().calls;
+          } catch {
+            return 0;
+          }
+        }),
+      )
+      .toBeGreaterThan(0);
     await expect(page.getByTestId("complexes")).toHaveText(example === 3 ? "2" : "1");
     const original = await page.evaluate(() => window.warehouseTest.stats());
     expect(original.calls).toBeLessThan(60);

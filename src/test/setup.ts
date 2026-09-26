@@ -31,7 +31,7 @@ HTMLCanvasElement.prototype.getContext = () =>
     transform: () => {},
     rect: () => {},
     clip: () => {},
-  } as any);
+  }) as any;
 
 // Global test utilities
 global.ResizeObserver = class ResizeObserver {

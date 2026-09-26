@@ -6,14 +6,7 @@
  */
 
 import type { Position } from "../types";
-import type {
-  AIStrategy,
-  AIDifficulty,
-  AIContext,
-  TilePlacement,
-  MeeplePlacement,
-  AIDecision,
-} from "./AIStrategy";
+import type { AIStrategy, AIDifficulty, AIContext, TilePlacement, MeeplePlacement, AIDecision } from "./AIStrategy";
 import { GAME_RULES } from "../constants/gameRules";
 import type { RNG } from "../utils/rng";
 import { FeatureAnalyzer } from "./evaluators";
@@ -68,10 +61,7 @@ export class RandomAI implements AIStrategy {
   /**
    * Evaluate meeple placement - random chance to claim any feature.
    */
-  evaluateMeeplePlacement(
-    context: AIContext,
-    _placedPosition: Position
-  ): MeeplePlacement | null {
+  evaluateMeeplePlacement(context: AIContext, _placedPosition: Position): MeeplePlacement | null {
     const { board, currentPlayer, claimableFeatures } = context;
 
     // Need at least one follower to claim
@@ -86,9 +76,10 @@ export class RandomAI implements AIStrategy {
     // A finished feature scores immediately and returns its follower, so even
     // the beginner AI should never pass up those points.
     const analyzer = new FeatureAnalyzer(board);
-    const completed = claimableFeatures.find(feature =>
-      feature.type !== "field" &&
-      analyzer.estimateFeatureValue(feature.type, _placedPosition, feature.identifier).isComplete
+    const completed = claimableFeatures.find(
+      (feature) =>
+        feature.type !== "field" &&
+        analyzer.estimateFeatureValue(feature.type, _placedPosition, feature.identifier).isComplete,
     );
     if (completed) return { ...completed, score: 1, shouldClaim: true };
 
@@ -101,7 +92,7 @@ export class RandomAI implements AIStrategy {
       return null;
     }
 
-    const candidates = claimableFeatures.filter(feature => feature.type !== "field");
+    const candidates = claimableFeatures.filter((feature) => feature.type !== "field");
     if (!candidates.length) return null;
     const randomIndex = Math.floor(this.rng() * candidates.length);
     const feature = candidates[randomIndex];
@@ -125,9 +116,7 @@ export class RandomAI implements AIStrategy {
     }
 
     // Pick a random placement from valid options
-    const randomIndex = Math.floor(
-      this.rng() * Math.min(tilePlacements.length, 5)
-    );
+    const randomIndex = Math.floor(this.rng() * Math.min(tilePlacements.length, 5));
     const tilePlacement = tilePlacements[randomIndex];
 
     return {

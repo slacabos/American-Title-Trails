@@ -17,8 +17,7 @@ export interface SavedGame {
   turnNumber: number;
 }
 
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
+const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
 
 function isSavedGame(value: unknown): value is SavedGame {
   return (

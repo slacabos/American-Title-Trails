@@ -12,10 +12,7 @@ function getNestedValue(obj: any, path: string): string {
 }
 
 // Helper function to replace placeholders like {playerName}, {count}, etc.
-function interpolateString(
-  template: string,
-  variables: Record<string, any> = {}
-): string {
+function interpolateString(template: string, variables: Record<string, any> = {}): string {
   return template.replace(/\{(\w+)\}/g, (match, key) => {
     return variables[key] !== undefined ? String(variables[key]) : match;
   });
@@ -34,18 +31,13 @@ export function useTranslations() {
       }
 
       if (typeof translation !== "string") {
-        console.warn(
-          `Translation for key "${key}" is not a string:`,
-          translation
-        );
+        console.warn(`Translation for key "${key}" is not a string:`, translation);
         return key;
       }
 
-      return variables
-        ? interpolateString(translation, variables)
-        : translation;
+      return variables ? interpolateString(translation, variables) : translation;
     },
-    [language]
+    [language],
   );
 
   const changeLanguage = useCallback((newLanguage: Language) => {

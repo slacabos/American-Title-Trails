@@ -76,7 +76,7 @@ export class TilePlacementEvaluator {
     position: Position,
     rotation: number,
     currentPlayerId: string,
-    allPlayers: PlayerState[]
+    allPlayers: PlayerState[],
   ): PlacementScore {
     const rotatedTile = tile.rotate(rotation);
 
@@ -101,19 +101,8 @@ export class TilePlacementEvaluator {
     const completionScore = this.evaluateCompletion(board, rotatedTile, position, currentPlayerId, allPlayers);
     const adjacencyScore = this.evaluateAdjacency(board, position);
     const costcoScore = this.evaluateCostcoPreference(rotatedTile);
-    const extensionScore = this.evaluateExtension(
-      board,
-      rotatedTile,
-      position,
-      currentPlayerId
-    );
-    const blockingScore = this.evaluateBlocking(
-      board,
-      rotatedTile,
-      position,
-      currentPlayerId,
-      allPlayers
-    );
+    const extensionScore = this.evaluateExtension(board, rotatedTile, position, currentPlayerId);
+    const blockingScore = this.evaluateBlocking(board, rotatedTile, position, currentPlayerId, allPlayers);
     const positionScore = this.evaluatePosition(board, position);
 
     // Add small random factor to break ties
@@ -151,20 +140,13 @@ export class TilePlacementEvaluator {
     tile: ITile,
     validPositions: Position[],
     currentPlayerId: string,
-    allPlayers: PlayerState[]
+    allPlayers: PlayerState[],
   ): PlacementScore[] {
     const scores: PlacementScore[] = [];
 
     for (const position of validPositions) {
       for (let rotation = 0; rotation < GAME_RULES.TILE_ROTATIONS; rotation++) {
-        const score = this.evaluatePlacement(
-          board,
-          tile,
-          position,
-          rotation,
-          currentPlayerId,
-          allPlayers
-        );
+        const score = this.evaluatePlacement(board, tile, position, rotation, currentPlayerId, allPlayers);
 
         if (score.totalScore > -Infinity) {
           scores.push(score);
@@ -198,7 +180,7 @@ export class TilePlacementEvaluator {
         return total + (ours === majority ? feature.points : -feature.points);
       }
       // Only an unoccupied feature on the new tile can be claimed this turn.
-      const canClaim = allPlayers.find(player => player.id === currentPlayerId)?.followers;
+      const canClaim = allPlayers.find((player) => player.id === currentPlayerId)?.followers;
       const onNewTile = feature.tiles.has(`${position.x},${position.y}`);
       return total + (canClaim && onNewTile ? feature.points : 0);
     }, 0);
@@ -222,12 +204,7 @@ export class TilePlacementEvaluator {
   /**
    * Evaluate extension potential - bonus for extending own claimed features.
    */
-  private evaluateExtension(
-    board: IBoard,
-    _tile: ITile,
-    position: Position,
-    currentPlayerId: string
-  ): number {
+  private evaluateExtension(board: IBoard, _tile: ITile, position: Position, currentPlayerId: string): number {
     let extensionScore = 0;
     const claims = board.getFeatureClaims();
 
@@ -242,8 +219,7 @@ export class TilePlacementEvaluator {
         // Check if any claim on the neighbor belongs to current player
         const ourClaims = claims.filter(
           (claim) =>
-            claim.players.includes(currentPlayerId) &&
-            claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`
+            claim.players.includes(currentPlayerId) && claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`,
         );
 
         if (ourClaims.length > 0) {
@@ -263,13 +239,11 @@ export class TilePlacementEvaluator {
     _tile: ITile,
     position: Position,
     currentPlayerId: string,
-    allPlayers: PlayerState[]
+    allPlayers: PlayerState[],
   ): number {
     let blockingScore = 0;
     const claims = board.getFeatureClaims();
-    const opponentIds = allPlayers
-      .filter((p) => p.id !== currentPlayerId)
-      .map((p) => p.id);
+    const opponentIds = allPlayers.filter((p) => p.id !== currentPlayerId).map((p) => p.id);
 
     // Check if this placement might interfere with opponent features
     const directions = ["north", "east", "south", "west"] as const;
@@ -283,7 +257,7 @@ export class TilePlacementEvaluator {
         const opponentClaims = claims.filter(
           (claim) =>
             claim.players.some((p) => opponentIds.includes(p)) &&
-            claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`
+            claim.edge.split(":")[0] === `${neighborPos.x},${neighborPos.y}`,
         );
 
         if (opponentClaims.length > 0) {
@@ -304,9 +278,7 @@ export class TilePlacementEvaluator {
     const centerX = (bounds.minX + bounds.maxX) / 2;
     const centerY = (bounds.minY + bounds.maxY) / 2;
 
-    const distanceFromCenter = Math.sqrt(
-      Math.pow(position.x - centerX, 2) + Math.pow(position.y - centerY, 2)
-    );
+    const distanceFromCenter = Math.sqrt(Math.pow(position.x - centerX, 2) + Math.pow(position.y - centerY, 2));
 
     // Invert distance so closer to center = higher score
     return Math.max(0, 5 - distanceFromCenter);
@@ -315,10 +287,7 @@ export class TilePlacementEvaluator {
   /**
    * Get neighbor position in a direction.
    */
-  private getNeighborPosition(
-    position: Position,
-    direction: string
-  ): Position {
+  private getNeighborPosition(position: Position, direction: string): Position {
     const deltas: Record<string, Position> = {
       north: { x: 0, y: -1 },
       east: { x: 1, y: 0 },

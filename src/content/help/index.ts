@@ -5,8 +5,6 @@ export const helpContent = {
   en,
 };
 
-export const availableHelpLanguages = Object.keys(helpContent) as Array<
-  keyof typeof helpContent
->;
+export const availableHelpLanguages = Object.keys(helpContent) as Array<keyof typeof helpContent>;
 
 export default helpContent;

@@ -8,17 +8,12 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4173",
     viewport: { width: 1440, height: 1000 },
     launchOptions: {
-      args: [
-        "--use-gl=angle",
-        "--use-angle=swiftshader",
-        "--enable-unsafe-swiftshader",
-      ],
+      args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
     },
     screenshot: "only-on-failure",
   },
   webServer: {
-    command:
-      "npm run dev -- --host 127.0.0.1 --port 4173 --strictPort --open false",
+    command: "npm run dev -- --host 127.0.0.1 --port 4173 --strictPort --open false",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
   },

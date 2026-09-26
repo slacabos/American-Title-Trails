@@ -38,7 +38,12 @@ describe("arrow directions", () => {
 
   it("map WASD onto the arrows, in either case", () => {
     expect(["w", "a", "s", "d", "W", "D"].map(directionKey)).toEqual([
-      "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp", "ArrowRight",
+      "ArrowUp",
+      "ArrowLeft",
+      "ArrowDown",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowRight",
     ]);
     expect(directionKey("ArrowLeft")).toBe("ArrowLeft");
     expect(["e", "q", "x", "Enter"].map(directionKey)).toEqual([undefined, undefined, undefined, undefined]);
@@ -83,7 +88,8 @@ describe("nearestLegal", () => {
 
 describe("focus guards", () => {
   it("treat fields, dropdowns and open dialogs as typing", () => {
-    document.body.innerHTML = '<input id="i"><div role="combobox" id="c"></div><button id="b"></button><main id="m"></main>';
+    document.body.innerHTML =
+      '<input id="i"><div role="combobox" id="c"></div><button id="b"></button><main id="m"></main>';
     expect(isTypingTarget(target(document.getElementById("i")!))).toBe(true);
     expect(isTypingTarget(target(document.getElementById("c")!))).toBe(true);
     expect(isTypingTarget(target(document.getElementById("b")!))).toBe(false);
@@ -93,7 +99,8 @@ describe("focus guards", () => {
   });
 
   it("let focused buttons, links and menu items keep Enter and Space", () => {
-    document.body.innerHTML = '<button id="b"><span id="s"></span></button><a href="#" id="a"></a><div role="menuitem" id="mi"></div><main id="m"></main>';
+    document.body.innerHTML =
+      '<button id="b"><span id="s"></span></button><a href="#" id="a"></a><div role="menuitem" id="mi"></div><main id="m"></main>';
     for (const id of ["b", "s", "a", "mi"]) expect(activatesOnEnter(target(document.getElementById(id)!))).toBe(true);
     expect(activatesOnEnter(target(document.getElementById("m")!))).toBe(false);
   });

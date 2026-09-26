@@ -20,7 +20,10 @@ export interface Shortcut {
   action: string;
 }
 
-const DIRECTIONS = [["←", "↑", "→", "↓"], ["W", "A", "S", "D"]];
+const DIRECTIONS = [
+  ["←", "↑", "→", "↓"],
+  ["W", "A", "S", "D"],
+];
 
 /** Every shortcut, grouped the way the help screen shows them. */
 export const SHORTCUT_GROUPS: { title: string; shortcuts: Shortcut[] }[] = [

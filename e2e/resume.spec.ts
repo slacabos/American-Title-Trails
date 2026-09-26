@@ -26,9 +26,11 @@ test("an unfinished game survives a reload", async ({ page }) => {
   if (await page.getByRole("button", { name: "Skip" }).isVisible()) await page.keyboard.press("x");
 
   // Let both computer players move.
-  await expect.poll(async () => (await savedActions(page)).filter((a) => a.type === "place").length, {
-    timeout: 20_000,
-  }).toBeGreaterThanOrEqual(3);
+  await expect
+    .poll(async () => (await savedActions(page)).filter((a) => a.type === "place").length, {
+      timeout: 20_000,
+    })
+    .toBeGreaterThanOrEqual(3);
 
   await page.reload();
   const placed = (await savedActions(page)).filter((a) => a.type === "place" || a.type === "discard").length;

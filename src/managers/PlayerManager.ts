@@ -10,13 +10,7 @@ import { GAME_RULES } from "../constants/gameRules";
  */
 export class PlayerManager {
   private players: PlayerState[];
-  private readonly defaultColors = [
-    "#FF0000",
-    "#0000FF",
-    "#00FF00",
-    "#FFFF00",
-    "#FF00FF",
-  ];
+  private readonly defaultColors = ["#FF0000", "#0000FF", "#00FF00", "#FFFF00", "#FF00FF"];
 
   constructor(playerConfigs: PlayerDefinition[]) {
     this.players = this.initializePlayers(playerConfigs);
@@ -30,7 +24,7 @@ export class PlayerManager {
       id: config.id || `player_${index + 1}`,
       name: config.name,
       isAI: config.isAI || false,
-      aiDifficulty: config.isAI ? (config.aiDifficulty || "medium") : undefined,
+      aiDifficulty: config.isAI ? config.aiDifficulty || "medium" : undefined,
       score: 0,
       followers: config.followers || GAME_RULES.FOLLOWERS_PER_PLAYER,
       color: config.color || this.getDefaultColor(index),

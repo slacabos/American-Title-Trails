@@ -19,7 +19,7 @@ export default defineConfig({
     port: 3000,
     open: true,
     watch: {
-      ignored: ['**/*.md', '**/docs/**'],
+      ignored: ["**/*.md", "**/docs/**"],
     },
   },
   build: {

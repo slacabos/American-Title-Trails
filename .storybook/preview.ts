@@ -11,10 +11,9 @@ const preview: Preview = {
       return React.createElement(
         "div",
         {
-          className:
-            "min-h-screen w-full bg-background p-8 flex items-center justify-center",
+          className: "min-h-screen w-full bg-background p-8 flex items-center justify-center",
         },
-        React.createElement(Story)
+        React.createElement(Story),
       );
     },
   ],

@@ -37,9 +37,7 @@ describe("zoom tiers", () => {
 describe("fine scenery parts", () => {
   beforeEach(() => {
     const ctx = document.createElement("canvas").getContext("2d")!;
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
-      Object.assign(ctx, { setLineDash: () => {} }),
-    );
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(Object.assign(ctx, { setLineDash: () => {} }));
   });
   afterEach(() => vi.restoreAllMocks());
 

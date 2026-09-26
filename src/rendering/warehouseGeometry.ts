@@ -24,7 +24,16 @@ export function buildWarehouses(complexes: WarehouseComplex[], materials: Wareho
     batch.push(geometry);
     batches.set(material, batch);
   };
-  const box = (point: Point, y: number, width: number, height: number, depth: number, material: THREE.Material, yaw = 0, tile?: Position) => {
+  const box = (
+    point: Point,
+    y: number,
+    width: number,
+    height: number,
+    depth: number,
+    material: THREE.Material,
+    yaw = 0,
+    tile?: Position,
+  ) => {
     const geometry = new THREE.BoxGeometry(width, height, depth).rotateY(yaw).translate(point[0], y, point[1]);
     if (tile) {
       // Trim wall/curb ends at tile boundaries. Diagonal trim must not project
@@ -47,7 +56,8 @@ export function buildWarehouses(complexes: WarehouseComplex[], materials: Wareho
     for (const section of complex.sections) {
       const shape = new THREE.Shape(section.roof.map(([x, z]) => new THREE.Vector2(x, -z)));
       const roof = new THREE.ExtrudeGeometry(shape, { depth: 0.018, bevelEnabled: false, steps: 1 })
-        .rotateX(-Math.PI / 2).translate(0, WAREHOUSE_ROOF_Y - 0.018, 0);
+        .rotateX(-Math.PI / 2)
+        .translate(0, WAREHOUSE_ROOF_Y - 0.018, 0);
       // World-aligned roof seams run continuously through adjoining tiles.
       const vertices = roof.getAttribute("position");
       const uv = roof.getAttribute("uv");
@@ -61,31 +71,51 @@ export function buildWarehouses(complexes: WarehouseComplex[], materials: Wareho
         const count = Math.floor(wall.length / 0.065);
         for (let i = 1; i < count; i++) {
           const t = i / count;
-          const point: Point = [wall.a[0] + (wall.b[0] - wall.a[0]) * t + wall.normal[0] * 0.044,
-            wall.a[1] + (wall.b[1] - wall.a[1]) * t + wall.normal[1] * 0.044];
+          const point: Point = [
+            wall.a[0] + (wall.b[0] - wall.a[0]) * t + wall.normal[0] * 0.044,
+            wall.a[1] + (wall.b[1] - wall.a[1]) * t + wall.normal[1] * 0.044,
+          ];
           const outside: Point = [point[0] + wall.normal[0] * 0.03, point[1] + wall.normal[1] * 0.03];
-          if (!insidePolygon(outside, section.paving) || section.roads.some(([x, z]) => Math.hypot(point[0] - x, point[1] - z) < ROAD_WIDTH / 2 + 0.04)) continue;
+          if (
+            !insidePolygon(outside, section.paving) ||
+            section.roads.some(([x, z]) => Math.hypot(point[0] - x, point[1] - z) < ROAD_WIDTH / 2 + 0.04)
+          )
+            continue;
           box(point, 0.003, 0.003, 0.002, 0.06, materials.marking, yaw(wall), section.position);
         }
       }
       for (const curb of section.curbs) {
         const steps = Math.ceil(curb.length / 0.02);
-        const point = (t: number): Point => [curb.a[0] + (curb.b[0] - curb.a[0]) * t,
-          curb.a[1] + (curb.b[1] - curb.a[1]) * t];
+        const point = (t: number): Point => [
+          curb.a[0] + (curb.b[0] - curb.a[0]) * t,
+          curb.a[1] + (curb.b[1] - curb.a[1]) * t,
+        ];
         let start: number | undefined;
         for (let i = 0; i <= steps; i++) {
           const p = point((i + 0.5) / steps);
-          const clear = i < steps && !section.roads.some(([x, z]) => Math.hypot(p[0] - x, p[1] - z) < ROAD_WIDTH / 2 + 0.02);
+          const clear =
+            i < steps && !section.roads.some(([x, z]) => Math.hypot(p[0] - x, p[1] - z) < ROAD_WIDTH / 2 + 0.02);
           if (clear && start === undefined) start = i;
           if (!clear && start !== undefined) {
             const span = { ...curb, a: point(start / steps), b: point(i / steps) };
-            box(midpoint(span, -0.005), 0.006, curb.length * (i - start) / steps, 0.012, 0.01, materials.trim, yaw(curb), section.position);
+            box(
+              midpoint(span, -0.005),
+              0.006,
+              (curb.length * (i - start)) / steps,
+              0.012,
+              0.01,
+              materials.trim,
+              yaw(curb),
+              section.position,
+            );
             start = undefined;
           }
         }
       }
-      const center: Point = [section.roof.reduce((sum, p) => sum + p[0], 0) / section.roof.length,
-        section.roof.reduce((sum, p) => sum + p[1], 0) / section.roof.length];
+      const center: Point = [
+        section.roof.reduce((sum, p) => sum + p[0], 0) / section.roof.length,
+        section.roof.reduce((sum, p) => sum + p[1], 0) / section.roof.length,
+      ];
       const signPoint = midpoint(complex.entrance, -0.08);
       if (Math.hypot(center[0] - signPoint[0], center[1] - signPoint[1]) > 0.16) {
         box(center, 0.19, 0.06, 0.04, 0.045, materials.metal);
@@ -99,8 +129,13 @@ export function buildWarehouses(complexes: WarehouseComplex[], materials: Wareho
     box(midpoint(entrance, 0.012), 0.06, 0.004, 0.092, 0.015, materials.trim, angle);
     box(midpoint(entrance, 0.018), 0.112, width + 0.025, 0.012, 0.06, materials.fascia, angle);
     const sign = midpoint(entrance, -0.075);
-    add(new THREE.PlaneGeometry(Math.min(0.31, entrance.length * 0.8), 0.08)
-      .rotateX(-Math.PI / 2).rotateY(angle + Math.PI).translate(sign[0], 0.182, sign[1]), materials.sign);
+    add(
+      new THREE.PlaneGeometry(Math.min(0.31, entrance.length * 0.8), 0.08)
+        .rotateX(-Math.PI / 2)
+        .rotateY(angle + Math.PI)
+        .translate(sign[0], 0.182, sign[1]),
+      materials.sign,
+    );
     if (complex.loadingBay) {
       const dock = complex.loadingBay;
       box(midpoint(dock, 0.003), 0.053, 0.13, 0.09, 0.012, materials.metal, yaw(dock));

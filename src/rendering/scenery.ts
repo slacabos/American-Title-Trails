@@ -11,14 +11,7 @@ import { isFine, LodTracker } from "./lod";
 
 const NIGHT_GLOW = 1.1;
 import { WarehouseComplex, warehouseLayout } from "./warehouseLayout";
-import {
-  canonicalTile,
-  insidePolygon,
-  Point,
-  ROAD_WIDTH,
-  sceneryKey,
-  zonePolygon,
-} from "./tileLayout";
+import { canonicalTile, insidePolygon, Point, ROAD_WIDTH, sceneryKey, zonePolygon } from "./tileLayout";
 
 interface BuildingLayout {
   x: number;
@@ -27,9 +20,8 @@ interface BuildingLayout {
   width?: number;
   depth?: number;
 }
-const scenerySeed = (id: string) => Array.from(id).reduce(
-  (seed, character) => (seed * 31 + character.charCodeAt(0)) >>> 0, 177,
-);
+const scenerySeed = (id: string) =>
+  Array.from(id).reduce((seed, character) => (seed * 31 + character.charCodeAt(0)) >>> 0, 177);
 const PENNANTS: Record<string, Point> = {
   "costco-road": [0.26, -0.2],
   "costco-complex-l": [0.17, -0.05],
@@ -102,9 +94,13 @@ export class SceneryLibrary {
       this.materials.set("warehouse-roof", roof);
     }
     return buildWarehouses(layout, {
-      roof, wall: this.material("#e4ddca"), trim: this.material("#d9d4be"),
-      fascia: this.material("#c5493f"), glass: this.warehouseGlass(),
-      metal: this.material("#667b7e"), marking: this.material("#eef0dd"),
+      roof,
+      wall: this.material("#e4ddca"),
+      trim: this.material("#d9d4be"),
+      fascia: this.material("#c5493f"),
+      glass: this.warehouseGlass(),
+      metal: this.material("#667b7e"),
+      marking: this.material("#eef0dd"),
       sign: this.label("costco"),
     });
   }
@@ -142,9 +138,7 @@ export class SceneryLibrary {
     const cached = this.ghosts.get(key);
     if (cached) return cached;
     const base = canonicalTile(tile);
-    const warehouse = this.createWarehouses(warehouseLayout([
-      { tile: base, position: { x: 0, y: 0 } },
-    ]));
+    const warehouse = this.createWarehouses(warehouseLayout([{ tile: base, position: { x: 0, y: 0 } }]));
     warehouse.parts.forEach((part) => this.ghostGeometry.add(part.geometry));
     // The ghost has no region yet, so it previews meadow plants.
     const plants = new PaintBatch();
@@ -270,8 +264,7 @@ export class SceneryLibrary {
       lit = false,
     ) => {
       const fine = isFine(geometry);
-      (lit ? (fine ? fineGlow : glow) : fine ? finePaint : paint)
-        .add(place(geometry, position, rotation), color);
+      (lit ? (fine ? fineGlow : glow) : fine ? finePaint : paint).add(place(geometry, position, rotation), color);
     };
     const box = (
       x: number,
@@ -283,14 +276,7 @@ export class SceneryLibrary {
       color: string,
       yaw = 0,
       lit = false,
-    ) =>
-      shape(
-        new THREE.BoxGeometry(w, h, d),
-        color,
-        new THREE.Vector3(x, y, z),
-        new THREE.Euler(0, yaw, 0),
-        lit,
-      );
+    ) => shape(new THREE.BoxGeometry(w, h, d), color, new THREE.Vector3(x, y, z), new THREE.Euler(0, yaw, 0), lit);
     const props: PropBuilder = { box, shape };
     (LANDMARKS[base.id] ?? []).forEach((landmark) => buildLandmark(props, landmark));
 
@@ -303,28 +289,13 @@ export class SceneryLibrary {
     });
     makeRegional(groundMaterial, groundTextures.mask);
     this.materials.set(`ground-${key}`, groundMaterial);
-    add(
-      new THREE.PlaneGeometry(1, 1),
-      groundMaterial,
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Euler(-Math.PI / 2, 0, 0),
-    );
+    add(new THREE.PlaneGeometry(1, 1), groundMaterial, new THREE.Vector3(0, 0, 0), new THREE.Euler(-Math.PI / 2, 0, 0));
 
     const building = (layout: BuildingLayout) => {
-      const {
-        x,
-        z,
-        yaw = 0,
-        width = 0.36,
-        depth = 0.23,
-      } = layout;
+      const { x, z, yaw = 0, width = 0.36, depth = 0.23 } = layout;
       const height = 0.105;
       const local = (lx: number, ly: number, lz: number) =>
-        new THREE.Vector3(
-          x + lx * Math.cos(yaw) + lz * Math.sin(yaw),
-          ly,
-          z - lx * Math.sin(yaw) + lz * Math.cos(yaw),
-        );
+        new THREE.Vector3(x + lx * Math.cos(yaw) + lz * Math.sin(yaw), ly, z - lx * Math.sin(yaw) + lz * Math.cos(yaw));
       const block = (
         lx: number,
         ly: number,
@@ -339,33 +310,9 @@ export class SceneryLibrary {
         box(p.x, p.y, p.z, w, h, d, color, yaw, lit);
       };
       block(0, 0.008, 0, width + 0.025, 0.016, depth + 0.025, "#d9d4be");
-      block(
-        0,
-        height / 2 + 0.016,
-        0,
-        width,
-        height,
-        depth,
-        "#e9d6b7",
-      );
-      block(
-        0,
-        height + 0.022,
-        0,
-        width + 0.018,
-        0.018,
-        depth + 0.018,
-        "#c64032",
-      );
-      block(
-        0,
-        height * 0.62,
-        depth / 2 + 0.003,
-        width * 0.94,
-        0.025,
-        0.008,
-        "#bf3d32",
-      );
+      block(0, height / 2 + 0.016, 0, width, height, depth, "#e9d6b7");
+      block(0, height + 0.022, 0, width + 0.018, 0.018, depth + 0.018, "#c64032");
+      block(0, height * 0.62, depth / 2 + 0.003, width * 0.94, 0.025, 0.008, "#bf3d32");
       for (const sign of [-1, 1]) {
         block(
           sign * width * 0.27,
@@ -378,16 +325,7 @@ export class SceneryLibrary {
           true,
         );
       }
-      block(
-        0,
-        height * 0.25,
-        depth / 2 + 0.009,
-        width * 0.16,
-        height * 0.41,
-        0.011,
-        "#254c58",
-        true,
-      );
+      block(0, height * 0.25, depth / 2 + 0.009, width * 0.16, height * 0.41, 0.011, "#254c58", true);
       // Roof lettering remains legible from the fixed tabletop camera.
       add(
         new THREE.PlaneGeometry(width * 0.9, depth * 0.62),
@@ -395,15 +333,7 @@ export class SceneryLibrary {
         local(0, height + 0.032, 0),
         new THREE.Euler(-Math.PI / 2, 0, yaw),
       );
-      block(
-        -width * 0.27,
-        height + 0.05,
-        -depth * 0.27,
-        0.043,
-        0.035,
-        0.036,
-        "#8e9a97",
-      );
+      block(-width * 0.27, height + 0.05, -depth * 0.27, 0.043, 0.035, 0.036, "#8e9a97");
     };
     if (base.hasMcDonalds) {
       const [rx, rz] = restaurantPosition(base);
@@ -412,24 +342,11 @@ export class SceneryLibrary {
       box(0.3, 0.14, base.river ? signZ : -0.27, 0.016, 0.28, 0.016, "#e4d8b7");
       box(0.3, 0.24, base.river ? signZ : -0.27, 0.14, 0.075, 0.025, "#bf3a2e");
       for (const x of [0.271, 0.329]) {
-        const arc = new THREE.EllipseCurve(
-          x,
-          0.262,
-          0.029,
-          0.063,
-          0,
-          Math.PI,
-          false,
-          0,
-        ).getPoints(12);
+        const arc = new THREE.EllipseCurve(x, 0.262, 0.029, 0.063, 0, Math.PI, false, 0).getPoints(12);
         for (let i = 1; i < arc.length; i++) {
           const a = arc[i - 1],
             b = arc[i];
-          const geometry = new THREE.BoxGeometry(
-            0.01,
-            a.distanceTo(b) + 0.003,
-            0.01,
-          );
+          const geometry = new THREE.BoxGeometry(0.01, a.distanceTo(b) + 0.003, 0.01);
           shape(
             geometry,
             "#ffd35b",
@@ -444,24 +361,8 @@ export class SceneryLibrary {
     base.costcoZones.forEach((zone) => {
       if (!zone.hasPennant) return;
       const [x, z] = PENNANTS[base.id] ?? [0.11, -0.03];
-      box(
-        x,
-        0.23,
-        z,
-        0.008,
-        0.14,
-        0.008,
-        "#b89a51",
-      );
-      box(
-        x + 0.03,
-        0.28,
-        z,
-        0.065,
-        0.044,
-        0.009,
-        "#ffd15c",
-      );
+      box(x, 0.23, z, 0.008, 0.14, 0.008, "#b89a51");
+      box(x + 0.03, 0.28, z, 0.065, 0.044, 0.009, "#ffd15c");
     });
     if (base.id === "costco-road") {
       box(-0.08, 0.09, 0.02, 0.2, 0.019, 0.105, "#ce4a38");
@@ -472,7 +373,7 @@ export class SceneryLibrary {
     }
 
     const zones = base.costcoZones.map((_, i) => zonePolygon(base, i));
-    const roads = base.roadConnections.flatMap(connection => tileRoadPath(base, connection));
+    const roads = base.roadConnections.flatMap((connection) => tileRoadPath(base, connection));
     (FIELD_FENCES[base.id] ?? []).forEach(([a, b]) => {
       const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
       const steps = Math.ceil(length / 0.065);
@@ -492,30 +393,52 @@ export class SceneryLibrary {
     });
     if (hasRiverBridge(base)) {
       const horizontal = base.id === "river-road-bridge";
-      const halfLength = horizontal ? 0.36 : 0.30;
+      const halfLength = horizontal ? 0.36 : 0.3;
       const heightAt = (t: number) => 0.012 + 0.065 * Math.sin(Math.PI * t);
       const vertices: number[] = [];
       const indices: number[] = [];
       for (let i = 0; i <= 16; i++) {
         const t = i / 16;
         const along = -halfLength + t * 2 * halfLength;
-        for (const side of [-1, 1]) vertices.push(horizontal ? along : side * ROAD_WIDTH / 2, heightAt(t), horizontal ? side * ROAD_WIDTH / 2 : along);
-        if (i < 16) { const k = i * 2; indices.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
+        for (const side of [-1, 1])
+          vertices.push(
+            horizontal ? along : (side * ROAD_WIDTH) / 2,
+            heightAt(t),
+            horizontal ? (side * ROAD_WIDTH) / 2 : along,
+          );
         if (i < 16) {
-          const next = -halfLength + (i + 1) / 16 * 2 * halfLength;
+          const k = i * 2;
+          indices.push(k, k + 2, k + 1, k + 1, k + 2, k + 3);
+        }
+        if (i < 16) {
+          const next = -halfLength + ((i + 1) / 16) * 2 * halfLength;
           for (const side of [-1, 1]) {
             const rail = ROAD_WIDTH / 2 + 0.012;
-            box(horizontal ? (along + next) / 2 : side * rail, heightAt((i + 0.5) / 16) + 0.035,
+            box(
+              horizontal ? (along + next) / 2 : side * rail,
+              heightAt((i + 0.5) / 16) + 0.035,
               horizontal ? side * rail : (along + next) / 2,
-              horizontal ? next - along + 0.002 : 0.012, 0.027, horizontal ? 0.012 : next - along + 0.002, "#d8d5bd");
+              horizontal ? next - along + 0.002 : 0.012,
+              0.027,
+              horizontal ? 0.012 : next - along + 0.002,
+              "#d8d5bd",
+            );
           }
-          if (i % 3 === 0) box(horizontal ? along : 0, heightAt(t) + 0.002, horizontal ? 0 : along,
-            horizontal ? 0.035 : 0.004, 0.004, horizontal ? 0.004 : 0.035, "#f2d786");
+          if (i % 3 === 0)
+            box(
+              horizontal ? along : 0,
+              heightAt(t) + 0.002,
+              horizontal ? 0 : along,
+              horizontal ? 0.035 : 0.004,
+              0.004,
+              horizontal ? 0.004 : 0.035,
+              "#f2d786",
+            );
         }
       }
       const deck = new THREE.BufferGeometry();
       deck.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-      deck.setAttribute("uv", new THREE.Float32BufferAttribute(new Array(vertices.length / 3 * 2).fill(0), 2));
+      deck.setAttribute("uv", new THREE.Float32BufferAttribute(new Array((vertices.length / 3) * 2).fill(0), 2));
       deck.setIndex(indices);
       deck.computeVertexNormals();
       // The ribbon's winding depends on the road axis.
@@ -566,9 +489,9 @@ export class SceneryLibrary {
     // Soft meadow patches vary by tile type, fading before the matching edges.
     for (let i = 0; i < 18; i++) {
       seed = (seed * 1664525 + 1013904223) >>> 0;
-      const x = 80 + seed % 352;
+      const x = 80 + (seed % 352);
       seed = (seed * 1664525 + 1013904223) >>> 0;
-      const y = 80 + seed % 352;
+      const y = 80 + (seed % 352);
       for (let radius = 64; radius >= 16; radius -= 16) {
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -599,9 +522,7 @@ export class SceneryLibrary {
   dispose(): void {
     this.ghostGeometry.forEach((geometry) => geometry.dispose());
     this.species.forEach((geometry) => geometry.dispose());
-    this.models.forEach((model) =>
-      model.parts.forEach((part) => part.geometry.dispose()),
-    );
+    this.models.forEach((model) => model.parts.forEach((part) => part.geometry.dispose()));
     this.materials.forEach((material) => material.dispose());
     this.textures.forEach((texture) => texture.dispose());
   }
@@ -617,11 +538,9 @@ function paintFeatures(ctx: CanvasRenderingContext2D, tile: ITile, size: number)
     points.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
     if (close) ctx.closePath();
   };
-  const roads = tile.roadConnections.map(connection => tileRoadPath(tile, connection));
+  const roads = tile.roadConnections.map((connection) => tileRoadPath(tile, connection));
   const zones = tile.costcoZones.map((_, index) => zonePolygon(tile, index));
-  const approaches = roads.filter((points) =>
-    points[points.length - 1].every((coordinate) => coordinate === 0),
-  );
+  const approaches = roads.filter((points) => points[points.length - 1].every((coordinate) => coordinate === 0));
   const junction = approaches.length > 1;
   const roadLayer = (color: string, width: number) => {
     ctx.lineWidth = width;
@@ -683,11 +602,8 @@ function paintFeatures(ctx: CanvasRenderingContext2D, tile: ITile, size: number)
     let drawing = false;
     ctx.beginPath();
     for (const [x, z] of points) {
-      const clearCenter =
-        terminates && Math.hypot(x, z) < (junction ? ROAD_WIDTH : 0.06);
-      const inParking = zones.some((polygon) =>
-        insidePolygon([x, z], polygon),
-      );
+      const clearCenter = terminates && Math.hypot(x, z) < (junction ? ROAD_WIDTH : 0.06);
+      const inParking = zones.some((polygon) => insidePolygon([x, z], polygon));
       if (clearCenter || inParking) {
         drawing = false;
         continue;
@@ -709,10 +625,7 @@ function paintFeatures(ctx: CanvasRenderingContext2D, tile: ITile, size: number)
       const distance = ROAD_WIDTH * 0.85;
       path([
         [x * distance + z * 0.012, z * distance - x * 0.012],
-        [
-          x * distance + z * ROAD_WIDTH * 0.44,
-          z * distance - x * ROAD_WIDTH * 0.44,
-        ],
+        [x * distance + z * ROAD_WIDTH * 0.44, z * distance - x * ROAD_WIDTH * 0.44],
       ]);
       ctx.stroke();
     });

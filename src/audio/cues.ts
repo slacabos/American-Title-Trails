@@ -24,7 +24,9 @@ export function soundSnapshot(state: GameState): SoundSnapshot {
     isGameOver: state.isGameOver,
     completed: completed.some((feature) => feature.type === "costco")
       ? "costco"
-      : completed.length ? "feature" : "none",
+      : completed.length
+        ? "feature"
+        : "none",
   };
 }
 
@@ -49,7 +51,10 @@ export function soundCues(prev: SoundSnapshot | undefined, next: SoundSnapshot, 
   if (placed) {
     cues.push({ cue: "land", at: impactMs });
     if (next.completed !== "none")
-      cues.push({ cue: next.completed === "costco" ? "completeCostco" : "complete", at: impactMs + CHIME_AFTER_LAND_MS });
+      cues.push({
+        cue: next.completed === "costco" ? "completeCostco" : "complete",
+        at: impactMs + CHIME_AFTER_LAND_MS,
+      });
   }
   if (next.followers.some((count, index) => count < (prev.followers[index] ?? count)))
     cues.push({ cue: "claim", at: 0 });

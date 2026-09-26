@@ -1,13 +1,6 @@
 import useTranslations from "@/hooks/useTranslations";
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
-import {
-  PlayerDefinition,
-  Position,
-  TerrainType,
-  GameState,
-  ClaimableFeature,
-  CompletedFeature,
-} from "../types";
+import { PlayerDefinition, Position, TerrainType, GameState, ClaimableFeature, CompletedFeature } from "../types";
 import { Game, GamePhase } from "../game";
 import { BoardView, BoardStatus, ViewToggle } from "./BoardView";
 import { readCameraView, saveCameraView, type CameraView } from "@/rendering/cameraView";
@@ -38,8 +31,7 @@ import { clearSavedGame, restoreGame, saveGame, type SavedGame } from "@/persist
 const sameFeature = (a: ClaimableFeature, b?: ClaimableFeature) =>
   !!b && a.type === b.type && a.identifier === b.identifier;
 
-const logTime = () =>
-  new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const logTime = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
 
@@ -115,7 +107,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
 
   // Each state change is a fresh snapshot, so this recomputes once per change.
   const claimableFeatures = useMemo(
-    () => gameState.phase === GamePhase.CLAIM_FEATURE ? game.getClaimableFeaturesForCurrentTurn() : [],
+    () => (gameState.phase === GamePhase.CLAIM_FEATURE ? game.getClaimableFeaturesForCurrentTurn() : []),
     [game, gameState],
   );
 
@@ -127,19 +119,19 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
 
   const addLog = useCallback((message: string) => {
     const id = logIdRef.current++;
-    setLogs((prev) => [
-      { id, time: logTime(), message },
-      ...prev.slice(0, 19),
-    ]);
+    setLogs((prev) => [{ id, time: logTime(), message }, ...prev.slice(0, 19)]);
   }, []);
 
-  const logCompletions = useCallback((features: CompletedFeature[]) => {
-    features.filter(feature => feature.type === "costco").forEach(feature =>
-      addLog(t("messages.costcoCompleted", { points: feature.points }))
-    );
-    const others = features.filter(feature => feature.type !== "costco").length;
-    if (others) addLog(t("messages.featuresCompleted", { count: others }));
-  }, [addLog, t]);
+  const logCompletions = useCallback(
+    (features: CompletedFeature[]) => {
+      features
+        .filter((feature) => feature.type === "costco")
+        .forEach((feature) => addLog(t("messages.costcoCompleted", { points: feature.points })));
+      const others = features.filter((feature) => feature.type !== "costco").length;
+      if (others) addLog(t("messages.featuresCompleted", { count: others }));
+    },
+    [addLog, t],
+  );
 
   useEffect(() => {
     if (!currentPlayerIsAI || isGameOver) return;
@@ -149,32 +141,43 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
       if (action?.type === "placed" && action.result.success) {
         logCompletions(action.result.completedFeatures);
       } else if (action?.type === "claimed") {
-        addLog(t("messages.claimedFeature", {
-          playerName,
-          type: action.feature.type,
-          identifier: action.feature.displayName ? ` (${action.feature.displayName})` : "",
-        }));
+        addLog(
+          t("messages.claimedFeature", {
+            playerName,
+            type: action.feature.type,
+            identifier: action.feature.displayName ? ` (${action.feature.displayName})` : "",
+          }),
+        );
       }
     }, GAME_RULES.AI_MOVE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [game, currentPlayerIsAI, currentPlayerIndex, phase, isGameOver, addLog, logCompletions, t]);
 
   const handleTilePlace = (position: Position) => {
-    if (gameState.phase !== GamePhase.PLACE_TILE || gameState.isGameOver || gameState.players[gameState.currentPlayerIndex]?.isAI) return;
+    if (
+      gameState.phase !== GamePhase.PLACE_TILE ||
+      gameState.isGameOver ||
+      gameState.players[gameState.currentPlayerIndex]?.isAI
+    )
+      return;
 
     const result = game.placeTile(position);
     if (result.success) {
-      addLog(t("messages.placedTile", {
-        playerName: gameState.players[gameState.currentPlayerIndex].name,
-        x: position.x,
-        y: position.y,
-      }));
+      addLog(
+        t("messages.placedTile", {
+          playerName: gameState.players[gameState.currentPlayerIndex].name,
+          x: position.x,
+          y: position.y,
+        }),
+      );
       logCompletions(result.completedFeatures);
     } else {
       sound.play("invalid");
-      addLog(t("messages.failedToPlace", {
-        message: result.message?.startsWith("river") ? t(`messages.${result.message}`) : result.message,
-      }));
+      addLog(
+        t("messages.failedToPlace", {
+          message: result.message?.startsWith("river") ? t(`messages.${result.message}`) : result.message,
+        }),
+      );
     }
   };
 
@@ -193,14 +196,18 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
   };
 
   const handleClaimFeature = (type: TerrainType, identifier?: string) => {
-    const displayName = claimableFeatures.find(feature => feature.type === type && feature.identifier === identifier)?.displayName;
+    const displayName = claimableFeatures.find(
+      (feature) => feature.type === type && feature.identifier === identifier,
+    )?.displayName;
     const success = game.claimFeature(type, identifier);
     if (success) {
-      addLog(t("messages.claimedFeature", {
-        playerName: gameState.players[gameState.currentPlayerIndex].name,
-        type,
-        identifier: displayName ? ` (${displayName})` : "",
-      }));
+      addLog(
+        t("messages.claimedFeature", {
+          playerName: gameState.players[gameState.currentPlayerIndex].name,
+          type,
+          identifier: displayName ? ` (${displayName})` : "",
+        }),
+      );
     } else {
       addLog(t("messages.failedToClaim"));
     }
@@ -221,16 +228,20 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
     setHighlightedFeature(undefined);
     setGame(previous);
     setGameState(previous.getState());
-    addLog(t("messages.tookBackTile", {
-      playerName: gameState.players[gameState.currentPlayerIndex].name,
-    }));
+    addLog(
+      t("messages.tookBackTile", {
+        playerName: gameState.players[gameState.currentPlayerIndex].name,
+      }),
+    );
   };
 
   const handleSkipClaim = () => {
     game.skipClaim();
-    addLog(t("messages.skippedClaiming", {
-      playerName: gameState.players[gameState.currentPlayerIndex].name,
-    }));
+    addLog(
+      t("messages.skippedClaiming", {
+        playerName: gameState.players[gameState.currentPlayerIndex].name,
+      }),
+    );
   };
 
   // Keyboard placement cursor. Like the board's hover, it belongs to one turn.
@@ -238,11 +249,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
   const turnKey = `${gameState.turnNumber}:${phase}:${currentPlayerIndex}`;
   const legal = useMemo(() => boardSnapshot(gameState).legal, [gameState]);
   const [cursorAt, setCursorAt] = useState<{ turn: string; position: Position }>();
-  const cursor = cursorAt?.turn !== turnKey
-    ? undefined
-    : legal.some((spot) => samePosition(spot, cursorAt.position))
-      ? cursorAt.position
-      : nearestLegal(legal, cursorAt.position);
+  const cursor =
+    cursorAt?.turn !== turnKey
+      ? undefined
+      : legal.some((spot) => samePosition(spot, cursorAt.position))
+        ? cursorAt.position
+        : nearestLegal(legal, cursorAt.position);
 
   // Keyboard shortcuts. The listener is attached once and always runs the
   // latest handler, which closes over this render's state.
@@ -391,10 +403,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
               <img src={iconUrl} alt={t("app.gameIcon")} />
               <span className="brand-wordmark">{t("app.title")}</span>
             </div>
-            <BoardStatus
-              className="hud-panel"
-              state={gameState}
-            />
+            <BoardStatus className="hud-panel" state={gameState} />
           </div>
           <div className="hud-top-right">
             <ViewToggle view={view} onViewChange={handleViewChange} />

@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -38,19 +31,8 @@ import type { CompletedCostco } from "@/rendering/completedCostcos";
 import { SCENE_PALETTE } from "@/rendering/timeOfDay";
 import type { CameraView } from "@/rendering/cameraView";
 import { directionKey, isTypingTarget } from "@/rendering/keyboard";
-import {
-  applyPose,
-  blendPose,
-  VIEW_POSES,
-  VIEW_TRANSITION_MS,
-  type ViewPose,
-} from "@/rendering/cameraPose";
-import {
-  LANDING_MS,
-  landingPose,
-  prefersReducedMotion,
-  type LandingFrame,
-} from "@/rendering/landing";
+import { applyPose, blendPose, VIEW_POSES, VIEW_TRANSITION_MS, type ViewPose } from "@/rendering/cameraPose";
+import { LANDING_MS, landingPose, prefersReducedMotion, type LandingFrame } from "@/rendering/landing";
 
 export interface BoardSceneProps {
   state: GameState;
@@ -88,7 +70,12 @@ function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }
   }, []);
   useEffect(() => () => texture.dispose(), [texture]);
   return (
-    <sprite name="completed-costco-marker" position={[center.x, 0.54, center.y]} scale={[0.22, 0.22, 1]} renderOrder={20}>
+    <sprite
+      name="completed-costco-marker"
+      position={[center.x, 0.54, center.y]}
+      scale={[0.22, 0.22, 1]}
+      renderOrder={20}
+    >
       <spriteMaterial map={texture} transparent depthTest={false} depthWrite={false} />
     </sprite>
   );
@@ -115,7 +102,6 @@ interface ViewTransition {
   start: number;
   duration: number;
 }
-
 
 function ContextHealth({ onUnavailable }: { onUnavailable: () => void }) {
   const { gl, get } = useThree();
@@ -169,25 +155,24 @@ function Navigation({
   const transition = useRef<ViewTransition | null>(null);
 
   /** Where to look, and how far to zoom, to frame the whole board in a pose. */
-  const framing = useCallback((pose: ViewPose) => {
-    const center = new THREE.Vector3((minX + maxX) / 2, 0, (minY + maxY) / 2);
-    const probe = (camera as THREE.OrthographicCamera).clone();
-    applyPose(probe, center, pose);
-    const inverse = probe.matrixWorldInverse;
-    const projected = new THREE.Box3();
-    for (const x of [minX - 1.5, maxX + 1.5])
-      for (const z of [minY - 1.5, maxY + 1.5]) {
-        projected.expandByPoint(
-          new THREE.Vector3(x, 0, z).applyMatrix4(inverse),
-        );
-        projected.expandByPoint(
-          new THREE.Vector3(x, 0.4, z).applyMatrix4(inverse),
-        );
-      }
-    const span = projected.getSize(new THREE.Vector3());
-    const zoom = Math.min(180, size.width / span.x, size.height / span.y) * 0.9;
-    return { center, zoom };
-  }, [camera, minX, minY, maxX, maxY, size.width, size.height]);
+  const framing = useCallback(
+    (pose: ViewPose) => {
+      const center = new THREE.Vector3((minX + maxX) / 2, 0, (minY + maxY) / 2);
+      const probe = (camera as THREE.OrthographicCamera).clone();
+      applyPose(probe, center, pose);
+      const inverse = probe.matrixWorldInverse;
+      const projected = new THREE.Box3();
+      for (const x of [minX - 1.5, maxX + 1.5])
+        for (const z of [minY - 1.5, maxY + 1.5]) {
+          projected.expandByPoint(new THREE.Vector3(x, 0, z).applyMatrix4(inverse));
+          projected.expandByPoint(new THREE.Vector3(x, 0.4, z).applyMatrix4(inverse));
+        }
+      const span = projected.getSize(new THREE.Vector3());
+      const zoom = Math.min(180, size.width / span.x, size.height / span.y) * 0.9;
+      return { center, zoom };
+    },
+    [camera, minX, minY, maxX, maxY, size.width, size.height],
+  );
 
   const fit = useCallback(() => {
     // A view switch lands on a fitted frame by itself.
@@ -334,9 +319,7 @@ function Navigation({
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     const hit = new THREE.Vector3();
     const pointers = new Set<number>();
-    let start:
-      | { x: number; y: number; type: string; button: number }
-      | undefined;
+    let start: { x: number; y: number; type: string; button: number } | undefined;
     let cancelled = false;
     const pick = (event: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
@@ -349,9 +332,7 @@ function Navigation({
       );
       if (!raycaster.ray.intersectPlane(plane, hit)) return undefined;
       const position = worldToBoard(hit.x, hit.z);
-      return latest.current.legal.find((candidate) =>
-        samePosition(position, candidate),
-      );
+      return latest.current.legal.find((candidate) => samePosition(position, candidate));
     };
     const down = (event: PointerEvent) => {
       pointers.add(event.pointerId);
@@ -370,17 +351,12 @@ function Navigation({
       }
     };
     const move = (event: PointerEvent) => {
-      if (
-        start &&
-        pointers.size &&
-        Math.hypot(event.clientX - start.x, event.clientY - start.y) > 6
-      ) {
+      if (start && pointers.size && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 6) {
         cancelled = true;
         autoFit.current = false;
         latest.current.onHover(undefined);
       }
-      if (!pointers.size && event.pointerType !== "touch")
-        latest.current.onHover(pick(event));
+      if (!pointers.size && event.pointerType !== "touch") latest.current.onHover(pick(event));
     };
     const up = (event: PointerEvent) => {
       if (!pointers.has(event.pointerId)) return;
@@ -543,28 +519,16 @@ export function BoardScene({
   const setHovered = useCallback(
     (position?: Position) =>
       setHoverAt((previous) =>
-        previous?.turn === turn && samePosition(previous.position, position)
-          ? previous
-          : { turn, position },
+        previous?.turn === turn && samePosition(previous.position, position) ? previous : { turn, position },
       ),
     [turn],
   );
-  const setSelected = useCallback(
-    (position?: Position) => setSelectedAt({ turn, position }),
-    [turn],
-  );
-  const preview = snapshot.legal.find((position) =>
-    samePosition(position, selected ?? hover ?? cursor),
-  );
-  const last =
-    state.lastPlacedPosition && state.board.getTile(state.lastPlacedPosition);
+  const setSelected = useCallback((position?: Position) => setSelectedAt({ turn, position }), [turn]);
+  const preview = snapshot.legal.find((position) => samePosition(position, selected ?? hover ?? cursor));
+  const last = state.lastPlacedPosition && state.board.getTile(state.lastPlacedPosition);
   const bounds = state.board.getBounds();
-  const center: [number, number] = [
-    (bounds.minX + bounds.maxX) / 2,
-    (bounds.minY + bounds.maxY) / 2,
-  ];
-  const span =
-    Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) + 5;
+  const center: [number, number] = [(bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2];
+  const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) + 5;
 
   return (
     <div className="tabletop-scene" data-testid="board-3d">
@@ -589,11 +553,7 @@ export function BoardScene({
           actions={actions}
         />
         <Daylight center={center} span={span} night={night} />
-        <mesh
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[center[0], -0.096, center[1]]}
-          receiveShadow
-        >
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[center[0], -0.096, center[1]]} receiveShadow>
           <planeGeometry args={[300, 300]} />
           <meshStandardMaterial color={palette.table} roughness={1} />
         </mesh>
@@ -601,20 +561,10 @@ export function BoardScene({
         <SceneryProvider>
           <NightLights night={night} />
           <LandingDriver landing={landing} frame={landingFrame} onDone={landed} />
-          <Scenery
-            records={snapshot.tiles}
-            seed={state.sceneSeed}
-            landing={landingFrame}
-            landingKey={landing?.key}
-          />
+          <Scenery records={snapshot.tiles} seed={state.sceneSeed} landing={landingFrame} landingKey={landing?.key} />
           <LandingDust landing={landingFrame} night={night} />
           {snapshot.legal.map((position) => (
-            <CellOutline
-              key={positionKey(position)}
-              x={position.x}
-              z={position.y}
-              fill
-            />
+            <CellOutline key={positionKey(position)} x={position.x} z={position.y} fill />
           ))}
           {preview && state.currentTile && (
             <>
@@ -629,9 +579,7 @@ export function BoardScene({
             if (!feature) return [];
             const [x, z] = featureAnchor(record.tile, feature);
             return claim.players.map((id, i) => {
-              const player = state.players.find(
-                (candidate) => candidate.id === id,
-              );
+              const player = state.players.find((candidate) => candidate.id === id);
               return player ? (
                 <Follower
                   key={`${claim.edge}-${id}-${i}`}
@@ -648,34 +596,21 @@ export function BoardScene({
           }),
         )}
         {completedCostcos.map((completed, index) => (
-          <CompletedCostcoMarker key={`${completed.center.x},${completed.center.y},${index}`} center={completed.center} />
-        ))}
-        {last && (
-          <CellOutline
-            x={last.position.x}
-            z={last.position.y}
-            color="#e8c572"
+          <CompletedCostcoMarker
+            key={`${completed.center.x},${completed.center.y},${index}`}
+            center={completed.center}
           />
+        ))}
+        {last && <CellOutline x={last.position.x} z={last.position.y} color="#e8c572" />}
+        {last && highlightedFeature && state.phase === GamePhase.CLAIM_FEATURE && (
+          <FeatureHighlight tile={last.tile} feature={highlightedFeature} x={last.position.x} z={last.position.y} />
         )}
-        {last &&
-          highlightedFeature &&
-          state.phase === GamePhase.CLAIM_FEATURE && (
-            <FeatureHighlight
-              tile={last.tile}
-              feature={highlightedFeature}
-              x={last.position.x}
-              z={last.position.y}
-            />
-          )}
       </Canvas>
       <div className="tabletop-compass" aria-hidden="true">
-        {t("board.compass")}{view === "drone" ? "↑" : "↗"}
+        {t("board.compass")}
+        {view === "drone" ? "↑" : "↗"}
       </div>
-      <div
-        className="board-pill tabletop-camera-controls"
-        role="group"
-        aria-label={t("board.cameraControls")}
-      >
+      <div className="board-pill tabletop-camera-controls" role="group" aria-label={t("board.cameraControls")}>
         <span className="board-pill-status">
           {t(snapshot.tiles.length === 1 ? "board.tilesOne" : "board.tiles", {
             count: snapshot.tiles.length,
@@ -685,21 +620,13 @@ export function BoardScene({
             : ""}
         </span>
         <span className="board-pill-divider" aria-hidden="true" />
-        <button
-          type="button"
-          aria-label={t("board.zoomOut")}
-          onClick={() => actions.current?.zoom(1 / 1.2)}
-        >
+        <button type="button" aria-label={t("board.zoomOut")} onClick={() => actions.current?.zoom(1 / 1.2)}>
           <Minus size={16} aria-hidden="true" />
         </button>
         <button type="button" onClick={() => actions.current?.fit()}>
           {t("board.fit")}
         </button>
-        <button
-          type="button"
-          aria-label={t("board.zoomIn")}
-          onClick={() => actions.current?.zoom(1.2)}
-        >
+        <button type="button" aria-label={t("board.zoomIn")} onClick={() => actions.current?.zoom(1.2)}>
           <Plus size={16} aria-hidden="true" />
         </button>
       </div>
@@ -735,10 +662,7 @@ export function TilePreviewScene({
   night?: boolean;
 }) {
   const { t } = useTranslations();
-  const records = useMemo(
-    () => tile ? [{ tile, position: { x: 0, y: 0 } }] : [],
-    [tile],
-  );
+  const records = useMemo(() => (tile ? [{ tile, position: { x: 0, y: 0 } }] : []), [tile]);
   return (
     <div className="tabletop-tile-preview" role="img" aria-label={tile?.name}>
       <Canvas

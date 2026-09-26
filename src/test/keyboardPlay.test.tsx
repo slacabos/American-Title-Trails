@@ -8,11 +8,14 @@ import { boardSnapshot } from "@/rendering/tileLayout";
 vi.mock("@/game", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/game")>();
   const { Game } = actual;
-  return { ...actual, Game: class extends Game {
-    constructor(players: ConstructorParameters<typeof Game>[0]) {
-      super(players, { seed: 17 });
-    }
-  } };
+  return {
+    ...actual,
+    Game: class extends Game {
+      constructor(players: ConstructorParameters<typeof Game>[0]) {
+        super(players, { seed: 17 });
+      }
+    },
+  };
 });
 
 // Expose what the 3D board would show: the cursor, the highlighted feature,
@@ -24,7 +27,11 @@ vi.mock("@/components/BoardView", () => ({
   BoardView: ({ state, cursor, highlightedFeature, view }: ComponentProps<typeof BoardView>) => (
     <div>
       <output data-testid="cursor">{cursor ? `${cursor.x},${cursor.y}` : "none"}</output>
-      <output data-testid="legal">{boardSnapshot(state).legal.map(({ x, y }) => `${x},${y}`).join(" ")}</output>
+      <output data-testid="legal">
+        {boardSnapshot(state)
+          .legal.map(({ x, y }) => `${x},${y}`)
+          .join(" ")}
+      </output>
       <output data-testid="highlight">{highlightedFeature?.identifier ?? "none"}</output>
       <output data-testid="view">{view}</output>
       <output data-testid="tiles">{state.board.getAllTiles().size}</output>
