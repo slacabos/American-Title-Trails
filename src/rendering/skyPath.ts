@@ -22,7 +22,7 @@ interface Key {
 // Morning, midday and golden hour; the sun blends between them as tiles are placed.
 const DAY: [Key, Key, Key] = [
   { color: "#ffe0bd", intensity: 2.2, sky: "#fbeedd", ground: "#7a8a7a", ambient: 1.95 },
-  { color: "#fff0d5", intensity: 2.5, sky: "#fff6df", ground: "#788a77", ambient: 2.1 },
+  { color: "#fff0d5", intensity: 1.75, sky: "#fff6df", ground: "#788a77", ambient: 1.55 },
   { color: "#ffc896", intensity: 2.3, sky: "#ffe8cc", ground: "#7b7a68", ambient: 1.9 },
 ];
 // The moon keeps one cool colour and only dims towards the horizon.
