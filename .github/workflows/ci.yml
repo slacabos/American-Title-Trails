@@ -37,6 +37,9 @@ jobs:
 
   browser:
     name: Stories and end-to-end tests
+    # Every change reaches main through a pull request, where this job runs
+    # and must pass; running it again on the merge commit adds nothing.
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
