@@ -38,10 +38,12 @@ test("a muted game stays silent, across reloads", async ({ page }) => {
   await countSounds(page);
   await page.goto("/");
   await page.getByRole("button", { name: "Start Game" }).click();
-  await page.getByRole("button", { name: "Mute sound" }).click();
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("switch", { name: "Sound" }).click();
   await page.reload();
   await placeFirstTile(page);
-  await expect(page.getByRole("button", { name: "Turn sound on" })).toBeVisible();
+  await page.getByRole("button", { name: "Settings" }).click();
+  await expect(page.getByRole("switch", { name: "Sound" })).toHaveAttribute("aria-checked", "false");
   await page.waitForTimeout(800);
   expect(await started(page)).toBe(0);
 });

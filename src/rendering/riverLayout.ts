@@ -92,3 +92,33 @@ export function paintRiver(ctx: CanvasRenderingContext2D, tile: ITile): void {
   }
   ctx.restore();
 }
+
+/**
+ * Water depth for the animated shader: black on land, brightening from the
+ * bank (≈0.1) to the middle of the channel (1). Same footprint as the painted
+ * water, so the shader lands exactly on it.
+ */
+export function paintWaterDepth(ctx: CanvasRenderingContext2D, tile: ITile): void {
+  if (!tile.river) return;
+  const points = riverPath(tile);
+  const lake = tile.river.kind === "lake" ? rotatePoint([-0.12, -0.04], tile.orientation) : undefined;
+  const steps = 10;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  for (let i = 0; i < steps; i++) {
+    const width = RIVER_WIDTH * (1 - i / steps);
+    const grey = Math.round((255 * (i + 1)) / steps);
+    ctx.strokeStyle = ctx.fillStyle = `rgb(${grey},${grey},${grey})`;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    points.forEach(([x, z], j) => (j ? ctx.lineTo(x, z) : ctx.moveTo(x, z)));
+    ctx.stroke();
+    if (lake) {
+      ctx.beginPath();
+      ctx.arc(lake[0], lake[1], 0.14 + width / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}

@@ -52,6 +52,7 @@ interface BoardViewProps {
   /** The keyboard placement cursor, previewed like a hover. */
   cursor?: Position;
   night?: boolean;
+  extraVfx?: boolean;
 }
 
 function useCompletedCostcos(state: GameState) {
@@ -83,6 +84,7 @@ export function BoardView({
   highlightedFeature,
   cursor,
   night = false,
+  extraVfx = false,
 }: BoardViewProps) {
   const { t } = useTranslations();
   const finishedCostcos = useCompletedCostcos(state);
@@ -114,6 +116,7 @@ export function BoardView({
               completedCostcos={finishedCostcos}
               cursor={cursor}
               night={night}
+              extraVfx={extraVfx}
             />
           </Suspense>
         </GraphicsBoundary>
@@ -179,7 +182,7 @@ export function BoardStatus({ state, className = "" }: { state: GameState; class
   );
 }
 
-function SceneryTilePreview({ tile, night }: { tile?: ITile; night?: boolean }) {
+function SceneryTilePreview({ tile, night, extraVfx }: { tile?: ITile; night?: boolean; extraVfx?: boolean }) {
   const [unavailable, setUnavailable] = useState(false);
   const onUnavailable = useCallback(() => setUnavailable(true), []);
   // A preview failure hides only the preview; the board and the tile name stay.
@@ -187,18 +190,26 @@ function SceneryTilePreview({ tile, night }: { tile?: ITile; night?: boolean }) 
   return (
     <GraphicsBoundary onUnavailable={onUnavailable}>
       <Suspense fallback={null}>
-        <TilePreviewScene tile={tile} onUnavailable={onUnavailable} night={night} />
+        <TilePreviewScene tile={tile} onUnavailable={onUnavailable} night={night} extraVfx={extraVfx} />
       </Suspense>
     </GraphicsBoundary>
   );
 }
 
-export function CurrentTilePreview({ tile, night = false }: { tile?: ITile; night?: boolean }) {
+export function CurrentTilePreview({
+  tile,
+  night = false,
+  extraVfx = false,
+}: {
+  tile?: ITile;
+  night?: boolean;
+  extraVfx?: boolean;
+}) {
   // Keep the canvas and its library alive during the claim phase. Recreating
   // WebGL contexts every turn can exhaust the device's graphics resources.
   return (
     <div hidden={!tile}>
-      <SceneryTilePreview tile={tile} night={night} />
+      <SceneryTilePreview tile={tile} night={night} extraVfx={extraVfx} />
     </div>
   );
 }

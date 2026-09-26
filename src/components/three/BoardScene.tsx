@@ -24,6 +24,7 @@ import {
   NightLights,
   Scenery,
   SceneryProvider,
+  WaterMotion,
 } from "./Scenery";
 import { useTranslations } from "@/hooks/useTranslations";
 import { PlacementGrid } from "./PlacementGrid";
@@ -44,6 +45,7 @@ export interface BoardSceneProps {
   view?: CameraView;
   /** The keyboard placement cursor; a pointer hover or touch selection wins. */
   cursor?: Position;
+  extraVfx?: boolean;
 }
 
 function CompletedCostcoMarker({ center }: { center: CompletedCostco["center"] }) {
@@ -463,7 +465,11 @@ function LandingDriver({
       onDone();
       return;
     }
-    frame.current = { key: landing.key, center: landing.center, pose: landingPose(t) };
+    frame.current = {
+      key: landing.key,
+      center: landing.center,
+      pose: landingPose(t),
+    };
     invalidate();
   }, -1);
   return null;
@@ -478,6 +484,7 @@ export function BoardScene({
   night = false,
   view = "tabletop",
   cursor,
+  extraVfx = false,
 }: BoardSceneProps) {
   const palette = SCENE_PALETTE[night ? "night" : "day"];
   const { t } = useTranslations();
@@ -487,8 +494,14 @@ export function BoardScene({
   // A hover or touch selection survives rotation, but never a turn or a
   // placement: each remembers the turn it was made in and lapses after it.
   const turn = `${state.turnNumber}:${state.phase}:${state.currentPlayerIndex}`;
-  const [hoverAt, setHoverAt] = useState<{ turn: string; position?: Position }>();
-  const [selectedAt, setSelectedAt] = useState<{ turn: string; position?: Position }>();
+  const [hoverAt, setHoverAt] = useState<{
+    turn: string;
+    position?: Position;
+  }>();
+  const [selectedAt, setSelectedAt] = useState<{
+    turn: string;
+    position?: Position;
+  }>();
   const hover = hoverAt?.turn === turn ? hoverAt.position : undefined;
   const selected = selectedAt?.turn === turn ? selectedAt.position : undefined;
   const actions = useRef<CameraActions | null>(null);
@@ -561,6 +574,7 @@ export function BoardScene({
         <SceneryProvider>
           <NightLights night={night} />
           <LandingDriver landing={landing} frame={landingFrame} onDone={landed} />
+          <WaterMotion enabled={extraVfx} />
           <Scenery records={snapshot.tiles} seed={state.sceneSeed} landing={landingFrame} landingKey={landing?.key} />
           <LandingDust landing={landingFrame} night={night} />
           {snapshot.legal.map((position) => (
@@ -656,10 +670,12 @@ export function TilePreviewScene({
   tile,
   onUnavailable,
   night = false,
+  extraVfx = false,
 }: {
   tile?: ITile;
   onUnavailable: () => void;
   night?: boolean;
+  extraVfx?: boolean;
 }) {
   const { t } = useTranslations();
   const records = useMemo(() => (tile ? [{ tile, position: { x: 0, y: 0 } }] : []), [tile]);
@@ -678,6 +694,7 @@ export function TilePreviewScene({
         <Daylight night={night} />
         <SceneryProvider>
           <NightLights night={night} />
+          <WaterMotion enabled={extraVfx && !!tile?.river} />
           <Scenery records={records} />
         </SceneryProvider>
       </Canvas>

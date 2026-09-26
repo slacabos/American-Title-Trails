@@ -4,7 +4,7 @@ import { GamePhase } from "@/types";
 import Scoreboard from "./Scoreboard";
 import TileDock from "./TileDock";
 import ActivityLog from "./ActivityLog";
-import SoundToggle from "./SoundToggle";
+import SettingsMenu from "./SettingsMenu";
 
 const players = [
   { id: "blue", name: "Blue", color: "#457da1" },
@@ -81,11 +81,19 @@ const entries = [
 
 export const ActivityLogPanel: Story = { render: () => <ActivityLog entries={entries} /> };
 
-export const SoundSwitch: Story = {
+export const SettingsPanel: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 8 }}>
-      <SoundToggle enabled onToggle={noop} />
-      <SoundToggle enabled={false} onToggle={noop} />
+    <div style={{ display: "flex", justifyContent: "flex-end", width: 320, height: 220 }}>
+      <SettingsMenu
+        open
+        onOpenChange={noop}
+        night={false}
+        onToggleNight={noop}
+        sound
+        onToggleSound={noop}
+        extraVfx
+        onToggleVfx={noop}
+      />
     </div>
   ),
 };

@@ -250,14 +250,34 @@ describe("keyboard play", () => {
   });
 
   it("mutes and unmutes with M, and remembers it", () => {
+    const soundSwitch = () => {
+      if (!screen.queryByRole("switch", { name: "Sound" }))
+        fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+      return screen.getByRole("switch", { name: "Sound" });
+    };
     const { unmount } = render(<GameBoard players={players} onReset={() => {}} />);
-    expect(screen.getByRole("button", { name: "Mute sound" })).toHaveAttribute("aria-pressed", "false");
+    expect(soundSwitch()).toHaveAttribute("aria-checked", "true");
     key("m");
-    expect(screen.getByRole("button", { name: "Turn sound on" })).toHaveAttribute("aria-pressed", "true");
+    expect(soundSwitch()).toHaveAttribute("aria-checked", "false");
     unmount();
     render(<GameBoard players={players} onReset={() => {}} />);
-    expect(screen.getByRole("button", { name: "Turn sound on" })).toBeInTheDocument();
+    expect(soundSwitch()).toHaveAttribute("aria-checked", "false");
     key("m");
-    expect(screen.getByRole("button", { name: "Mute sound" })).toBeInTheDocument();
+    expect(soundSwitch()).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("keeps night, sound and extra effects in one settings panel", () => {
+    render(<GameBoard players={players} onReset={() => {}} />);
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    const effects = screen.getByRole("switch", { name: "Extra effects" });
+    expect(effects).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(effects);
+    expect(effects).toHaveAttribute("aria-checked", "false");
+    key("g");
+    expect(effects).toHaveAttribute("aria-checked", "true");
+    expect(screen.getAllByRole("switch").map((s) => s.textContent)).toEqual(["NightN", "SoundM", "Extra effectsG"]);
+    key("Escape");
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
   });
 });

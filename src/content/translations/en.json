@@ -406,8 +406,10 @@
     },
     "switchToNight": "Switch to night",
     "switchToDay": "Switch to day",
-    "muteSound": "Mute sound",
-    "unmuteSound": "Turn sound on",
+    "settings": "Settings",
+    "nightMode": "Night",
+    "sound": "Sound",
+    "extraVfx": "Extra effects",
     "keyboardHint": "Arrows/WASD + Enter to place · Q/E rotate · ? all keys",
     "shortcuts": "Keyboard shortcuts"
   },
@@ -427,6 +429,7 @@
     "view": "Switch between Tabletop and Drone",
     "night": "Switch day / night",
     "sound": "Sound on / off",
+    "effects": "Extra effects on / off",
     "cancel": "Clear the cursor, close menus",
     "help": "Show or hide help",
     "groups": {

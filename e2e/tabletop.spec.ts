@@ -359,6 +359,9 @@ test("the drone view looks straight down with north up, places tiles and is reme
 
 test("the production game keeps its current tile when switching camera views", async ({ page }) => {
   await page.goto("/");
+  // Screenshots are compared below, so keep the water still.
+  await page.evaluate(() => localStorage.setItem("american-tile-trails.extra-vfx", "off"));
+  await page.reload();
   await page.getByRole("button", { name: "Start Game" }).click();
   await expect(page.getByTestId("board-3d")).toBeVisible();
   const name = await page.locator(".tabletop-tile-preview").getAttribute("aria-label");
@@ -388,7 +391,11 @@ test("night mode switches the board and HUD, and persists", async ({ page }) => 
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
-  await page.evaluate(() => localStorage.setItem("american-tile-trails.time", "day"));
+  await page.evaluate(() => {
+    localStorage.setItem("american-tile-trails.time", "day");
+    // Only the switch to night should change the image, not moving water.
+    localStorage.setItem("american-tile-trails.extra-vfx", "off");
+  });
   await page.reload();
   await page.getByRole("button", { name: "Start Game" }).click();
   await expect(page.getByTestId("board-3d")).toBeVisible();
@@ -396,7 +403,8 @@ test("night mode switches the board and HUD, and persists", async ({ page }) => 
   const canvas = page.locator('[data-testid="board-3d"] canvas');
   await page.waitForTimeout(500);
   const day = await canvas.screenshot();
-  await page.getByRole("button", { name: "Switch to night" }).click();
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("switch", { name: "Night" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-time", "night");
   await expect.poll(async () => (await canvas.screenshot()).equals(day)).toBe(false);
   await page.screenshot({ path: "test-results/tabletop-night.png" });
