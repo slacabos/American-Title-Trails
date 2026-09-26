@@ -25,11 +25,12 @@ const DAY: [Key, Key, Key] = [
   { color: "#fff0d5", intensity: 1.75, sky: "#fff6df", ground: "#788a77", ambient: 1.55 },
   { color: "#ffc896", intensity: 2.3, sky: "#ffe8cc", ground: "#7b7a68", ambient: 1.9 },
 ];
-// The moon keeps one cool colour and only dims towards the horizon.
+// Dusk as a night game starts, cool moonlight through the middle, dawn as it
+// ends. The twilight ends are soft mauve light under a violet sky.
 const NIGHT: [Key, Key, Key] = [
-  { color: "#b9c4e0", intensity: 0.85, sky: "#7d88a0", ground: "#232c30", ambient: 1.05 },
+  { color: "#d9aecb", intensity: 0.95, sky: "#9a88c4", ground: "#342c46", ambient: 1.25 },
   { color: "#c3cde6", intensity: 1.05, sky: "#7d88a0", ground: "#232c30", ambient: 1.05 },
-  { color: "#b9c4e0", intensity: 0.85, sky: "#7d88a0", ground: "#232c30", ambient: 1.05 },
+  { color: "#e0b2c2", intensity: 0.95, sky: "#a08ac2", ground: "#382e46", ambient: 1.25 },
 ];
 
 /** Degrees above the table: never so low that shadows smear across the board. */
@@ -40,7 +41,7 @@ const mixColor = (a: string, b: string, t: number) => new THREE.Color(a).lerp(ne
 /**
  * The sun rises in the east (+x) as the game starts, crosses the south (+z) at
  * midday and sets in the west (−x) as the last tiles are placed. At night the
- * moon makes the same crossing, lower and cooler.
+ * moon makes the same crossing, lower and cooler, between dusk and dawn.
  */
 export function skyPose(progress: number, night = false): SkyPose {
   const t = Math.min(1, Math.max(0, Number.isFinite(progress) ? progress : 0.5));
@@ -54,7 +55,9 @@ export function skyPose(progress: number, night = false): SkyPose {
     Math.sin(azimuth) * Math.cos(elevation),
   ).normalize();
   const keys = night ? NIGHT : DAY;
-  const [from, to, blend] = t < 0.5 ? [keys[0], keys[1], t * 2] : [keys[1], keys[2], t * 2 - 1];
+  const [from, to, linear] = t < 0.5 ? [keys[0], keys[1], t * 2] : [keys[1], keys[2], t * 2 - 1];
+  // Twilight only lingers near the ends of a night game; moonlight fills the middle.
+  const blend = !night ? linear : t < 0.5 ? Math.sin((linear * Math.PI) / 2) : 1 - Math.cos((linear * Math.PI) / 2);
   return {
     direction,
     color: mixColor(from.color, to.color, blend),

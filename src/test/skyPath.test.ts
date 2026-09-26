@@ -34,13 +34,23 @@ describe("sky path", () => {
   });
 
   it("gives the moon a lower, dimmer and cooler light than the sun", () => {
-    for (const progress of [0, 0.5, 1]) {
-      const sun = skyPose(progress);
-      const moon = skyPose(progress, true);
-      expect(moon.intensity).toBeLessThan(sun.intensity);
-      expect(moon.color.b).toBeGreaterThan(moon.color.r);
-    }
+    for (const progress of [0, 0.5, 1])
+      expect(skyPose(progress, true).intensity).toBeLessThan(skyPose(progress).intensity);
+    const midnight = skyPose(0.5, true);
+    expect(midnight.color.b).toBeGreaterThan(midnight.color.r);
     expect(elevation(0.5, true)).toBeLessThan(elevation(0.5));
+  });
+
+  it("opens a night game at dusk and ends it at dawn, with moonlight in between", () => {
+    const warmth = (progress: number) => skyPose(progress, true).color.r / skyPose(progress, true).color.b;
+    const lavender = (progress: number) => skyPose(progress, true).sky.r / skyPose(progress, true).sky.g;
+    for (const end of [0, 1]) {
+      expect(warmth(end)).toBeGreaterThan(1);
+      expect(lavender(end)).toBeGreaterThan(lavender(0.5));
+    }
+    // By a fifth of the way in, the twilight has mostly given way to the moon.
+    expect(warmth(0.2)).toBeLessThan((warmth(0) + warmth(0.5)) / 2);
+    expect(warmth(0.8)).toBeLessThan((warmth(1) + warmth(0.5)) / 2);
   });
 
   it("measures progress through the deck", () => {

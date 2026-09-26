@@ -78,9 +78,11 @@ share of the deck on the board, so a resumed game gets the same sky. The sun
 rises in the east (+x) at the first tile, crosses the south (+z) at midday and
 sets in the west as the deck runs out. Its colour runs from soft morning light
 through white midday to golden hour. At night the moon makes the same crossing,
-lower, cooler and dimmer. Elevation never drops below about 24°, so shadows
-stay on the board. The light moves a little with each placed tile and does not
-animate, so an idle board stays idle. The tile preview keeps the midday light.
+lower, cooler and dimmer. A night game opens at dusk and ends at dawn, in soft
+mauve light under a violet sky; the twilight eases out quickly, so moonlight
+fills the middle. Elevation never drops below about 24°, so shadows stay on the
+board. The light moves a little with each placed tile and does not animate, so
+an idle board stays idle. The tile preview keeps the midday light.
 
 Props are shaded where they meet the ground, at no runtime cost.
 `PaintBatch` darkens vertex colours near y = 0 (`groundShade` in `paint.ts`),
