@@ -18,6 +18,7 @@ The Vite dev server runs at http://localhost:3000 and opens automatically.
 - A 12-tile River opening, followed by the existing 51 land tiles (63 tiles total).
 - Curving water, lakeside restaurants, and road bridges on a 3D tabletop.
 - Placed tiles drop onto the 3D tabletop with a small bounce and a puff of dust.
+- Synthesized sound effects (no audio files) for landings, claims, completions and turns; M mutes.
 - Tile rotation with live placement validation.
 - Take back a placed tile (U or Ctrl/⌘+Z) until you claim or skip.
 - Feature claiming for roads, Costcos, McDonald's, and fields (farmers).
