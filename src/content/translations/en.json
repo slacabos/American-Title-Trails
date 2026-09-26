@@ -399,6 +399,8 @@
     },
     "switchToNight": "Switch to night",
     "switchToDay": "Switch to day",
+    "muteSound": "Mute sound",
+    "unmuteSound": "Turn sound on",
     "keyboardHint": "Arrows/WASD + Enter to place · Q/E rotate · ? all keys",
     "shortcuts": "Keyboard shortcuts"
   },
@@ -416,6 +418,7 @@
     "fit": "Fit the board",
     "view": "Switch between Tabletop and Drone",
     "night": "Switch day / night",
+    "sound": "Sound on / off",
     "cancel": "Clear the cursor, close menus",
     "help": "Show or hide help",
     "groups": {

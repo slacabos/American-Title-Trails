@@ -1,9 +1,7 @@
 import * as THREE from "three";
+import { LANDING_FALL as FALL } from "./landingTiming";
 
-/** A placed tile drops in, squashes on impact and settles in this long. */
-export const LANDING_MS = 480;
-/** Share of the landing spent falling; the rest is the squash and settle. */
-const FALL = 0.55;
+export { LANDING_MS, prefersReducedMotion } from "./landingTiming";
 const DROP_HEIGHT = 0.6;
 
 export interface LandingPose {
@@ -52,10 +50,6 @@ export function landingMatrix(
   const back = new THREE.Matrix4().makeTranslation(center.x, pose.lift, center.y);
   return out.copy(back).multiply(scale).multiply(toCenter).multiply(base);
 }
-
-export const prefersReducedMotion = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 
 /** What is landing this frame, shared by every mesh that draws the tile. */
 export interface LandingFrame {

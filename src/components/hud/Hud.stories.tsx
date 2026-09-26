@@ -4,6 +4,7 @@ import { GamePhase } from "@/types";
 import Scoreboard from "./Scoreboard";
 import TileDock from "./TileDock";
 import ActivityLog from "./ActivityLog";
+import SoundToggle from "./SoundToggle";
 
 const players = [
   { id: "blue", name: "Blue", color: "#457da1" },
@@ -80,3 +81,12 @@ const entries = [
 ];
 
 export const ActivityLogPanel: Story = { render: () => <ActivityLog entries={entries} /> };
+
+export const SoundSwitch: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 8 }}>
+      <SoundToggle enabled onToggle={noop} />
+      <SoundToggle enabled={false} onToggle={noop} />
+    </div>
+  ),
+};

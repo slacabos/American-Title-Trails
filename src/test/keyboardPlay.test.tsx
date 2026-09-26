@@ -189,4 +189,16 @@ describe("keyboard play", () => {
     expect(screen.queryAllByRole("button", { name: /^(Claim|Place farmer)/ })).toHaveLength(0);
     expect(screen.getByText(/skipped claiming/)).toBeInTheDocument();
   });
+
+  it("mutes and unmutes with M, and remembers it", () => {
+    const { unmount } = render(<GameBoard players={players} onReset={() => {}} />);
+    expect(screen.getByRole("button", { name: "Mute sound" })).toHaveAttribute("aria-pressed", "false");
+    key("m");
+    expect(screen.getByRole("button", { name: "Turn sound on" })).toHaveAttribute("aria-pressed", "true");
+    unmount();
+    render(<GameBoard players={players} onReset={() => {}} />);
+    expect(screen.getByRole("button", { name: "Turn sound on" })).toBeInTheDocument();
+    key("m");
+    expect(screen.getByRole("button", { name: "Mute sound" })).toBeInTheDocument();
+  });
 });

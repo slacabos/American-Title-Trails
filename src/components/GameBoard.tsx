@@ -28,7 +28,10 @@ import Scoreboard from "./hud/Scoreboard";
 import TileDock from "./hud/TileDock";
 import ActivityLog, { type LogEntry } from "./hud/ActivityLog";
 import TimeToggle from "./hud/TimeToggle";
+import SoundToggle from "./hud/SoundToggle";
 import useTimeOfDay from "@/hooks/useTimeOfDay";
+import useSound from "@/hooks/useSound";
+import useGameSounds from "@/hooks/useGameSounds";
 import { CircleQuestionMark, Keyboard, Menu, RotateCcw } from "lucide-react";
 
 const sameFeature = (a: ClaimableFeature, b?: ClaimableFeature) =>
@@ -54,6 +57,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   ]);
   const [menuOpen, setMenuOpen] = useState(false);
   const { night, toggle: toggleNight } = useTimeOfDay();
+  const sound = useSound();
+  useGameSounds(gameState, sound.play);
   const stageRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLElement>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -134,6 +139,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
       }));
       logCompletions(result.completedFeatures);
     } else {
+      sound.play("invalid");
       addLog(t("messages.failedToPlace", {
         message: result.message?.startsWith("river") ? t(`messages.${result.message}`) : result.message,
       }));
@@ -143,12 +149,14 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
   const handleRotateClockwise = () => {
     if (game.canRotateTile()) {
       game.rotateTileClockwise();
+      sound.play("rotate");
     }
   };
 
   const handleRotateCounterClockwise = () => {
     if (game.canRotateTile()) {
       game.rotateTileCounterClockwise();
+      sound.play("rotate");
     }
   };
 
@@ -256,6 +264,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
         case "n":
           toggleNight();
           break;
+        case "m":
+          sound.toggle();
+          break;
         case "v":
           handleViewChange(view === "drone" ? "tabletop" : "drone");
           break;
@@ -325,6 +336,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, onReset }) => {
           <div className="hud-top-right">
             <ViewToggle view={view} onViewChange={handleViewChange} />
             <TimeToggle night={night} onToggle={toggleNight} />
+            <SoundToggle enabled={sound.enabled} onToggle={sound.toggle} />
             <button
               type="button"
               className="hud-icon-button"

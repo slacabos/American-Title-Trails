@@ -90,7 +90,7 @@ Every action has a key; the full list is at the top of this help.
 - **Place a tile:** The arrow keys or **WASD** move a cursor between legal spaces (up is up on screen, in either view). Press **Enter** or **Space** to place the tile there.
 - **Claim:** **Up** / **Down** (or **W** / **S**) step through the claim options and highlight each feature on the board; **Enter** claims it. **1–9** claim an option directly, and **X** skips.
 - **Camera:** **+** and **−** zoom, **Shift+Arrows** or **Shift+WASD** pan, **F** fits the board, and **V** switches between Tabletop and Drone.
-- **Other:** **N** switches day and night, **Esc** clears the cursor, and **?** opens this help.
+- **Other:** **N** switches day and night, **M** turns sound on or off, **Esc** clears the cursor, and **?** opens this help.
 
 ---
 
