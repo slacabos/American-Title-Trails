@@ -26,7 +26,7 @@ npm run storybook    # Storybook on port 6006
 - **Vitest 4** for unit tests (jsdom) and for Storybook stories, which run in a real browser through Playwright
 - **Playwright** for end-to-end tests (`e2e/`)
 - **Storybook 10**, with stories colocated with their components
-- **ESLint 10** flat config (`eslint.config.js`)
+- **ESLint 10** flat config (`eslint.config.js`) for correctness; **Prettier** (`.prettierrc.json`, width 120) for formatting
 - **react-markdown** + remark-gfm for the in-app help
 
 ---
@@ -185,6 +185,7 @@ All changes go through `Game` methods: `placeTile(position, rotation)`, `claimFe
 | `npm run preview`                                         | Serve the production build                             |
 | `npx tsc --noEmit`                                        | Type check only                                        |
 | `npm run lint` / `npm run lint:fix`                       | ESLint on `src/`                                       |
+| `npm run format` / `npm run format:check`                 | Prettier: rewrite, or only check, every file           |
 | `npm test`                                                | All unit tests, including the AI simulation            |
 | `npm run test:ai-sim`                                     | Only the AI balance simulation                         |
 | `npx vitest run --config vite.config.ts --project storybook` | Every story, rendered and tested in Chromium        |
@@ -310,6 +311,8 @@ Anything that changes the game must go through a `Game` method that records a `G
 
 ## Git Workflow and Releases
 
-- Before committing, run `npx tsc --noEmit`, `npm run lint` and `npm test`. For UI or 3D changes also run the Storybook tests and `npm run test:browser`. CI (`.github/workflows/ci.yml`) runs all of these on pushes to `main` and on pull requests.
+- **Git hooks** (husky, installed by `npm install`): the pre-commit hook runs ESLint `--fix` and Prettier on staged files (lint-staged); the pre-push hook runs `npx tsc --noEmit`. Don't bypass them with `--no-verify`.
+- Before committing, also run `npm test`. For UI or 3D changes, run the Storybook tests and `npm run test:browser` as well. CI (`.github/workflows/ci.yml`) runs all of these, plus `npm run format:check`, on pushes to `main` and on pull requests.
+- The commit that first applied Prettier is listed in `.git-blame-ignore-revs`. Run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once so `git blame` skips it (GitHub does this automatically).
 - Commit messages are short, imperative sentences (for example "Add synthesized sound effects with a mute toggle").
 - **Releases:** bump the version with `npm version X.Y.Z --no-git-tag-version`, commit "Release version X.Y.Z", then create an annotated tag `vX.Y.Z` with a one-line summary and push `main` and the tag.

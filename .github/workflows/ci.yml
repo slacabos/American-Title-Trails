@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   checks:
-    name: Types, lint, unit tests, build
+    name: Format, types, lint, unit tests, build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -26,6 +26,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run format:check
       - run: npx tsc --noEmit
       - run: npm run lint
       # Includes the AI balance simulation.

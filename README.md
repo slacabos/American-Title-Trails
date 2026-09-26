@@ -90,9 +90,11 @@ npm run test:ui
 npm run test:browser    # Playwright end-to-end tests
 npm run test:coverage
 
-# Linting
+# Linting and formatting
 npm run lint
 npm run lint:fix
+npm run format          # Prettier
+npm run format:check
 
 # Storybook
 npm run storybook

@@ -1,0 +1,2 @@
+# ESLint first, then Prettier, one after the other: both edit the same files.
+npx lint-staged --concurrent false

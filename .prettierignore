@@ -1,0 +1,14 @@
+# Build and test output
+dist/
+coverage/
+storybook-static/
+test-results/
+playwright-report/
+
+# Generated from src/content/help/*.md by scripts/sync-help-content.js
+src/content/help/*.ts
+!src/content/help/index.ts
+
+# Managed by npm; local notes
+package-lock.json
+plans/

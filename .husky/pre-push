@@ -1,0 +1,2 @@
+# Quick type check; CI runs the tests.
+npx tsc --noEmit
