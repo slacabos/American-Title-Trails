@@ -10,6 +10,7 @@ import { cornerWeights } from "@/rendering/regions";
 import { writeRegionAttributes } from "@/rendering/groundShader";
 import { type PlantInstances, plantInstances, SMALL_SPECIES } from "@/rendering/vegetation";
 import { Lod } from "@/rendering/lod";
+import { skyPose } from "@/rendering/skyPath";
 import { AT_REST, landingMatrix, type LandingFrame } from "@/rendering/landing";
 import {
   canonicalTile,
@@ -489,27 +490,37 @@ export function WaterMotion({ enabled }: { enabled: boolean }) {
   return null;
 }
 
-/** Warm sun by day; a cool, dim moon at night. Shadows are cast in both. */
+/** Far enough out that the shadow camera sees the whole board from any angle. */
+const LIGHT_DISTANCE = 12;
+
+/**
+ * Warm sun by day; a cool, dim moon at night. Shadows are cast in both. Both
+ * cross the sky as `progress` runs from the first tile (0) to the last (1).
+ */
 export function Daylight({
   center = [0, 0],
   span = 4,
   night = false,
+  progress = 0.5,
 }: {
   center?: [number, number];
   span?: number;
   night?: boolean;
+  progress?: number;
 }) {
   const target = useMemo(() => new THREE.Object3D(), []);
   target.position.set(center[0], 0, center[1]);
+  const pose = useMemo(() => skyPose(progress, night), [progress, night]);
+  const light = pose.direction.clone().multiplyScalar(LIGHT_DISTANCE);
   return (
     <>
       <primitive object={target} />
-      <hemisphereLight args={night ? ["#7d88a0", "#232c30", 1.05] : ["#fff6df", "#788a77", 2.1]} />
+      <hemisphereLight color={pose.sky} groundColor={pose.ground} intensity={pose.ambient} />
       <directionalLight
-        position={[center[0] - 5, 10, center[1] + 4]}
+        position={[center[0] + light.x, light.y, center[1] + light.z]}
         target={target}
-        intensity={night ? 1.05 : 2.5}
-        color={night ? "#c3cde6" : "#fff0d5"}
+        intensity={pose.intensity}
+        color={pose.color}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-span}

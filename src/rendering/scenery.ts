@@ -5,7 +5,7 @@ import type { ITile } from "@/interfaces/ITile";
 import { buildWarehouses } from "./warehouseGeometry";
 import { createWaterUniforms, makeRegional } from "./groundShader";
 import { GLOW_COLOR, PaintBatch, place, type PropBuilder } from "./paint";
-import { buildLandmark, LANDMARKS } from "./landmarks";
+import { buildLandmark, LANDMARK_RADIUS, LANDMARKS } from "./landmarks";
 import { buildSpecies, type Species, speciesFor, vegetationSpots } from "./vegetation";
 import { isFine, LodTracker } from "./lod";
 
@@ -512,6 +512,7 @@ export class SceneryLibrary {
       }
     }
     paintFeatures(ctx, tile, 512);
+    paintContactShadows(ctx, tile, 512);
     // White where regional landscapes may recolour the ground; black under
     // roads, lots, water and painted markings, which keep their colours.
     const maskCanvas = document.createElement("canvas");
@@ -552,6 +553,24 @@ export class SceneryLibrary {
 }
 
 /** Roads, lots, markings and water, in tile units centred on the canvas. */
+/**
+ * Soft shade on the ground under every plant and landmark, painted once per tile
+ * type. Stacked translucent discs darken towards the centre, like the meadow
+ * patches, so it costs nothing at runtime.
+ */
+function paintContactShadows(ctx: CanvasRenderingContext2D, tile: ITile, size: number): void {
+  const blob = ([x, z]: Point, radius: number) => {
+    ctx.fillStyle = "#26341e12";
+    for (let step = 5; step >= 1; step--) {
+      ctx.beginPath();
+      ctx.arc((x + 0.5) * size, (z + 0.5) * size, (radius * size * step) / 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+  for (const spot of vegetationSpots(tile)) blob(spot.at, (spot.kind === "shrub" ? 0.04 : 0.062) * spot.scale);
+  for (const landmark of LANDMARKS[tile.id] ?? []) blob(landmark.at, LANDMARK_RADIUS[landmark.kind] * 1.15);
+}
+
 function paintFeatures(ctx: CanvasRenderingContext2D, tile: ITile, size: number): void {
   ctx.save();
   ctx.translate(size / 2, size / 2);
