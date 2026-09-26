@@ -72,7 +72,7 @@ function Harness() {
         </div>
       </div>
       <aside>
-        <CurrentTilePreview tile={state.currentTile} mode={mode} night={night} extraVfx={extraVfx} />
+        <CurrentTilePreview tile={state.currentTile} night={night} extraVfx={extraVfx} />
         <button onClick={() => game.rotateTileClockwise()}>Rotate tile</button>
         {state.phase === GamePhase.CLAIM_FEATURE && (
           <>
