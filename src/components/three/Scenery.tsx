@@ -10,7 +10,7 @@ import { cornerWeights } from "@/rendering/regions";
 import { writeRegionAttributes } from "@/rendering/groundShader";
 import { type PlantInstances, plantInstances, SMALL_SPECIES } from "@/rendering/vegetation";
 import { Lod } from "@/rendering/lod";
-import { skyPose, type SkyTuning } from "@/rendering/skyPath";
+import { skyPose } from "@/rendering/skyPath";
 import { AT_REST, landingMatrix, type LandingFrame } from "@/rendering/landing";
 import {
   canonicalTile,
@@ -502,13 +502,11 @@ export function Daylight({
   span = 4,
   night = false,
   progress = 0.5,
-  tuning,
 }: {
   center?: [number, number];
   span?: number;
   night?: boolean;
   progress?: number;
-  tuning?: SkyTuning;
 }) {
   const target = useMemo(() => new THREE.Object3D(), []);
   target.position.set(center[0], 0, center[1]);
@@ -517,15 +515,11 @@ export function Daylight({
   return (
     <>
       <primitive object={target} />
-      <hemisphereLight
-        color={pose.sky}
-        groundColor={pose.ground}
-        intensity={pose.ambient * (tuning?.ambientScale ?? 1)}
-      />
+      <hemisphereLight color={pose.sky} groundColor={pose.ground} intensity={pose.ambient} />
       <directionalLight
         position={[center[0] + light.x, light.y, center[1] + light.z]}
         target={target}
-        intensity={pose.intensity * (tuning?.keyScale ?? 1)}
+        intensity={pose.intensity}
         color={pose.color}
         castShadow
         shadow-mapSize={[1024, 1024]}
