@@ -181,7 +181,9 @@ export const AllTilesAndRotations: Story = {
       board: gallery,
       lastPlacedPosition: undefined,
     },
+    skyProgress: 0.5,
   },
+  argTypes: { skyProgress: { control: { type: "range", min: 0, max: 1, step: 0.01 } } },
   parameters: {
     docs: {
       description: {
