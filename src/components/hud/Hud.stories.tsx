@@ -37,6 +37,7 @@ function Dock({ phase }: { phase: "place" | "claim" | "ai" }) {
         onRotateCounterClockwise={noop}
         onClaim={noop}
         onSkip={noop}
+        onTakeBack={state.phase === GamePhase.CLAIM_FEATURE ? noop : undefined}
         onHighlight={noop}
       />
     </div>

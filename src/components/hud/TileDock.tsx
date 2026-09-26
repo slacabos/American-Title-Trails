@@ -1,5 +1,5 @@
 import React from "react";
-import { RotateCcw, RotateCw } from "lucide-react";
+import { RotateCcw, RotateCw, Undo2 } from "lucide-react";
 import type { ClaimableFeature, GameState, TerrainType } from "@/types";
 import { GamePhase } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ interface TileDockProps {
   onRotateCounterClockwise: () => void;
   onClaim: (type: TerrainType, identifier?: string) => void;
   onSkip: () => void;
+  /** Lifts the placed tile back into hand; absent when that isn't allowed. */
+  onTakeBack?: () => void;
   onHighlight: (feature?: ClaimableFeature) => void;
   /** The option Enter would claim, chosen with the arrow keys or the pointer. */
   highlighted?: ClaimableFeature;
@@ -29,6 +31,7 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
     onRotateCounterClockwise,
     onClaim,
     onSkip,
+    onTakeBack,
     onHighlight,
     highlighted,
     night = false,
@@ -115,6 +118,12 @@ export const TileDock = React.forwardRef<HTMLElement, TileDockProps>(function Ti
               <Button variant="outline" onClick={onSkip}>
                 {t("hud.skip")}
               </Button>
+              {onTakeBack && (
+                <Button variant="ghost" onClick={onTakeBack}>
+                  <Undo2 aria-hidden="true" />
+                  {t("hud.takeBack")}
+                </Button>
+              )}
             </div>
           </>
         )}

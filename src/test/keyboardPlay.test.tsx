@@ -189,4 +189,56 @@ describe("keyboard play", () => {
     expect(screen.queryAllByRole("button", { name: /^(Claim|Place farmer)/ })).toHaveLength(0);
     expect(screen.getByText(/skipped claiming/)).toBeInTheDocument();
   });
+
+  it("takes the placed tile back with U until a claim is made", () => {
+    render(<GameBoard players={players} onReset={() => {}} />);
+    const claims = () => screen.queryAllByRole("button", { name: /^(Claim|Place farmer)/ });
+    let before = "";
+    let tiles = "";
+    for (let turn = 0; turn < 20; turn++) {
+      aimCursor();
+      before = legal().join(" ");
+      tiles = text("tiles")!;
+      key("u"); // nothing to take back while placing
+      expect(text("tiles")).toBe(tiles);
+      key("Enter");
+      if (claims().length) break;
+    }
+    expect(claims().length).toBeGreaterThan(0);
+    expect(text("tiles")).toBe(String(Number(tiles) + 1));
+
+    key("u");
+    expect(text("tiles")).toBe(tiles);
+    expect(claims()).toHaveLength(0);
+    // Back in hand, turned the way it was placed.
+    expect(legal().join(" ")).toBe(before);
+    expect(screen.getByText(/took back their tile/)).toBeInTheDocument();
+
+    // Placed again, Ctrl+Z works too; after skipping there's nothing to take back.
+    key("ArrowDown");
+    key("Enter");
+    expect(claims().length).toBeGreaterThan(0);
+    key("z", { ctrlKey: true });
+    expect(text("tiles")).toBe(tiles);
+    key("ArrowDown");
+    key("Enter");
+    key("x");
+    const after = text("tiles");
+    key("u");
+    expect(text("tiles")).toBe(after);
+  });
+
+  it("takes the tile back with the dock button", () => {
+    render(<GameBoard players={players} onReset={() => {}} />);
+    expect(screen.queryByRole("button", { name: /take back/i })).not.toBeInTheDocument();
+    for (let turn = 0; turn < 20; turn++) {
+      aimCursor();
+      key("Enter");
+      if (screen.queryByRole("button", { name: /take back/i })) break;
+    }
+    const tiles = Number(text("tiles"));
+    fireEvent.click(screen.getByRole("button", { name: /take back/i }));
+    expect(Number(text("tiles"))).toBe(tiles - 1);
+    expect(screen.queryByRole("button", { name: /take back/i })).not.toBeInTheDocument();
+  });
 });

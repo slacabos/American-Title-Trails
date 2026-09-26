@@ -19,6 +19,7 @@ The Vite dev server runs at http://localhost:3000 and opens automatically.
 - Curving water, lakeside restaurants, and road bridges on a 3D tabletop.
 - Placed tiles drop onto the 3D tabletop with a small bounce and a puff of dust.
 - Tile rotation with live placement validation.
+- Take back a placed tile (U or Ctrl/⌘+Z) until you claim or skip.
 - Feature claiming for roads, Costcos, McDonald's, and fields (farmers).
 - Farmers stay on the board and score at game end.
 - Real-time scoreboard, activity log, and turn/tile stats.

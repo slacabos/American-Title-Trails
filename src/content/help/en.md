@@ -59,6 +59,7 @@ Each turn consists of up to 3 phases:
 - **Costco Areas:** Claim a shopping area
 - **McDonald's:** Claim the restaurant (1 point per tile in the 3x3 area, max 9)
 - You must have available followers to claim features
+- **Take back:** Until you claim or skip, **Take back tile** (or **U**) returns the tile to your hand to place again. If the tile offers nothing to claim, your turn ends as soon as it is placed and can't be taken back.
 
 ### 3. Scoring Phase 📊 (Automatic)
 
@@ -85,7 +86,7 @@ Each turn consists of up to 3 phases:
 Every action has a key; the full list is at the top of this help.
 
 - **Place a tile:** The arrow keys or **WASD** move a cursor between legal spaces (up is up on screen, in either view). Press **Enter** or **Space** to place the tile there.
-- **Claim:** **Up** / **Down** (or **W** / **S**) step through the claim options and highlight each feature on the board; **Enter** claims it. **1–9** claim an option directly, and **X** skips.
+- **Claim:** **Up** / **Down** (or **W** / **S**) step through the claim options and highlight each feature on the board; **Enter** claims it. **1–9** claim an option directly, **X** skips, and **U** or **Ctrl/⌘+Z** takes the tile back.
 - **Camera:** **+** and **−** zoom, **Shift+Arrows** or **Shift+WASD** pan, **F** fits the board, and **V** switches between Tabletop and Drone.
 - **Other:** **N** switches day and night, **Esc** clears the cursor, and **?** opens this help.
 

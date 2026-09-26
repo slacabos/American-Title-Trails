@@ -53,7 +53,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
   const [seed] = useState(() => resume?.seed ?? newSeed());
   // One game per mount: App remounts this component for every new game. A
   // constructor or replay error reaches the surrounding ErrorBoundary.
-  const [game] = useState(() => {
+  const [game, setGame] = useState(() => {
     if (!resume) return new Game(players, { seed });
     const restored = restoreGame(resume);
     if (!restored) throw new Error("The saved game could not be restored");
@@ -198,6 +198,26 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
     }
   };
 
+  // A human may lift their tile back into hand until they claim or skip.
+  const actions = game.getActions();
+  const lastAction = actions[actions.length - 1];
+  const canTakeBack =
+    phase === GamePhase.CLAIM_FEATURE && !currentPlayerIsAI && !isGameOver && lastAction?.type === "place";
+
+  const handleTakeBack = () => {
+    if (!canTakeBack || lastAction?.type !== "place") return;
+    const previous = Game.replay(resume?.players ?? players, seed, actions.slice(0, -1));
+    if (!previous) return;
+    // Hand the tile back turned the way it was placed.
+    previous.rotateTile(lastAction.orientation);
+    setHighlightedFeature(undefined);
+    setGame(previous);
+    setGameState(previous.getState());
+    addLog(t("messages.tookBackTile", {
+      playerName: gameState.players[gameState.currentPlayerIndex].name,
+    }));
+  };
+
   const handleSkipClaim = () => {
     game.skipClaim();
     addLog(t("messages.skippedClaiming", {
@@ -268,6 +288,14 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
         return;
       }
 
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "z") {
+        if (canTakeBack) {
+          e.preventDefault();
+          handleTakeBack();
+        }
+        return;
+      }
+
       if (modified) return;
       if (/^[1-9]$/.test(e.key)) {
         const feature = claiming ? claimableFeatures[Number(e.key) - 1] : undefined;
@@ -284,6 +312,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
           break;
         case "x":
           if (claiming) handleSkipClaim();
+          break;
+        case "u":
+          if (canTakeBack) handleTakeBack();
           break;
         case "n":
           toggleNight();
@@ -439,6 +470,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ players, resume, onReset }) => {
             onRotateCounterClockwise={handleRotateCounterClockwise}
             onClaim={handleClaimFeature}
             onSkip={handleSkipClaim}
+            onTakeBack={canTakeBack ? handleTakeBack : undefined}
             onHighlight={setHighlightedFeature}
             highlighted={highlightedFeature}
             night={night}

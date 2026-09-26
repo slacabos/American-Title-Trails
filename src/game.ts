@@ -169,7 +169,8 @@ export class Game {
     seed: number,
     actions: readonly GameAction[]
   ): Game | undefined {
-    const game = new Game(players, { seed });
+    // `this`, so a subclass replays as itself.
+    const game = new this(players, { seed });
     return actions.every((action) => game.applyAction(action)) ? game : undefined;
   }
 

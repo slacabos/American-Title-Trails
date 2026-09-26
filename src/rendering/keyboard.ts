@@ -39,6 +39,7 @@ export const SHORTCUT_GROUPS: { title: string; shortcuts: Shortcut[] }[] = [
       { keys: [["↑", "↓", "W", "S"], ["1–9"]], action: "shortcuts.chooseClaim" },
       { keys: [["Enter"]], action: "shortcuts.claim" },
       { keys: [["X"]], action: "shortcuts.skip" },
+      { keys: [["U"]], action: "shortcuts.takeBack" },
     ],
   },
   {
