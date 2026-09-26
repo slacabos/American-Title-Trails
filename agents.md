@@ -312,7 +312,8 @@ Anything that changes the game must go through a `Game` method that records a `G
 ## Git Workflow and Releases
 
 - **Git hooks** (husky, installed by `npm install`): the pre-commit hook runs ESLint `--fix` and Prettier on staged files (lint-staged); the pre-push hook runs `npx tsc --noEmit`. Don't bypass them with `--no-verify`.
-- Before committing, also run `npm test`. For UI or 3D changes, run the Storybook tests and `npm run test:browser` as well. CI (`.github/workflows/ci.yml`) runs all of these, plus `npm run format:check`, on pushes to `main` and on pull requests. It skips the AI balance simulation, which depends on machine speed; run `npm run test:ai-sim` locally after changing the AI.
+- Before committing, also run `npm test`. For UI or 3D changes, run the Storybook tests and `npm run test:browser` as well. CI (`.github/workflows/ci.yml`) runs all of these, plus `npm run format:check`, on every pull request; pushes to `main` get only the fast job. It skips the AI balance simulation, which depends on machine speed; run `npm run test:ai-sim` locally after changing the AI.
 - The commit that first applied Prettier is listed in `.git-blame-ignore-revs`. Run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once so `git blame` skips it (GitHub does this automatically).
+- `main` is protected: changes go through a pull request, and both CI jobs must pass with the branch up to date. The repository admin can bypass this, which is how release commits are pushed.
 - Commit messages are short, imperative sentences (for example "Add synthesized sound effects with a mute toggle").
 - **Releases:** bump the version with `npm version X.Y.Z --no-git-tag-version`, commit "Release version X.Y.Z", then create an annotated tag `vX.Y.Z` with a one-line summary and push `main` and the tag.
